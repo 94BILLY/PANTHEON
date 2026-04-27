@@ -1,0 +1,47 @@
+# Pantheon — Path 1 (VU1) EE build
+#
+# Asset pipeline (host): Softimage binary .hrc on NT -> hrcConvert in out -a
+#   -> ASCII .hrc in WSL -> python3 hrc2ps2.py <name>.hrc -> <name>_data.h
+#   e.g. floor.hrc -> floor_data.h, skydome.hrc -> skydome_data.h
+#   Skydome: prefer an upper hemisphere (y>=0) in Softimage to save tris; full sphere works.
+#
+#   make -f Makefile.world
+# Optional: add -DPANTHEON_DEBUG_LOG=1 to EE_CC line for host: pad trace logs.
+EE_BIN = floor.elf
+EE_OBJS = floor.o shader.o
+
+# Libraries - IMPORTANT: -lpad is added here
+EE_LIBS = -ldraw -lgraph -lmath3d -lpacket -ldma -lkernel -lpad -lm
+
+EE_CC = ee-gcc
+EE_AS = dvp-as
+EE_LD = ee-gcc
+EE_STRIP = mips64r5900el-ps2-elf-strip
+
+all: $(EE_BIN)
+	$(EE_STRIP) --strip-all $(EE_BIN)
+
+# Assemble VU1 microprogram
+shader.o: shader.vsm
+	$(EE_AS) -o shader.o shader.vsm
+
+# Compile C source
+floor.o: floor.c
+	$(EE_CC) -D_EE -G0 -O2 -Wall \
+		-I$(PS2SDK)/ee/include \
+		-I$(PS2SDK)/common/include \
+		-c floor.c -o floor.o
+
+# Link
+$(EE_BIN): $(EE_OBJS)
+	$(EE_LD) \
+		-T$(PS2SDK)/ee/startup/linkfile \
+		-O2 -o $(EE_BIN) \
+		$(EE_OBJS) \
+		-L$(PS2SDK)/ee/lib \
+		$(EE_LIBS)
+
+clean:
+	rm -f *.o *.elf
+
+.PHONY: all clean
