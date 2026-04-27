@@ -1,0 +1,68 @@
+.vu
+.global PantheonShader
+PantheonShader:
+; Path 1 shared contract:
+;   giftag @ 240, output @ 241, xgkick @ 240, input @ 8
+nop lq VF06, 240(VI00) ; GIF tag
+nop lq VF05, 2(VI00) ; VF05.xy = GS center (2048,2048); .z = Z bias (from EE unpack)
+nop lq VF07, 3(VI00) ; VF07.x=XY scale, y=Z scale, z=nearZ(0.1), w=maxXY(2047)
+nop lq VF01, 4(VI00) ; MVP Row 0
+nop lq VF02, 5(VI00) ; MVP Row 1
+nop lq VF03, 6(VI00) ; MVP Row 2
+nop lq VF04, 7(VI00) ; MVP Row 3
+nop lq VF00, 0(VI00) ; perspective w=1.0f
+
+; Output GS packet starts in high VU memory to avoid clobbering input UNPACK area.
+nop sq VF06, 240(VI00)
+
+nop xitop VI01
+nop iaddiu VI02, VI00, 8 ; Input vertices start at 8
+nop iaddiu VI03, VI00, 241 ; Output buffer starts at 241
+
+VertexLoop:
+nop ibeq VI01, VI00, EndLoop
+nop iaddi VI01, VI01, -2
+
+nop lq VF08, 0(VI02) ; Load Position
+nop lq VF09, 1(VI02) ; Load Pre-packed Color
+nop iaddi VI02, VI02, 2
+
+mulax ACC, VF01, VF08x nop
+madday ACC, VF02, VF08y nop
+maddaz ACC, VF03, VF08z nop
+maddw VF10, VF04, VF08w nop
+
+; Clamp W to near-Z before reciprocal projection.
+maxz.w VF10, VF10, VF07 nop
+nop div q, VF00w, VF10w
+nop waitq
+mulq.xyzw VF10, VF10, q nop
+mulaw.xyzw ACC, VF05, VF00w nop
+madd.xyzw VF10, VF10, VF05 nop ; VF10 = screen-space float
+
+; Bound projected X/Y to [0, maxScreen] before integer conversion.
+max.xy VF10, VF10, VF00 nop
+miniw.xy VF10, VF10, VF07 nop
+
+; Use explicit bounded pack scale path through VF11.
+mulx.xy VF11, VF10, VF07 nop
+ftoi0.xy VF10, VF11 nop
+muly.z VF11, VF10, VF07 nop
+ftoi0.z VF10, VF11 nop
+
+; PACKED stream with NREG=2: write RGBAQ then XYZ2 as separate qwords.
+nop sq VF09, 0(VI03)
+nop sq VF10, 1(VI03)
+nop iaddi VI03, VI03, 2
+
+nop b VertexLoop
+nop nop
+
+EndLoop:
+nop iaddiu VI04, VI00, 240
+nop xgkick VI04
+nop[E] nop
+nop nop
+
+.global PantheonShaderEnd
+PantheonShaderEnd:

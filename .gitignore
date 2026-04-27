@@ -1,0 +1,11 @@
+*.o
+*.elf
+*.log
+*.mp4
+*.zip
+*.iso
+*.Zone.Identifier
+*:Zone.Identifier
+*:Zone.Identifier:Zone.Identifier
+.cursor/debug-*.log
+agent-tools/
