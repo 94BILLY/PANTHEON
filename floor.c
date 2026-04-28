@@ -30,6 +30,8 @@
 
 #include "floor_data.h"
 #include "skydome_data.h"
+#include "pantheon_path1_contract.h"
+#include "pantheon_timecycle.h"
 
 /* Authored Softimage skydome in VU1 when cruncher produced tris (else CPU placeholder). */
 #define USE_VU1_SKYDOME_MESH (SKYDOME_TRI_COUNT > 0)
@@ -38,9 +40,8 @@
 #define PANTHEON_DEBUG_LOG 0
 #endif
 
-/* Agent NDJSON (session f266a2): Path1 DMA size checks. Disable after verification. */
 #ifndef PANTHEON_AGENT_TRACE
-#define PANTHEON_AGENT_TRACE 1
+#define PANTHEON_AGENT_TRACE 0
 #endif
 
 // ==================== GTA SAN ANDREAS CAMERA ====================
@@ -90,16 +91,6 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 /* H10: A/B diagnostics to localize VU1 vs non-VU rendering path. */
 #define PATH1_AB_CPU_OVERLAY 0
 
-/* Path 1 contract shared with shader.vsm. */
-#define PATH1_VU_GIFTAG_ADDR 240
-#define PATH1_VU_OUTPUT_BASE 241
-#define PATH1_VU_XGKICK_ADDR 240
-#define PATH1_VU_INPUT_BASE 8
-#define PATH1_VU_CONST_PERSPECTIVE_ADDR 0
-#define PATH1_VU_CONST_SCREEN_ADDR 2
-#define PATH1_VU_CONST_MVP_ADDR 4
-#define PATH1_VU_MAX_BATCH_VERTS 108
-
 /* Must match the scale applied in init_flat_floor() to floor mesh (Softimage export). */
 #define FLOOR_MESH_SCALE 14.0f
 
@@ -112,15 +103,33 @@ static PantheonVertex flat_skydome[SKYDOME_TRI_COUNT * 3] __attribute__((aligned
 packet_t *packets[2];
 int context = 0;
 static int g_dbg_frame = 0;
+static PantheonAtmosphere g_atmosphere;
+static PantheonWeather g_weather = PANTHEON_WEATHER_CLEAR;
+static float g_day01 = 0.58f;
+
+typedef enum PantheonRenderJobType {
+    PANTHEON_RENDER_JOB_CLEAR = 0,
+    PANTHEON_RENDER_JOB_CPU_DEBUG,
+    PANTHEON_RENDER_JOB_PATH1_SKY,
+    PANTHEON_RENDER_JOB_PATH1_FLOOR
+} PantheonRenderJobType;
+
+typedef struct PantheonRenderJob {
+    PantheonRenderJobType type;
+    int enabled;
+} PantheonRenderJob;
 
 // Forward declarations
 qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z);
 qword_t *render_floor_path1_count(qword_t *q, MATRIX mvp, int total_verts);
 static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *mesh_tris, int total_verts, int max_verts);
+static void update_atmosphere(int frame_id);
+static void update_skydome_colors(void);
 #if !USE_VU1_SKYDOME_MESH
 static qword_t *render_sky_placeholder_dome(qword_t *q, MATRIX world_view, MATRIX view_screen);
 #endif
 static void clamp_player_to_floor(void);
+static void apply_sky_color(PantheonVertex *v);
 
 #if PANTHEON_DEBUG_LOG
 static void debug_log(const char *run_id, const char *hypothesis_id, const char *location, const char *message, const char *data_json) {
@@ -571,6 +580,19 @@ static void update_camera_orbit(void) {
     camera_rotation[3] = 1.0f;
 }
 
+static void update_atmosphere(int frame_id) {
+    g_day01 += 1.0f / (60.0f * 180.0f);
+    if (g_day01 >= 1.0f) {
+        g_day01 -= 1.0f;
+    }
+
+    /* Showcase PS2-style weather moods while the renderer is still a testbed. */
+    int cycle = (frame_id / (60 * 18)) & 3;
+    g_weather = (PantheonWeather)cycle;
+    g_atmosphere = pantheon_sample_timecycle(g_weather, g_day01);
+    update_skydome_colors();
+}
+
 /* Flattened triangle stream for VU1 (CPU expand at boot; see flight log Day 4). */
 PantheonVertex flat_floor[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
 static PantheonVertex floor_tile_tris[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
@@ -654,6 +676,18 @@ static void init_sky_placeholder_dome(void) {
                 r = fminf(1.0f, r + w * 0.35f);
                 g = fminf(1.0f, g + w * 0.32f);
                 bl = fminf(1.0f, bl + w * 0.12f);
+            }
+            {
+                float alpha = (float)g_atmosphere.cloud_alpha / 255.0f;
+                if (alpha > 0.0f && t > 0.15f) {
+                    float puff = sinf((float)j * 0.55f + (float)i * 0.4f);
+                    if (puff > 0.65f) {
+                        float w = (puff - 0.65f) * 1.8f * alpha;
+                        r = fminf(1.0f, r + (((float)g_atmosphere.cloud.r / 255.0f) - r) * w);
+                        g = fminf(1.0f, g + (((float)g_atmosphere.cloud.g / 255.0f) - g) * w);
+                        bl = fminf(1.0f, bl + (((float)g_atmosphere.cloud.b / 255.0f) - bl) * w);
+                    }
+                }
             }
             sky_cols[vi][0] = r;
             sky_cols[vi][1] = g;
@@ -742,6 +776,33 @@ static inline float pantheon_rgbaq_from_u8(u8 r, u8 g, u8 b, u8 a) {
     } pun;
     pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
     return pun.f;
+}
+
+static void apply_sky_color(PantheonVertex *v) {
+    float len2 = v->x * v->x + v->y * v->y + v->z * v->z;
+    float invl = (len2 > 1e-8f) ? (1.0f / sqrtf(len2)) : 0.0f;
+    float t = 0.5f * ((v->y * invl) + 1.0f);
+    if (t < 0.0f)
+        t = 0.0f;
+    if (t > 1.0f)
+        t = 1.0f;
+
+    float horizon = 1.0f - t;
+    PantheonColor c = pantheon_lerp_color(g_atmosphere.sky_horizon, g_atmosphere.sky_top, t);
+    float puff = sinf(v->x * 0.0045f + v->z * 0.0055f + v->y * 0.0025f);
+    if (puff > 0.48f && g_atmosphere.cloud_alpha > 0) {
+        float w = (puff - 0.48f) * ((float)g_atmosphere.cloud_alpha / 128.0f);
+        if (w > 0.85f)
+            w = 0.85f;
+        c.r = pantheon_lerp_u8(c.r, g_atmosphere.cloud.r, w * horizon);
+        c.g = pantheon_lerp_u8(c.g, g_atmosphere.cloud.g, w * horizon);
+        c.b = pantheon_lerp_u8(c.b, g_atmosphere.cloud.b, w * horizon);
+    }
+
+    v->r = pantheon_rgbaq_from_u8(c.r, c.g, c.b, 255);
+    v->g = 1.0f;
+    v->b = 0.0f;
+    v->a = 0.0f;
 }
 
 static inline qword_t* add_dma_tag(qword_t *q, u16 qwc, u8 id, u32 addr, u32 vif0, u32 vif1) {
@@ -875,38 +936,7 @@ static void init_flat_skydome(void) {
         v->x *= SKYDOME_MESH_SCALE;
         v->y *= SKYDOME_MESH_SCALE;
         v->z *= SKYDOME_MESH_SCALE;
-
-        float len2 = v->x * v->x + v->y * v->y + v->z * v->z;
-        float invl = (len2 > 1e-8f) ? (1.0f / sqrtf(len2)) : 0.0f;
-        float ny = v->y * invl;
-        /* 0 = horizon ring, 1 = zenith (+Y in typical Softimage sphere export). */
-        float t = 0.5f * (ny + 1.0f);
-        if (t < 0.0f)
-            t = 0.0f;
-        if (t > 1.0f)
-            t = 1.0f;
-
-        u8 r_z = 28, g_z = 105, b_z = 210;
-        u8 r_h = 175, g_h = 215, b_h = 248;
-        float tf = 1.0f - t;
-        u8 r = (u8)(tf * (float)r_h + t * (float)r_z);
-        u8 g = (u8)(tf * (float)g_h + t * (float)g_z);
-        u8 b = (u8)(tf * (float)b_h + t * (float)b_z);
-
-        float puff = sinf(v->x * 0.0045f + v->z * 0.0055f + v->y * 0.0025f);
-        if (puff > 0.58f) {
-            float w = (puff - 0.58f) * 2.2f;
-            if (w > 0.7f)
-                w = 0.7f;
-            r = (u8)fminf(255.0f, (float)r + w * 78.0f);
-            g = (u8)fminf(255.0f, (float)g + w * 72.0f);
-            b = (u8)fminf(255.0f, (float)b + w * 38.0f);
-        }
-
-        v->r = pantheon_rgbaq_from_u8(r, g, b, 255);
-        v->g = 1.0f;
-        v->b = 0.0f;
-        v->a = 0.0f;
+        apply_sky_color(v);
     }
 }
 #endif
@@ -938,6 +968,10 @@ static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *
         int output_end = output_start + (verts_this_batch * 2) - 1;
         int wraps = (output_end > 1023) ? 1 : 0;
         int overlaps = ((output_start <= input_end) && (output_end >= input_start)) ? 1 : 0;
+#if !PANTHEON_AGENT_TRACE
+        (void)wraps;
+        (void)overlaps;
+#endif
 
         if (i == 0 && (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0)) {
             int sample_count = (verts_this_batch < 8) ? verts_this_batch : 8;
@@ -1004,6 +1038,14 @@ static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *
     }
 
     return q;
+}
+
+static void update_skydome_colors(void) {
+#if USE_VU1_SKYDOME_MESH
+    for (int i = 0; i < SKYDOME_TRI_COUNT * 3; i++) {
+        apply_sky_color(&flat_skydome[i]);
+    }
+#endif
 }
 
 qword_t *render_floor_path1_count(qword_t *q, MATRIX mvp, int total_verts) {
@@ -1208,7 +1250,8 @@ int main(int argc, char *argv[]) {
     // #endregion
 
     MATRIX world_view, view_screen, mvp;
-    create_view_screen(view_screen, graph_aspect_ratio(), -3.0f, 3.0f, -3.0f, 3.0f, 1.0f, 2000.0f);
+    update_atmosphere(0);
+    create_view_screen(view_screen, graph_aspect_ratio(), -3.0f, 3.0f, -3.0f, 3.0f, 1.0f, g_atmosphere.far_clip);
     // #region agent log
     agent_path1_boot_log("H20", "floor.c:main", "before_main_loop");
     // #endregion
@@ -1217,8 +1260,15 @@ int main(int argc, char *argv[]) {
         static int dbg_frame = 0;
         dbg_frame++;
         g_dbg_frame = dbg_frame;
+        update_atmosphere(dbg_frame);
         packet_reset(packets[context]);
         qword_t *q = packets[context]->data;
+        const PantheonRenderJob render_jobs[] = {
+            {PANTHEON_RENDER_JOB_CLEAR, 1},
+            {PANTHEON_RENDER_JOB_CPU_DEBUG, PATH1_AB_CPU_OVERLAY},
+            {PANTHEON_RENDER_JOB_PATH1_SKY, RENDER_STAGE >= 2},
+            {PANTHEON_RENDER_JOB_PATH1_FLOOR, RENDER_STAGE >= 2}
+        };
 
         if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
             int pad_state = padGetState(0, 0);
@@ -1243,6 +1293,7 @@ int main(int argc, char *argv[]) {
         read_pad_analog();
         update_camera_orbit();
 
+        create_view_screen(view_screen, graph_aspect_ratio(), -3.0f, 3.0f, -3.0f, 3.0f, 1.0f, g_atmosphere.far_clip);
         create_world_view(world_view, camera_position, camera_rotation);
         matrix_multiply(mvp, world_view, view_screen);
         if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
@@ -1252,11 +1303,15 @@ int main(int argc, char *argv[]) {
             // #endregion
         }
 
-        q = render_clear_and_setup(q, context, frame, &z);
+        if (render_jobs[0].enabled) {
+            q = render_clear_and_setup(q, context, frame, &z);
+        }
 
         int cpu_qw_before = (int)(q - packets[context]->data);
-        q = render_cpu_probe(q, world_view, view_screen);
-        q = render_cpu_exported_floor(q, world_view, view_screen);
+        if (render_jobs[1].enabled) {
+            q = render_cpu_probe(q, world_view, view_screen);
+            q = render_cpu_exported_floor(q, world_view, view_screen);
+        }
         if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
             int cpu_qw_after = (int)(q - packets[context]->data);
             char j[128];
@@ -1275,47 +1330,50 @@ int main(int argc, char *argv[]) {
         dma_channel_send_normal(DMA_CHANNEL_GIF, (void *)PHYSICAL(packets[context]->data), q - packets[context]->data, 0, 0);
         dma_wait_fast();
 
-        if (RENDER_STAGE >= 2) {
+        if (render_jobs[2].enabled || render_jobs[3].enabled) {
         #if USE_VU1_SKYDOME_MESH
             /* Path1 skydome first, then floor. */
-            packet_reset(packets[context]);
-            q = packets[context]->data;
-            q = render_path1_tris(q, mvp, flat_skydome, SKYDOME_TRI_COUNT * 3, SKYDOME_TRI_COUNT * 3);
-            q = add_dma_tag(q, 0, 7, 0, 0, 0);
-            FlushCache(0);
-            {
-                int vif1_qw = (int)(q - packets[context]->data);
-                if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                    agent_path1_dma_log("H1", "floor.c:skydome_vif1", "skydome", vif1_qw, vif1_qw);
-                    agent_path1_phase_log("H7", "floor.c:main_loop", "skydome_send", dbg_frame);
-                    agent_path1_packet_log("H13", "floor.c:main_loop", "skydome_send", context, (int)packets[context]->qwords, vif1_qw, 0);
+            if (render_jobs[2].enabled) {
+                packet_reset(packets[context]);
+                q = packets[context]->data;
+                q = render_path1_tris(q, mvp, flat_skydome, SKYDOME_TRI_COUNT * 3, SKYDOME_TRI_COUNT * 3);
+                q = add_dma_tag(q, 0, 7, 0, 0, 0);
+                FlushCache(0);
+                {
+                    int vif1_qw = (int)(q - packets[context]->data);
+                    if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
+                        agent_path1_dma_log("H1", "floor.c:skydome_vif1", "skydome", vif1_qw, vif1_qw);
+                        agent_path1_phase_log("H7", "floor.c:main_loop", "skydome_send", dbg_frame);
+                        agent_path1_packet_log("H13", "floor.c:main_loop", "skydome_send", context, (int)packets[context]->qwords, vif1_qw, 0);
+                    }
+                    dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
                 }
-                dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
+                dma_wait_fast();
             }
-            dma_wait_fast();
         #endif
-            int path1_vert_count = FLOOR_TRI_COUNT * 3;
-            packet_reset(packets[context]);
-            q = packets[context]->data;
-            q = render_floor_path1_count(q, mvp, path1_vert_count);
-            q = add_dma_tag(q, 0, 7, 0, 0, 0);
-            FlushCache(0);
-            if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                int vif1_qw = (int)(q - packets[context]->data);
-                // #region agent log
-                agent_path1_dma_log("H17", "floor.c:main_loop", "floor_vif1_submit", vif1_qw, vif1_qw);
-                agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_begin", dbg_frame);
-                // #endregion
-            }
-            {
-                int vif1_qw = (int)(q - packets[context]->data);
-                dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
-            }
-            dma_wait_fast();
-            if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                // #region agent log
-                agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_end", dbg_frame);
-                // #endregion
+            if (render_jobs[3].enabled) {
+                int path1_vert_count = FLOOR_TRI_COUNT * 3;
+                packet_reset(packets[context]);
+                q = packets[context]->data;
+                q = render_floor_path1_count(q, mvp, path1_vert_count);
+                q = add_dma_tag(q, 0, 7, 0, 0, 0);
+                FlushCache(0);
+                {
+                    int vif1_qw = (int)(q - packets[context]->data);
+                    if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
+                        // #region agent log
+                        agent_path1_dma_log("H17", "floor.c:main_loop", "floor_vif1_submit", vif1_qw, vif1_qw);
+                        agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_begin", dbg_frame);
+                        // #endregion
+                    }
+                    dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
+                }
+                dma_wait_fast();
+                if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
+                    // #region agent log
+                    agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_end", dbg_frame);
+                    // #endregion
+                }
             }
         }
 
