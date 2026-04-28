@@ -88,8 +88,8 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define SHOW_CPU_PROBE 0
 #define SHOW_CPU_EXPORTED_FLOOR 0
 #define SHOW_SKY_PLACEHOLDER 1
-/* H10: A/B diagnostics to localize VU1 vs non-VU rendering path. */
-#define PATH1_AB_CPU_OVERLAY 0
+/* Keep the known-good GIF floor visible until the VIF1 floor path is independently proven. */
+#define PATH1_AB_CPU_OVERLAY 1
 
 /* Must match the scale applied in init_flat_floor() to floor mesh (Softimage export). */
 #define FLOOR_MESH_SCALE 14.0f
