@@ -88,8 +88,21 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define SHOW_CPU_PROBE 0
 #define SHOW_CPU_EXPORTED_FLOOR 0
 #define SHOW_SKY_PLACEHOLDER 1
-/* Keep the known-good GIF floor visible until the VIF1 floor path is independently proven. */
+/* Render profiles:
+ * 0 = stable hybrid baseline (CPU overlay + Path1)
+ * 1 = strict Path1 validation (no CPU overlay) */
+#ifndef PANTHEON_RENDER_PROFILE
+#define PANTHEON_RENDER_PROFILE 0
+#endif
+#if PANTHEON_RENDER_PROFILE == 1
+#define PATH1_AB_CPU_OVERLAY 0
+#else
 #define PATH1_AB_CPU_OVERLAY 1
+#endif
+
+#ifndef PANTHEON_MIN_TELEMETRY
+#define PANTHEON_MIN_TELEMETRY 0
+#endif
 
 /* Must match the scale applied in init_flat_floor() to floor mesh (Softimage export). */
 #define FLOOR_MESH_SCALE 14.0f
@@ -601,7 +614,7 @@ static PantheonVertex floor_tile_tris[FLOOR_TRI_COUNT * 3] __attribute__((aligne
 static float floor_bound_x0, floor_bound_x1, floor_bound_z0, floor_bound_z1;
 static float floor_tile_span_x = 0.0f, floor_tile_span_z = 0.0f;
 
-static void init_floor_walk_bounds(void) {
+static void __attribute__((unused)) init_floor_walk_bounds(void) {
     float minx = flat_floor[0].x;
     float maxx = minx;
     float minz = flat_floor[0].z;
@@ -911,7 +924,7 @@ void init_flat_floor() {
     }
 } //
 
-static void build_floor_tile(float tile_off_x, float tile_off_z) {
+static void __attribute__((unused)) build_floor_tile(float tile_off_x, float tile_off_z) {
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         floor_tile_tris[i] = flat_floor[i];
         floor_tile_tris[i].x += tile_off_x;
@@ -1242,6 +1255,7 @@ int main(int argc, char *argv[]) {
     // #endregion
 
     init_flat_floor();
+    init_floor_walk_bounds();
 #if USE_VU1_SKYDOME_MESH
     init_flat_skydome();
 #endif
@@ -1288,6 +1302,14 @@ int main(int argc, char *argv[]) {
             agent_dbg22_log("pre-fix", "H24", "floor.c:main_loop", "frame_input_camera_state", j);
             // #endregion
         }
+#if PANTHEON_MIN_TELEMETRY
+        if ((dbg_frame % 300) == 0) {
+            printf("pantheon frame=%d overlay=%d cam=(%.2f,%.2f,%.2f)\n",
+                   dbg_frame,
+                   PATH1_AB_CPU_OVERLAY,
+                   camera_position[0], camera_position[1], camera_position[2]);
+        }
+#endif
 
         try_finish_pad_init();
         read_pad_analog();
