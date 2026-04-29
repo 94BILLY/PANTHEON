@@ -143,11 +143,13 @@ def write_header(input_file, output_file, prefix, vertices, indices, uvs, color_
             out.write(f"    {{{tri[0]}, {tri[1]}, {tri[2]}, 0}}{end_char}\n")
         out.write("};\n\n")
 
+        out.write("#ifndef PANTHEON_UV_STRUCT\n#define PANTHEON_UV_STRUCT\n")
         out.write(
             "typedef struct {\n"
             "    float s, t, q, pad;\n"
-            "} __attribute__((aligned(16))) PantheonUV;\n\n"
+            "} __attribute__((aligned(16))) PantheonUV;\n"
         )
+        out.write("#endif\n\n")
         if uvs:
             out.write(
                 f"static const PantheonUV {prefix}_uv[{prefix.upper()}_UV_COUNT] "
