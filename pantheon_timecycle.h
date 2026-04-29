@@ -19,6 +19,11 @@ typedef struct PantheonColor {
     unsigned char b;
 } PantheonColor;
 
+/*
+ * One row of the timecycle table (GTA-style discrete palette). Colors are 8-bit RGB
+ * 0..255 per channel; pantheon_sample_timecycle applies temporal lerp between adjacent
+ * rows for the active weather using day01 in [0,1) mapped to eight slices per day.
+ */
 typedef struct PantheonTimecycleSlot {
     PantheonColor sky_top;
     PantheonColor sky_horizon;
@@ -105,6 +110,20 @@ static inline PantheonColor pantheon_lerp_color(PantheonColor a, PantheonColor b
     out.r = pantheon_lerp_u8(a.r, b.r, t);
     out.g = pantheon_lerp_u8(a.g, b.g, t);
     out.b = pantheon_lerp_u8(a.b, b.b, t);
+    return out;
+}
+
+static inline PantheonAtmosphere pantheon_lerp_atmosphere(PantheonAtmosphere a, PantheonAtmosphere b, float t) {
+    PantheonAtmosphere out;
+    out.sky_top = pantheon_lerp_color(a.sky_top, b.sky_top, t);
+    out.sky_horizon = pantheon_lerp_color(a.sky_horizon, b.sky_horizon, t);
+    out.cloud = pantheon_lerp_color(a.cloud, b.cloud, t);
+    out.post_rgb1 = pantheon_lerp_color(a.post_rgb1, b.post_rgb1, t);
+    out.post_rgb2 = pantheon_lerp_color(a.post_rgb2, b.post_rgb2, t);
+    out.cloud_alpha = pantheon_lerp_u8(a.cloud_alpha, b.cloud_alpha, t);
+    out.post_alpha = pantheon_lerp_u8(a.post_alpha, b.post_alpha, t);
+    out.far_clip = a.far_clip + (b.far_clip - a.far_clip) * t;
+    out.fog_start = a.fog_start + (b.fog_start - a.fog_start) * t;
     return out;
 }
 

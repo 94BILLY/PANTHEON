@@ -86,6 +86,12 @@ cd /home/marvin/Pantheon
 make -f Makefile.world
 ```
 
+Optional host texture upload slice (VRAM telemetry always on; upload only when `PANTHEON_TEXTURE_PHASE=1`):
+
+```bash
+make -f Makefile.world PANTHEON_TEXTURE_PHASE=1
+```
+
 Output:
 
 - `floor.elf`
@@ -96,7 +102,8 @@ Output:
 - `shader.vsm` - VU1 microprogram implementing transform/packing/kick behavior.
 - `Makefile.world` - PS2SDK-based build entry for the current world/test executable.
 - `hrc2ps2.py` - Asset conversion tool for `.hrc` mesh data.
-- `HANDOFF.md` - Deep technical handoff and current implementation notes.
+- `pantheon_vram.c` / `pantheon_vram.h` - GS VRAM word layout telemetry and overlap checks vs `graph_vram_allocate`.
+- `pantheon_texture_host.c` - Optional (`PANTHEON_TEXTURE_PHASE=1`) host→GS texture upload via libdraw (`draw_texture_transfer` / `draw_texture_flush`).
 
 ## Roadmap
 

@@ -8,7 +8,10 @@
 #   make -f Makefile.world
 # Optional: add -DPANTHEON_DEBUG_LOG=1 to EE_CC line for host: pad trace logs.
 EE_BIN = floor.elf
-EE_OBJS = floor.o shader.o
+EE_OBJS = floor.o shader.o pantheon_vram.o pantheon_texture_host.o
+
+# Optional: -DPANTHEON_TEXTURE_PHASE=1 enables host texture upload slice (libdraw transfer + TEXFLUSH).
+PANTHEON_TEXTURE_PHASE ?= 0
 
 # Libraries - IMPORTANT: -lpad is added here
 EE_LIBS = -ldraw -lgraph -lmath3d -lpacket -ldma -lkernel -lpad -lm
@@ -17,6 +20,8 @@ EE_CC = ee-gcc
 EE_AS = dvp-as
 EE_LD = ee-gcc
 EE_STRIP = mips64r5900el-ps2-elf-strip
+EE_CFLAGS = -D_EE -G0 -O2 -Wall -fno-lto
+EE_LDFLAGS = -fno-lto
 
 all: $(EE_BIN)
 	$(EE_STRIP) --strip-all $(EE_BIN)
@@ -25,9 +30,23 @@ all: $(EE_BIN)
 shader.o: shader.vsm
 	$(EE_AS) -o shader.o shader.vsm
 
+pantheon_vram.o: pantheon_vram.c pantheon_vram.h
+	$(EE_CC) $(EE_CFLAGS) \
+		-I$(PS2SDK)/ee/include \
+		-I$(PS2SDK)/common/include \
+		-c pantheon_vram.c -o pantheon_vram.o
+
+pantheon_texture_host.o: pantheon_texture_host.c pantheon_texture_host.h
+	$(EE_CC) $(EE_CFLAGS) \
+		-DPANTHEON_TEXTURE_PHASE=$(PANTHEON_TEXTURE_PHASE) \
+		-I$(PS2SDK)/ee/include \
+		-I$(PS2SDK)/common/include \
+		-c pantheon_texture_host.c -o pantheon_texture_host.o
+
 # Compile C source
 floor.o: floor.c
-	$(EE_CC) -D_EE -G0 -O2 -Wall \
+	$(EE_CC) $(EE_CFLAGS) \
+		-DPANTHEON_TEXTURE_PHASE=$(PANTHEON_TEXTURE_PHASE) \
 		-I$(PS2SDK)/ee/include \
 		-I$(PS2SDK)/common/include \
 		-c floor.c -o floor.o
@@ -35,6 +54,7 @@ floor.o: floor.c
 # Link
 $(EE_BIN): $(EE_OBJS)
 	$(EE_LD) \
+		$(EE_LDFLAGS) \
 		-T$(PS2SDK)/ee/startup/linkfile \
 		-O2 -o $(EE_BIN) \
 		$(EE_OBJS) \

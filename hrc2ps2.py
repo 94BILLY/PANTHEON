@@ -10,9 +10,12 @@ import sys
 POSITION_RE = re.compile(
     r"position\s+([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)"
 )
-UV_RE = re.compile(r"\buv\b\s+([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)")
+# Softimage 3.x ASCII: uvTexture / txt2D / uv (per polygon corner, not global findall).
+UV_LINE_RE = re.compile(r"(?:uv|uvTexture|txt2D)\s+([\d\.-]+)\s+([\d\.-]+)")
 NODES_RE = re.compile(r"nodes\s+(\d+)\s+{(.*?)}", re.DOTALL)
 VERTEX_INDEX_RE = re.compile(r"vertex\s+(\d+)")
+# Corner leader: [k] vertex <idx>
+VERTEX_CORNER_HEAD = re.compile(r"\[\d+\]\s+vertex\s+(\d+)")
 
 
 def transform_axis(x, y, z, source_up):
@@ -24,22 +27,79 @@ def transform_axis(x, y, z, source_up):
     return x, y, z
 
 
+def parse_corners_from_nodes_block(block):
+    """
+    Ordered (vertex_index, u, v) per polygon corner — preserves seams (multiple UVs per vertex idx).
+    """
+    parts = VERTEX_CORNER_HEAD.split(block)
+    corners = []
+    if len(parts) >= 3:
+        i = 1
+        while i < len(parts):
+            vi = int(parts[i])
+            tail = parts[i + 1] if (i + 1) < len(parts) else ""
+            muv = UV_LINE_RE.search(tail)
+            if muv:
+                u, v = float(muv.group(1)), float(muv.group(2))
+            else:
+                u, v = 0.0, 0.0
+            corners.append((vi, u, v))
+            i += 2
+    if len(corners) >= 3:
+        return corners
+    # Fallback: same-order vertex list + UV list (older exports without [k] vertex leaders).
+    v_indices = [int(x) for x in VERTEX_INDEX_RE.findall(block)]
+    uv_pairs = UV_LINE_RE.findall(block)
+    if len(v_indices) >= 3 and len(uv_pairs) == len(v_indices):
+        return [(v_indices[j], float(uv_pairs[j][0]), float(uv_pairs[j][1])) for j in range(len(v_indices))]
+    return []
+
+
+def fan_triangulate(corners):
+    """
+    Same fan as legacy index emission: anchor corners[0], triangles (0, i, i+1).
+    Returns (triangle_vertex_indices, uv_per_corner_flat) where uv flat has 3 * num_tris pairs.
+    """
+    indices = []
+    uvs = []
+    if len(corners) < 3:
+        return indices, uvs
+    for i in range(1, len(corners) - 1):
+        a, b, c = corners[0][0], corners[i][0], corners[i + 1][0]
+        indices.append((a, b, c))
+        for ck in (corners[0], corners[i], corners[i + 1]):
+            uvs.append([ck[1], ck[2]])
+    return indices, uvs
+
+
 def extract_mesh_data(content, source_up):
     raw_verts = POSITION_RE.findall(content)
     vertices = []
     for vx, vy, vz in raw_verts:
         x, y, z = transform_axis(float(vx), float(vy), float(vz), source_up)
         vertices.append([x, y, z])
-    raw_uvs = UV_RE.findall(content)
-    uvs = [[float(u), float(v)] for u, v in raw_uvs]
     indices = []
+    uvs = []
     for _, block in NODES_RE.findall(content):
-        v_indices = [int(i) for i in VERTEX_INDEX_RE.findall(block)]
-        if len(v_indices) < 3:
+        corners = parse_corners_from_nodes_block(block)
+        if len(corners) < 3:
             continue
-        for i in range(1, len(v_indices) - 1):
-            indices.append((v_indices[0], v_indices[i], v_indices[i + 1]))
+        tris, uv_chunk = fan_triangulate(corners)
+        indices.extend(tris)
+        uvs.extend(uv_chunk)
     return vertices, indices, uvs
+
+
+def audit_uv_bounds(uvs):
+    """Return list of warning strings for out-of-range UV (possible coordinate bleed)."""
+    warnings = []
+    for i, pair in enumerate(uvs):
+        u, v = pair[0], pair[1]
+        if abs(u) > 16.0 or abs(v) > 16.0:
+            warnings.append(f"uv[{i}] large magnitude ({u}, {v})")
+        elif u < -0.01 or v < -0.01 or u > 1.01 or v > 1.01:
+            warnings.append(f"uv[{i}] outside typical [0,1]: ({u}, {v})")
+    return warnings
 
 
 def is_probably_binary(raw_data):
@@ -376,6 +436,7 @@ def write_header(input_file, output_file, prefix, vertices, indices, uvs, color_
             "typedef struct {\n"
             "    float x, y, z, w;\n"
             "    float r, g, b, a;\n"
+            "    float s, t, tex_q, pad_uv;\n"
             "} __attribute__((aligned(16))) PantheonVertex;\n\n"
         )
         out.write(
@@ -387,6 +448,10 @@ def write_header(input_file, output_file, prefix, vertices, indices, uvs, color_
 
         out.write(f"#define {prefix.upper()}_VERT_COUNT {len(vertices)}\n")
         out.write(f"#define {prefix.upper()}_TRI_COUNT {len(indices)}\n\n")
+        out.write(
+            f"/* PantheonUV entries: one per triangle corner (unrolled), UV_COUNT == 3 * TRI_COUNT "
+            f"when UV data present. */\n"
+        )
         out.write(f"#define {prefix.upper()}_UV_COUNT {len(uvs)}\n\n")
 
         out.write(
@@ -398,7 +463,8 @@ def write_header(input_file, output_file, prefix, vertices, indices, uvs, color_
             r, g, b, a = compute_color(vertices, idx, color_mode, bounds, prefix)
             out.write(
                 f"    {{{v[0]:.4f}f, {v[1]:.4f}f, {v[2]:.4f}f, 1.0f, "
-                f"{r:.2f}f, {g:.2f}f, {b:.2f}f, {a:.2f}f}}{end_char}\n"
+                f"{r:.2f}f, {g:.2f}f, {b:.2f}f, {a:.2f}f, "
+                f"0.0f, 0.0f, 1.0f, 0.0f}}{end_char}\n"
             )
         out.write("};\n\n")
 
@@ -495,10 +561,21 @@ def main():
         vertices, indices, uvs, binary_guess, used_binary_scrape, scrape_offset, strategy_id = parse_hrc(
             input_file, args.source_up, args.binary_offset
         )
+        if uvs and indices and len(uvs) != 3 * len(indices):
+            print(
+                f"WARN: UV corner count {len(uvs)} != 3 * tri_count ({3 * len(indices)}); "
+                "texture mapping may be inconsistent.",
+                file=sys.stderr,
+            )
+        uv_warn = audit_uv_bounds(uvs)
+        for w in uv_warn[:32]:
+            print(f"hrc2ps2: {w}", file=sys.stderr)
+        if len(uv_warn) > 32:
+            print(f"hrc2ps2: ... and {len(uv_warn) - 32} more UV warnings", file=sys.stderr)
         if args.check_only:
             print(
                 "CHECK: "
-                f"verts={len(vertices)} tris={len(indices)} uvs={len(uvs)} "
+                f"verts={len(vertices)} tris={len(indices)} uv_corners={len(uvs)} "
                 f"source_up={args.source_up} binary_guess={int(binary_guess)} "
                 f"used_binary_scrape={int(used_binary_scrape)} scrape_offset={scrape_offset} "
                 f"strategy={strategy_id}"
@@ -511,7 +588,7 @@ def main():
 
     print(
         f"SUCCESS: Exported {len(vertices)} vertices and "
-        f"{len(indices)} triangles ({len(uvs)} uv pairs) to {output_file}. "
+        f"{len(indices)} triangles ({len(uvs)} UV corners, 3 per tri when textured) to {output_file}. "
         f"binary_guess={int(binary_guess)} used_binary_scrape={int(used_binary_scrape)} "
         f"scrape_offset={scrape_offset} strategy={strategy_id} color_mode={args.color_mode}"
     )
