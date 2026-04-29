@@ -43,6 +43,7 @@ madd.xyzw VF10, VF10, VF05 nop ; VF10 = screen-space float
 ; Bound projected X/Y to [0, maxScreen] before integer conversion.
 max.xy VF10, VF10, VF00 nop
 miniw.xy VF10, VF10, VF07 nop
+maxz.z VF10, VF10, VF00 nop ; keep depth non-negative after near-Z clamp
 
 ; Use explicit bounded pack scale path through VF11.
 mulx.xy VF11, VF10, VF07 nop
@@ -51,6 +52,7 @@ muly.z VF11, VF10, VF07 nop
 ftoi0.z VF10, VF11 nop
 
 ; PACKED stream with NREG=2: write RGBAQ then XYZ2 as separate qwords.
+; VF09 is courier payload from EE (pre-packed RGBA + q) and must not be converted here.
 nop sq VF09, 0(VI03)
 nop sq VF10, 1(VI03)
 nop iaddi VI03, VI03, 2
