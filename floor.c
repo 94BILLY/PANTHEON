@@ -116,6 +116,9 @@ static PantheonVertex flat_skydome[SKYDOME_TRI_COUNT * 3] __attribute__((aligned
 packet_t *packets[2];
 int context = 0;
 static int g_dbg_frame = 0;
+static int g_last_nearz_hits = 0;
+static int g_last_batch_verts = 0;
+static int g_last_vif1_qw = 0;
 static PantheonAtmosphere g_atmosphere;
 static PantheonWeather g_weather = PANTHEON_WEATHER_CLEAR;
 static float g_day01 = 0.58f;
@@ -783,10 +786,7 @@ static qword_t *render_sky_placeholder_dome(qword_t *q, MATRIX world_view, MATRI
 
 /* GS RGBAQ slot X: packed u8 RGBA as one float (same layout as init_flat_floor). */
 static inline float pantheon_rgbaq_from_u8(u8 r, u8 g, u8 b, u8 a) {
-    union {
-        u32 i;
-        float f;
-    } pun;
+    PantheonColorPun pun;
     pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
     return pun.f;
 }
@@ -907,7 +907,7 @@ void init_flat_floor() {
 
     // Keep geometry in a sane range while validating VU1 transforms.
     // Safe type-punning using a union to satisfy strict-aliasing rules
-    union { u32 i; float f; } color_pun;
+    PantheonColorPun color_pun;
     /* Grass-ish base (Bliss-style); tune packed bytes if hue shifts on hardware. */
     color_pun.i = (128 << 24) | (55 << 16) | (185 << 8) | 40;
 
@@ -965,9 +965,11 @@ static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *
     if (total_verts > max_verts) total_verts = max_verts;
     if (total_verts <= 0) return q;
     int verts_per_batch = PATH1_VU_MAX_BATCH_VERTS;
+    g_last_nearz_hits = 0;
 
     for (int i = 0; i < total_verts; i += verts_per_batch) {
         Path1MemoryImageBatch batch;
+        int batch_nearz_hits = 0;
         int verts_this_batch = total_verts - i;
         if (verts_this_batch > verts_per_batch) verts_this_batch = verts_per_batch;
         verts_this_batch -= (verts_this_batch % 3);
@@ -997,7 +999,7 @@ static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *
                 float cx = (mvp[0] * v->x) + (mvp[4] * v->y) + (mvp[8] * v->z) + (mvp[12] * v->w);
                 float cy = (mvp[1] * v->x) + (mvp[5] * v->y) + (mvp[9] * v->z) + (mvp[13] * v->w);
                 float cw = (mvp[3] * v->x) + (mvp[7] * v->y) + (mvp[11] * v->z) + (mvp[15] * v->w);
-                if (cw <= 0.0f) w_le_0_1_count++;
+                if (cw <= 0.1f) w_le_0_1_count++;
                 if (cw < w_min) w_min = cw;
                 if (cw > w_max) w_max = cw;
                 if (fabsf(cw) > 1.0e-6f) {
@@ -1044,10 +1046,13 @@ static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *
                 ndc_y_max
             );
             // #endregion
+            batch_nearz_hits = w_le_0_1_count;
         }
 
         path1_build_memory_image(&batch, &mesh_tris[i], verts_this_batch);
         q = path1_emit_memory_image_batch(q, &batch, mvp);
+        g_last_batch_verts = verts_this_batch;
+        g_last_nearz_hits += batch_nearz_hits;
     }
 
     return q;
@@ -1189,6 +1194,15 @@ static qword_t *render_cpu_exported_floor(qword_t *q, MATRIX world_view, MATRIX 
 // ==================== MAIN ====================
 
 int main(int argc, char *argv[]) {
+    typedef char pantheon_vertex_size_must_be_32[(sizeof(PantheonVertex) == 32) ? 1 : -1];
+    typedef char pantheon_tri_size_must_be_16[(sizeof(PantheonTriangle) == 16) ? 1 : -1];
+    typedef char pantheon_vertex_align_must_be_16[((__alignof__(PantheonVertex) == 16)) ? 1 : -1];
+    typedef char pantheon_tri_align_must_be_16[((__alignof__(PantheonTriangle) == 16)) ? 1 : -1];
+    (void)sizeof(pantheon_vertex_size_must_be_32);
+    (void)sizeof(pantheon_tri_size_must_be_16);
+    (void)sizeof(pantheon_vertex_align_must_be_16);
+    (void)sizeof(pantheon_tri_align_must_be_16);
+
     SifInitRpc(0);
     // #region agent log
     agent_path1_boot_log("H19", "floor.c:main", "entered_main_after_sifinit");
@@ -1363,6 +1377,7 @@ int main(int argc, char *argv[]) {
                 FlushCache(0);
                 {
                     int vif1_qw = (int)(q - packets[context]->data);
+                    g_last_vif1_qw = vif1_qw;
                     if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
                         agent_path1_dma_log("H1", "floor.c:skydome_vif1", "skydome", vif1_qw, vif1_qw);
                         agent_path1_phase_log("H7", "floor.c:main_loop", "skydome_send", dbg_frame);
@@ -1382,6 +1397,7 @@ int main(int argc, char *argv[]) {
                 FlushCache(0);
                 {
                     int vif1_qw = (int)(q - packets[context]->data);
+                    g_last_vif1_qw = vif1_qw;
                     if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
                         // #region agent log
                         agent_path1_dma_log("H17", "floor.c:main_loop", "floor_vif1_submit", vif1_qw, vif1_qw);
@@ -1391,6 +1407,12 @@ int main(int argc, char *argv[]) {
                     dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
                 }
                 dma_wait_fast();
+                #if PANTHEON_MIN_TELEMETRY
+                if ((dbg_frame % 120) == 0) {
+                    printf("pantheon path1 frame=%d verts=%d vif_qw=%d nearz=%d\n",
+                           dbg_frame, g_last_batch_verts, g_last_vif1_qw, g_last_nearz_hits);
+                }
+                #endif
                 if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
                     // #region agent log
                     agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_end", dbg_frame);
