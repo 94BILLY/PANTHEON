@@ -617,7 +617,7 @@ static PantheonVertex floor_tile_tris[FLOOR_TRI_COUNT * 3] __attribute__((aligne
 static float floor_bound_x0, floor_bound_x1, floor_bound_z0, floor_bound_z1;
 static float floor_tile_span_x = 0.0f, floor_tile_span_z = 0.0f;
 
-static void __attribute__((unused)) init_floor_walk_bounds(void) {
+static void init_floor_walk_bounds(void) {
     float minx = flat_floor[0].x;
     float maxx = minx;
     float minz = flat_floor[0].z;
@@ -640,11 +640,17 @@ static void __attribute__((unused)) init_floor_walk_bounds(void) {
 }
 
 static void clamp_player_to_floor(void) {
-    /* Path 1 world-floor tiling keeps coverage around the player; no hard edge clamp. */
-    (void)floor_bound_x0;
-    (void)floor_bound_x1;
-    (void)floor_bound_z0;
-    (void)floor_bound_z1;
+    /* Keep world position in a huge envelope to avoid far-distance precision drift. */
+    float limit_x = floor_tile_span_x * 100.0f;
+    float limit_z = floor_tile_span_z * 100.0f;
+    if (floor_tile_span_x > 0.0f) {
+        if (player_x > limit_x) player_x = limit_x;
+        if (player_x < -limit_x) player_x = -limit_x;
+    }
+    if (floor_tile_span_z > 0.0f) {
+        if (player_z > limit_z) player_z = limit_z;
+        if (player_z < -limit_z) player_z = -limit_z;
+    }
 }
 
 #if !USE_VU1_SKYDOME_MESH
@@ -924,7 +930,7 @@ void init_flat_floor() {
     }
 } //
 
-static void __attribute__((unused)) build_floor_tile(float tile_off_x, float tile_off_z) {
+static void build_floor_tile(float tile_off_x, float tile_off_z) {
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         floor_tile_tris[i] = flat_floor[i];
         floor_tile_tris[i].x += tile_off_x;
@@ -1390,34 +1396,57 @@ int main(int argc, char *argv[]) {
         #endif
             if (render_jobs[3].enabled) {
                 int path1_vert_count = FLOOR_TRI_COUNT * 3;
-                packet_reset(packets[context]);
-                q = packets[context]->data;
-                q = render_floor_path1_count(q, mvp, path1_vert_count);
-                q = add_dma_tag(q, 0, 7, 0, 0, 0);
-                FlushCache(0);
-                {
-                    int vif1_qw = (int)(q - packets[context]->data);
-                    g_last_vif1_qw = vif1_qw;
+                if (floor_tile_span_x > 0.0f && floor_tile_span_z > 0.0f) {
+                    int player_tile_x = (int)floorf(player_x / floor_tile_span_x);
+                    int player_tile_z = (int)floorf(player_z / floor_tile_span_z);
+                    for (int tz = -1; tz <= 1; tz++) {
+                        for (int tx = -1; tx <= 1; tx++) {
+                            packet_reset(packets[context]);
+                            q = packets[context]->data;
+                            float tile_off_x = (float)(player_tile_x + tx) * floor_tile_span_x;
+                            float tile_off_z = (float)(player_tile_z + tz) * floor_tile_span_z;
+                            build_floor_tile(tile_off_x, tile_off_z);
+                            q = render_path1_tris(q, mvp, floor_tile_tris, path1_vert_count, path1_vert_count);
+                            q = add_dma_tag(q, 0, 7, 0, 0, 0);
+                            FlushCache(0);
+                            {
+                                int vif1_qw = (int)(q - packets[context]->data);
+                                g_last_vif1_qw = vif1_qw;
+                                dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
+                            }
+                            dma_wait_fast();
+                        }
+                    }
+                } else {
+                    packet_reset(packets[context]);
+                    q = packets[context]->data;
+                    q = render_floor_path1_count(q, mvp, path1_vert_count);
+                    q = add_dma_tag(q, 0, 7, 0, 0, 0);
+                    FlushCache(0);
+                    {
+                        int vif1_qw = (int)(q - packets[context]->data);
+                        g_last_vif1_qw = vif1_qw;
+                        if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
+                            // #region agent log
+                            agent_path1_dma_log("H17", "floor.c:main_loop", "floor_vif1_submit", vif1_qw, vif1_qw);
+                            agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_begin", dbg_frame);
+                            // #endregion
+                        }
+                        dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
+                    }
+                    dma_wait_fast();
                     if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
                         // #region agent log
-                        agent_path1_dma_log("H17", "floor.c:main_loop", "floor_vif1_submit", vif1_qw, vif1_qw);
-                        agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_begin", dbg_frame);
+                        agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_end", dbg_frame);
                         // #endregion
                     }
-                    dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(packets[context]->data), vif1_qw, 0, 0);
                 }
-                dma_wait_fast();
                 #if PANTHEON_MIN_TELEMETRY
                 if ((dbg_frame % 120) == 0) {
                     printf("pantheon path1 frame=%d verts=%d vif_qw=%d nearz=%d\n",
                            dbg_frame, g_last_batch_verts, g_last_vif1_qw, g_last_nearz_hits);
                 }
                 #endif
-                if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                    // #region agent log
-                    agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_end", dbg_frame);
-                    // #endregion
-                }
             }
         }
 
