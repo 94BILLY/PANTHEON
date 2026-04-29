@@ -10,7 +10,7 @@ EE_BIN = pantheon.elf
 EE_OBJS = pantheon.o
 EE_LIBS = -ldraw -lgraph -lmath3d -lpacket -ldma -lkernel
 PYTHON ?= python3
-HRC_FILES ?= sphere.hrc skydome.hrc
+HRC_FILES ?= skydome.hrc
 GENERATED_HEADERS := $(HRC_FILES:.hrc=_data.h)
 
 all: assets $(EE_BIN)
@@ -18,8 +18,9 @@ all: assets $(EE_BIN)
 
 assets: $(GENERATED_HEADERS)
 
-%_data.h: %.hrc hrc2ps2.py
-	$(PYTHON) hrc2ps2.py "$<" -o "$@"
+# Kojima blue rim->zenith gradient (must match floor.c apply_sky_color + hrc2ps2 skydome branch)
+skydome_data.h: skydome.hrc hrc2ps2.py
+	$(PYTHON) hrc2ps2.py "$<" -o "$@" --color-mode gradient
 
 clean:
 	rm -f $(EE_BIN) $(EE_OBJS) $(GENERATED_HEADERS)

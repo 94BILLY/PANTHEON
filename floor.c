@@ -821,9 +821,11 @@ static void apply_sky_color(PantheonVertex *v) {
         t = 1.0f;
 
     float horizon = 1.0f - t;
-    PantheonColor sky_horizon = {180, 200, 200};
-    PantheonColor sky_top = {100, 180, 255};
+    /* Kojima-style zenith/horizon: hazy light blue at rim, saturated blue-green zenith. */
+    PantheonColor sky_horizon = {128, 200, 200};
+    PantheonColor sky_top = {128, 255, 180};
     PantheonColor c = pantheon_lerp_color(sky_horizon, sky_top, t);
+    unsigned char sky_a = pantheon_lerp_u8(180, 100, t);
     float puff = sinf(v->x * 0.0045f + v->z * 0.0055f + v->y * 0.0025f);
     if (puff > 0.48f && g_atmosphere.cloud_alpha > 0) {
         float w = (puff - 0.48f) * ((float)g_atmosphere.cloud_alpha / 128.0f);
@@ -834,7 +836,7 @@ static void apply_sky_color(PantheonVertex *v) {
         c.b = pantheon_lerp_u8(c.b, g_atmosphere.cloud.b, w * horizon);
     }
 
-    v->r = pantheon_rgbaq_from_u8(c.r, c.g, c.b, 255);
+    v->r = pantheon_rgbaq_from_u8(c.r, c.g, c.b, sky_a);
     v->g = 1.0f;
     v->b = 0.0f;
     v->a = 0.0f;
@@ -1112,8 +1114,8 @@ qword_t *render_floor_path1_count(qword_t *q, MATRIX mvp, int total_verts) {
 qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z) {
     q = draw_setup_environment(q, 0, &frame[ctx], z);
     q = draw_primitive_xyoffset(q, 0, 2048 - 320, 2048 - 224);
-    /* Clear to horizon blue so any gaps read as sky (Bliss-style backdrop). */
-    q = draw_clear(q, 0, 2048.0f - 320.0f, 2048.0f - 224.0f, 640.0f, 448.0f, 120, 170, 230);
+    /* Clear to horizon haze (matches skydome rim + GS BGCOLOR; gaps read as sky). */
+    q = draw_clear(q, 0, 2048.0f - 320.0f, 2048.0f - 224.0f, 640.0f, 448.0f, 128, 200, 200);
     return q;
 }
 
