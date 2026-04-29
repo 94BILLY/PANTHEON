@@ -17,6 +17,11 @@
 #define PATH1_VU_CONST_MVP_ADDR 4
 #define PATH1_VU_MAX_BATCH_VERTS 108
 
+typedef union PantheonColorPun {
+    float f;
+    u32 i;
+} PantheonColorPun;
+
 #if (PATH1_VU_OUTPUT_BASE <= PATH1_VU_INPUT_BASE)
 #error "Path 1 output buffer must live above the input payload."
 #endif
