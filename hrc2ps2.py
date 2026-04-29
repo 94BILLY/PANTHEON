@@ -336,16 +336,17 @@ def compute_color(vertices, idx, color_mode, bounds, asset_prefix):
     if color_mode == "flat":
         return 128.0, 128.0, 128.0, 128.0
     if asset_prefix == "skydome":
-        # Kojima-blue test gradient: horizon haze -> zenith blue.
+        # Kojima-blue gradient (offline mirror of floor.c apply_sky_color): rim -> zenith.
         min_y = min(v[1] for v in vertices)
         max_y = max(v[1] for v in vertices)
         span_y = max(max_y - min_y, 1.0e-6)
         y = vertices[idx][1]
         t = (y - min_y) / span_y
-        r = 180.0 + ((100.0 - 180.0) * t)
-        g = 200.0 + ((180.0 - 200.0) * t)
-        b = 200.0 + ((255.0 - 200.0) * t)
-        return r, g, b, 128.0
+        r = 128.0
+        g = 200.0 + (255.0 - 200.0) * t
+        b = 200.0 + (180.0 - 200.0) * t
+        a = 180.0 + (100.0 - 180.0) * t
+        return r, g, b, a
     min_x, max_x, min_z, max_z = bounds
     x, _, z = vertices[idx]
     span_x = max(max_x - min_x, 1.0e-6)
