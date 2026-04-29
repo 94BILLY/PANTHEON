@@ -41,15 +41,21 @@ def extract_mesh_data(content, source_up):
     return vertices, indices, uvs
 
 
+def is_probably_binary(raw_data):
+    """Heuristic: NUL bytes strongly indicate binary payload."""
+    return b"\x00" in raw_data
+
+
 def parse_hrc(path, source_up):
     with open(path, "rb") as hrc_file:
         raw_data = hrc_file.read()
+    binary_guess = is_probably_binary(raw_data)
 
     # First pass: normal text decode for ASCII-exported HRCH files.
     text_content = raw_data.decode("latin-1", errors="ignore")
     vertices, indices, uvs = extract_mesh_data(text_content, source_up)
     if vertices and indices:
-        return vertices, indices, uvs
+        return vertices, indices, uvs, binary_guess, False
 
     # Fallback for binary Softimage exports: scrape from known payload offset.
     # This mirrors the documented offset path used when hrcConvert -a is unavailable.
@@ -58,7 +64,7 @@ def parse_hrc(path, source_up):
         scraped_text = raw_data[binary_offset:].decode("latin-1", errors="ignore")
         vertices, indices, uvs = extract_mesh_data(scraped_text, source_up)
         if vertices and indices:
-            return vertices, indices, uvs
+            return vertices, indices, uvs, binary_guess, True
 
     if not vertices:
         raise ValueError(
@@ -67,11 +73,31 @@ def parse_hrc(path, source_up):
         )
     raise ValueError("No polygon nodes found to triangulate.")
 
-    return vertices, indices, uvs
+    return vertices, indices, uvs, binary_guess, False
 
 
-def write_header(input_file, output_file, prefix, vertices, indices, uvs):
+def compute_color(vertices, idx, color_mode, bounds):
+    if color_mode == "flat":
+        return 128.0, 128.0, 128.0, 128.0
+    min_x, max_x, min_z, max_z = bounds
+    x, _, z = vertices[idx]
+    span_x = max(max_x - min_x, 1.0e-6)
+    span_z = max(max_z - min_z, 1.0e-6)
+    tx = (x - min_x) / span_x
+    tz = (z - min_z) / span_z
+    r = 32.0 + (96.0 * tx)
+    g = 64.0 + (48.0 * (1.0 - tz))
+    b = 32.0 + (96.0 * tz)
+    return r, g, b, 128.0
+
+
+def write_header(input_file, output_file, prefix, vertices, indices, uvs, color_mode):
     guard = f"{prefix.upper()}_DATA_H"
+    min_x = min(v[0] for v in vertices)
+    max_x = max(v[0] for v in vertices)
+    min_z = min(v[2] for v in vertices)
+    max_z = max(v[2] for v in vertices)
+    bounds = (min_x, max_x, min_z, max_z)
     with open(output_file, "w", newline="\n") as out:
         out.write(f"/* PANTHEON ASSET PIPELINE | Auto-generated from {input_file} */\n")
         out.write(f"#ifndef {guard}\n#define {guard}\n\n")
@@ -101,9 +127,10 @@ def write_header(input_file, output_file, prefix, vertices, indices, uvs):
         )
         for idx, v in enumerate(vertices):
             end_char = "," if idx < len(vertices) - 1 else ""
+            r, g, b, a = compute_color(vertices, idx, color_mode, bounds)
             out.write(
                 f"    {{{v[0]:.4f}f, {v[1]:.4f}f, {v[2]:.4f}f, 1.0f, "
-                f"128.0f, 128.0f, 128.0f, 128.0f}}{end_char}\n"
+                f"{r:.2f}f, {g:.2f}f, {b:.2f}f, {a:.2f}f}}{end_char}\n"
             )
         out.write("};\n\n")
 
@@ -133,7 +160,7 @@ def write_header(input_file, output_file, prefix, vertices, indices, uvs):
         else:
             out.write(
                 f"static const PantheonUV {prefix}_uv[1] __attribute__((aligned(16))) = "
-                "{{{0.0f, 0.0f, 1.0f, 0.0f}}};\n\n"
+                "{{0.0f, 0.0f, 1.0f, 0.0f}};\n\n"
             )
 
         out.write(f"#endif /* {guard} */\n")
@@ -162,6 +189,17 @@ def parse_args():
         default="z",
         help="Source coordinate up-axis (default: z for Softimage legacy exports).",
     )
+    parser.add_argument(
+        "--color-mode",
+        choices=["flat", "gradient"],
+        default="flat",
+        help="Generated vertex colors: flat nominal white or spatial test gradient.",
+    )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Parse and report contract info without writing output header.",
+    )
     return parser.parse_args()
 
 
@@ -178,15 +216,25 @@ def main():
     print(f"Crunching {input_file} -> {output_file}")
 
     try:
-        vertices, indices, uvs = parse_hrc(input_file, args.source_up)
-        write_header(input_file, output_file, prefix, vertices, indices, uvs)
+        vertices, indices, uvs, binary_guess, used_binary_scrape = parse_hrc(input_file, args.source_up)
+        if args.check_only:
+            print(
+                "CHECK: "
+                f"verts={len(vertices)} tris={len(indices)} uvs={len(uvs)} "
+                f"source_up={args.source_up} binary_guess={int(binary_guess)} "
+                f"used_binary_scrape={int(used_binary_scrape)}"
+            )
+            return 0
+        write_header(input_file, output_file, prefix, vertices, indices, uvs, args.color_mode)
     except ValueError as parse_error:
         print(f"ERROR: {parse_error}")
         return 1
 
     print(
         f"SUCCESS: Exported {len(vertices)} vertices and "
-        f"{len(indices)} triangles ({len(uvs)} uv pairs) to {output_file}."
+        f"{len(indices)} triangles ({len(uvs)} uv pairs) to {output_file}. "
+        f"binary_guess={int(binary_guess)} used_binary_scrape={int(used_binary_scrape)} "
+        f"color_mode={args.color_mode}"
     )
     return 0
 
