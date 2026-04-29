@@ -197,9 +197,12 @@ static const PantheonTriangle skydome_indices[SKYDOME_TRI_COUNT] __attribute__((
     {57, 8, 1, 0}
 };
 
+#ifndef PANTHEON_UV_STRUCT
+#define PANTHEON_UV_STRUCT
 typedef struct {
     float s, t, q, pad;
 } __attribute__((aligned(16))) PantheonUV;
+#endif
 
 static const PantheonUV skydome_uv[1] __attribute__((aligned(16))) = {{0.0f, 0.0f, 1.0f, 0.0f}};
 
