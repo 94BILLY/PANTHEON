@@ -945,6 +945,9 @@ static void clamp_player_to_floor(void) {
     }
     return;
 #endif
+    /* SoftImage sandbox floor contract: player always stands on floor plane (y=0). */
+    player_y = 0.0f;
+
     /* Keep world position in a huge envelope to avoid far-distance precision drift. */
     float limit_x = floor_tile_span_x * 100.0f;
     float limit_z = floor_tile_span_z * 100.0f;
@@ -1885,10 +1888,10 @@ int main(int argc, char *argv[]) {
         update_camera_orbit();
 #else
         camera_position[0] = 0.0f;
-        camera_position[1] = 260.0f;
-        camera_position[2] = 40.0f;
+        camera_position[1] = 220.0f;
+        camera_position[2] = 0.0f;
         camera_position[3] = 1.0f;
-        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 1.20f : -1.20f;
+        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 1.45f : -1.45f;
         camera_rotation[1] = 0.0f;
         camera_rotation[2] = 0.0f;
         camera_rotation[3] = 1.0f;
