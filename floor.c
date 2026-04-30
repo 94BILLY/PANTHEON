@@ -241,6 +241,18 @@ typedef struct PantheonRenderJob {
     int enabled;
 } PantheonRenderJob;
 
+typedef enum PantheonPath1SceneJobType {
+    PANTHEON_PATH1_SCENE_JOB_SKY = 0,
+    PANTHEON_PATH1_SCENE_JOB_FLOOR
+} PantheonPath1SceneJobType;
+
+typedef struct PantheonPath1SceneJob {
+    PantheonPath1SceneJobType type;
+    const PantheonVertex *mesh_tris;
+    int vert_count;
+    const char *submit_tag;
+} PantheonPath1SceneJob;
+
 // Forward declarations
 qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z);
 qword_t *render_floor_path1_count(qword_t *q, MATRIX mvp, int total_verts);
@@ -252,6 +264,7 @@ static qword_t *render_sky_placeholder_dome(qword_t *q, MATRIX world_view, MATRI
 #endif
 static void clamp_player_to_floor(void);
 static void apply_sky_color(PantheonVertex *v);
+static void path1_submit_scene_jobs(const PantheonPath1SceneJob *jobs, int job_count, MATRIX mvp, int frame_id);
 
 static FILE *pantheon_log_stream_open(const char *primary, const char *fallback1, const char *fallback2, const char *fallback3) {
     static FILE *dbg22_stream = NULL;
