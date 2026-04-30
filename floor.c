@@ -67,6 +67,12 @@ static float player_yaw = 0.0f;
 #ifndef PANTHEON_CAMERA_HEIGHT_OFFSET
 #define PANTHEON_CAMERA_HEIGHT_OFFSET 20.0f
 #endif
+#ifndef PANTHEON_FIRST_PERSON_VIEW
+#define PANTHEON_FIRST_PERSON_VIEW 0
+#endif
+#ifndef PANTHEON_FIRST_PERSON_EYE_HEIGHT
+#define PANTHEON_FIRST_PERSON_EYE_HEIGHT 6.0f
+#endif
 static const float CAM_DIST = PANTHEON_CAM_DIST;
 
 static VECTOR camera_position = {0.0f, 106.0f, 158.0f, 1.0f};
@@ -79,9 +85,9 @@ static const float MOVE_SPEED = 2.15f;
 static const float PI_F = 3.14159265f;
 
 static float cam_yaw = 0.0f;
-static float cam_pitch = 0.5f;
+static float cam_pitch = 0.10f;
 static float target_yaw = 0.5f;
-static float target_pitch = 0.5f;
+static float target_pitch = 0.10f;
 static int pad_ready = 0;
 /* Set if padPortOpen() succeeded. Pad may not be PAD_STATE_STABLE until after a few
  * full frames; a short boot-time busy-wait is not enough, so we finish init in the main loop. */
@@ -123,7 +129,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_STATIC_CAMERA
-#define PANTHEON_TRIAGE_STATIC_CAMERA 1
+#define PANTHEON_TRIAGE_STATIC_CAMERA 0
 #endif
 
 #ifndef PANTHEON_TRIAGE_ENABLE_SKYDOME
@@ -803,6 +809,17 @@ static void read_pad_analog(void) {
 }
 
 static void update_camera_orbit(void) {
+#if PANTHEON_FIRST_PERSON_VIEW
+    camera_position[0] = player_x;
+    camera_position[1] = player_y + PANTHEON_FIRST_PERSON_EYE_HEIGHT;
+    camera_position[2] = player_z;
+    camera_position[3] = 1.0f;
+
+    camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? cam_pitch : -cam_pitch;
+    camera_rotation[1] = -cam_yaw;
+    camera_rotation[2] = 0.0f;
+    camera_rotation[3] = 1.0f;
+#else
     float cos_p = cosf(cam_pitch);
     float sin_p = sinf(cam_pitch);
 
@@ -815,6 +832,7 @@ static void update_camera_orbit(void) {
     camera_rotation[1] = -cam_yaw;
     camera_rotation[2] = 0.0f;
     camera_rotation[3] = 1.0f;
+#endif
     if (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0) {
         float dx = camera_position[0] - player_x;
         float dz = camera_position[2] - player_z;
