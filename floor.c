@@ -123,7 +123,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_STATIC_CAMERA
-#define PANTHEON_TRIAGE_STATIC_CAMERA 1
+#define PANTHEON_TRIAGE_STATIC_CAMERA 0
 #endif
 
 #ifndef PANTHEON_TRIAGE_ENABLE_SKYDOME
@@ -131,7 +131,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 0
+#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 1
 #endif
 #ifndef PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 #define PANTHEON_TRIAGE_FORCE_FLAT_QUAD 1
@@ -146,7 +146,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 #ifndef PANTHEON_TRIAGE_PITCH_SIGN_FLIP
 /* If floor looks like a distant wall, flip pitch sign for create_world_view convention. */
-#define PANTHEON_TRIAGE_PITCH_SIGN_FLIP 0
+#define PANTHEON_TRIAGE_PITCH_SIGN_FLIP 1
 #endif
 
 #ifndef PANTHEON_CAMERA_ENVELOPE_HARDEN
@@ -172,7 +172,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define PANTHEON_PATH1_GIF_USE_ST 1
 #endif
 #ifndef PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-#define PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE 0
+#define PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE 1
 #endif
 
 #ifndef PANTHEON_TILE_RADIUS
