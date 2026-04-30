@@ -123,7 +123,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_STATIC_CAMERA
-#define PANTHEON_TRIAGE_STATIC_CAMERA 0
+#define PANTHEON_TRIAGE_STATIC_CAMERA 1
 #endif
 
 #ifndef PANTHEON_TRIAGE_ENABLE_SKYDOME
@@ -1312,13 +1312,11 @@ void init_flat_floor() {
 
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         float src_x = flat_floor[i].x;
-        float src_y = flat_floor[i].y;
         float src_z = flat_floor[i].z;
+        /* Strict planar mapping: authored grid X/Z -> world X/Z, with Y locked to floor. */
         flat_floor[i].x = src_x * FLOOR_MESH_SCALE;
-        /* Force authored SoftImage 6x6 grid onto world floor plane. */
         flat_floor[i].y = 0.0f;
-        /* Preserve authored secondary axis as depth so spacing/shape remains recognizable. */
-        flat_floor[i].z = src_y * FLOOR_MESH_SCALE;
+        flat_floor[i].z = src_z * FLOOR_MESH_SCALE;
 
         // Build the exact 128-bit payload the GS RGBAQ register expects!
         flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
@@ -1887,11 +1885,12 @@ int main(int argc, char *argv[]) {
         read_pad_analog();
         update_camera_orbit();
 #else
-        camera_position[0] = 0.0f;
-        camera_position[1] = 220.0f;
-        camera_position[2] = 0.0f;
+        /* Center sandbox camera over the authored 6x6 floor grid. */
+        camera_position[0] = g_floor_center_x;
+        camera_position[1] = 260.0f;
+        camera_position[2] = g_floor_center_z;
         camera_position[3] = 1.0f;
-        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 1.45f : -1.45f;
+        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 1.15f : -1.15f;
         camera_rotation[1] = 0.0f;
         camera_rotation[2] = 0.0f;
         camera_rotation[3] = 1.0f;
