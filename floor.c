@@ -1308,19 +1308,14 @@ void init_flat_floor() {
     color_pun.i = (128 << 24) | (55 << 16) | (185 << 8) | 40;
 
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
-        flat_floor[i].x *= FLOOR_MESH_SCALE;
-#if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-        {
-            float src_y = flat_floor[i].y;
-            float src_z = flat_floor[i].z;
-            /* Source floor arrives in XY plane; map to engine XZ world plane. */
-            flat_floor[i].y = src_z * FLOOR_MESH_SCALE;
-            flat_floor[i].z = src_y * FLOOR_MESH_SCALE;
-        }
-#else
-        flat_floor[i].z *= FLOOR_MESH_SCALE;
-        flat_floor[i].y *= FLOOR_MESH_SCALE;
-#endif
+        float src_x = flat_floor[i].x;
+        float src_y = flat_floor[i].y;
+        float src_z = flat_floor[i].z;
+        flat_floor[i].x = src_x * FLOOR_MESH_SCALE;
+        /* Force authored SoftImage 6x6 grid onto world floor plane. */
+        flat_floor[i].y = 0.0f;
+        /* Preserve authored secondary axis as depth so spacing/shape remains recognizable. */
+        flat_floor[i].z = src_y * FLOOR_MESH_SCALE;
 
         // Build the exact 128-bit payload the GS RGBAQ register expects!
         flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
@@ -1817,6 +1812,7 @@ int main(int argc, char *argv[]) {
            PANTHEON_VIEW_NEAR,
            PANTHEON_VU_NEARZ,
            PANTHEON_CAMERA_ENVELOPE_HARDEN);
+    printf("pantheon skydome mesh path=%d tris=%d\n", USE_VU1_SKYDOME_MESH, SKYDOME_TRI_COUNT);
     {
         char j[320];
         snprintf(
