@@ -123,7 +123,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_STATIC_CAMERA
-#define PANTHEON_TRIAGE_STATIC_CAMERA 0
+#define PANTHEON_TRIAGE_STATIC_CAMERA 1
 #endif
 
 #ifndef PANTHEON_TRIAGE_ENABLE_SKYDOME
@@ -131,7 +131,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 1
+#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 0
 #endif
 #ifndef PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 #define PANTHEON_TRIAGE_FORCE_FLAT_QUAD 1
@@ -172,7 +172,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define PANTHEON_PATH1_GIF_USE_ST 1
 #endif
 #ifndef PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-#define PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE 1
+#define PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE 0
 #endif
 
 #ifndef PANTHEON_TILE_RADIUS
@@ -213,6 +213,15 @@ static float g_day01 = 0.58f;
 /* Cross-fade between weather segment presets (avoids instant hue jumps every ~18 min). */
 static int g_weather_blend_remaining = 0;
 #define PANTHEON_WEATHER_BLEND_FRAMES 90
+#ifndef PANTHEON_WEATHER_AUTO_CYCLE
+#define PANTHEON_WEATHER_AUTO_CYCLE 0
+#endif
+#ifndef PANTHEON_WEATHER_SLOT_SECONDS
+#define PANTHEON_WEATHER_SLOT_SECONDS 300
+#endif
+#ifndef PANTHEON_DAY_CYCLE_SECONDS
+#define PANTHEON_DAY_CYCLE_SECONDS 600.0f
+#endif
 
 typedef enum PantheonRenderJobType {
     PANTHEON_RENDER_JOB_CLEAR = 0,
@@ -833,15 +842,18 @@ static void update_camera_orbit(void) {
 }
 
 static void update_atmosphere(int frame_id) {
-    /* Advance simulated day (one full cycle per 180s at 60 Hz). */
-    g_day01 += 1.0f / (60.0f * 180.0f);
+    /* Advance simulated day at a slower cadence to avoid visible clear-color stepping. */
+    g_day01 += 1.0f / (60.0f * PANTHEON_DAY_CYCLE_SECONDS);
     if (g_day01 >= 1.0f) {
         g_day01 -= 1.0f;
     }
 
-    /* Showcase PS2-style weather moods while the renderer is still a testbed. */
-    int cycle = (frame_id / (60 * 18)) & 3;
-    PantheonWeather w_target = (PantheonWeather)cycle;
+    PantheonWeather w_target = g_weather;
+#if PANTHEON_WEATHER_AUTO_CYCLE
+    /* Optional showcase mode: long-slot weather transitions. */
+    int cycle = (frame_id / (60 * PANTHEON_WEATHER_SLOT_SECONDS)) & 3;
+    w_target = (PantheonWeather)cycle;
+#endif
 
     if (w_target != g_weather && g_weather_blend_remaining == 0) {
         g_weather_blend_remaining = PANTHEON_WEATHER_BLEND_FRAMES;
@@ -1877,10 +1889,10 @@ int main(int argc, char *argv[]) {
         update_camera_orbit();
 #else
         camera_position[0] = 0.0f;
-        camera_position[1] = 120.0f;
-        camera_position[2] = 220.0f;
+        camera_position[1] = 260.0f;
+        camera_position[2] = 40.0f;
         camera_position[3] = 1.0f;
-        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 0.55f : -0.55f;
+        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 1.20f : -1.20f;
         camera_rotation[1] = 0.0f;
         camera_rotation[2] = 0.0f;
         camera_rotation[3] = 1.0f;
