@@ -1198,16 +1198,6 @@ static u8 pantheon_boot_reveal_luma(int frame_id) {
 #endif
 }
 
-static float pantheon_smoothstep01(float t) {
-    if (t < 0.0f) {
-        t = 0.0f;
-    }
-    if (t > 1.0f) {
-        t = 1.0f;
-    }
-    return t * t * (3.0f - (2.0f * t));
-}
-
 static void pantheon_boot_glyph_rows(char c, u8 rows[7]) {
     rows[0] = 0x00; rows[1] = 0x00; rows[2] = 0x00; rows[3] = 0x00;
     rows[4] = 0x00; rows[5] = 0x00; rows[6] = 0x00;
@@ -1235,8 +1225,6 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
     const int glyph_h = 7;
     const int z = 1;
     rect_t rect;
-    int min_u_x = 9999;
-    int max_u_x = -9999;
     int min_u_y = 9999;
     int max_u_y = -9999;
     int ink_found = 0;
@@ -1264,12 +1252,8 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
                 if ((bits & (1u << (4 - rx))) == 0) {
                     continue;
                 }
-                int ux0 = cursor_units + rx;
-                int ux1 = ux0 + 1;
                 int uy0 = ry;
                 int uy1 = uy0 + 1;
-                if (ux0 < min_u_x) min_u_x = ux0;
-                if (ux1 > max_u_x) max_u_x = ux1;
                 if (uy0 < min_u_y) min_u_y = uy0;
                 if (uy1 > max_u_y) max_u_y = uy1;
                 ink_found = 1;
@@ -1282,26 +1266,27 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
         return q;
     }
 
-    int width_units = max_u_x - min_u_x;
+    /* Full line width in cursor units (must match render loop: spaces + per-glyph advance).
+     * Centering on ink bbox alone shifts the string when spaces are present. */
+    int layout_end_units = 0;
+    for (int gi = 0; title[gi] != '\0'; gi++) {
+        if (title[gi] == ' ') {
+            layout_end_units += space_advance;
+        } else {
+            layout_end_units += advance;
+        }
+    }
+
     int height_units = max_u_y - min_u_y;
-    while (scale > 2 && ((width_units * scale) > 592 || (height_units * scale) > 128)) {
+    int width_units_layout = layout_end_units;
+    while (scale > 2 && ((width_units_layout * scale) > 620 || (height_units * scale) > 128)) {
         scale--;
     }
 
-    int width_px = width_units * scale;
     int height_px = height_units * scale;
-    int start_x = (640 - width_px) / 2;
+    /* Center full title line in 640×448 framebuffer (draw xyoffset is applied separately). */
+    int start_x = (640 - layout_end_units * scale) / 2;
     int start_y = (448 - height_px) / 2;
-    {
-        float intro_t = 0.0f;
-        int motion_frames = PANTHEON_BOOT_REVEAL_HALF_FRAMES + 36;
-        if (frame_id > 0) {
-            intro_t = (float)frame_id / (float)motion_frames;
-        }
-        intro_t = pantheon_smoothstep01(intro_t);
-        /* Gentle vertical settle for a more cinematic boot card feel. */
-        start_y += (int)((1.0f - intro_t) * 20.0f);
-    }
 
     /* Contrast with monochrome boot ramp: dark bg -> light glyphs, peak white -> dark glyphs. */
     {
@@ -1329,7 +1314,7 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
                 if ((bits & (1u << (4 - rx))) == 0) {
                     continue;
                 }
-                int px = start_x + ((cursor_units + rx - min_u_x) * scale);
+                int px = start_x + ((cursor_units + rx) * scale);
                 int py = start_y + ((ry - min_u_y) * scale);
                 rect.v0.x = (float)px;
                 rect.v0.y = (float)py;
