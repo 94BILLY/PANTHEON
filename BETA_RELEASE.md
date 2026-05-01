@@ -22,7 +22,16 @@ git rev-parse HEAD
 |------|----------|
 | **Render** | **Hybrid** (`PANTHEON_RENDER_PROFILE=0`): CPU GIF path draws debug/export floor + Path1 draws skydome/floor. Most stable for visibility. |
 | **Floor** | World-anchored tiles (`PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER=0`), SoftImage XY→XZ swizzle on. |
-| **Intro** | Boot luma ramp + title `WWW.94BILLY.COM`; glyphs use libdraw-correct GS coords (START/END offset vs framebuffer origin). |
+| **Intro** | Boot luma ramp + title `WWW.94BILLY.COM`; glyphs use libdraw-correct GS coords (START/END offset vs framebuffer origin). Optional EE “showcase” motion: sine wave on rows + staggered letter reveal (`PANTHEON_BOOT_TEXT_ANIMATE`, default **on**). |
+
+## Boot font / “Times New Roman”
+
+- **Current:** Tiny **bitmap** font in C (`pantheon_boot_glyph_rows`) — zero extra VRAM, no texture uploads.
+- **Serif / Times look:** The EE has **no built-in TTF**. Practical options:
+  1. **Pre-render** your string (or full alphabet) to a **paletted 4/8 bpp texture** offline, **upload once** at boot, draw with `draw_rect_textured` — closest to “real” Times on PS2.
+  2. Keep bitmaps but **add more glyph definitions** (still no engine change outside boot).
+- **Disable motion** (static title):  
+  `EE_CFLAGS='-DPANTHEON_BOOT_TEXT_ANIMATE=0'`
 | **Sky** | `g_day01` advances over `PANTHEON_DAY_CYCLE_SECONDS` (default 24 min); `PANTHEON_ATMO_SMOOTH_ALPHA` lerps atmosphere to avoid stair-stepping. |
 | **Start palette** | **`PANTHEON_WEATHER_OVERCAST`** at **`g_day01=0.2`** → baby-blue biased overcast daylight. |
 | **Dusk / purple** | **CLEAR** weather, slots 5→6 (`pantheon_timecycle.h`): strengthened magenta/purple dusk toward night. |
