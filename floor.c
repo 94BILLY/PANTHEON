@@ -283,8 +283,9 @@ static float g_floor_center_z = 0.0f;
 static PantheonAtmosphere g_atmosphere;
 static PantheonAtmosphere g_atmosphere_target;
 static int g_atmosphere_inited = 0;
-static PantheonWeather g_weather = PANTHEON_WEATHER_CLEAR;
-static float g_day01 = 0.58f;
+/* Default: soft baby-blue overcast daylight (see pantheon_timecycle.h OVERCAST row). */
+static PantheonWeather g_weather = PANTHEON_WEATHER_OVERCAST;
+static float g_day01 = 0.20f;
 /* Cross-fade between weather segment presets (avoids instant hue jumps every ~18 min). */
 static int g_weather_blend_remaining = 0;
 #define PANTHEON_WEATHER_BLEND_FRAMES 90

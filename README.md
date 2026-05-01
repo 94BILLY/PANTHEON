@@ -40,3 +40,5 @@ While designed as a study in modern asymmetric computational topologies, Pantheo
 
 **Official Repository:** https://github.com/94BILLY/Pantheon  
 **Author:** [94BILLY](https://github.com/94BILLY)
+
+**Beta baseline (pinned defaults + strict Path1 note):** see [`BETA_RELEASE.md`](BETA_RELEASE.md).
