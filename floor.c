@@ -1030,15 +1030,16 @@ void init_flat_floor() {
                 b = 92;
                 a = 255;
             } else if (checker) {
-                r = 28;
-                g = 92;
-                b = 38;
-                a = 230;
+                /* Brighter than v0.9.3-beta cells: dark greens read as “no floor” in orbit + video encode. */
+                r = 52;
+                g = 148;
+                b = 62;
+                a = 240;
             } else {
-                r = 22;
-                g = 72;
-                b = 30;
-                a = 220;
+                r = 44;
+                g = 125;
+                b = 54;
+                a = 235;
             }
             color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
         }
