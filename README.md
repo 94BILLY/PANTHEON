@@ -1,4 +1,4 @@
-# Pantheon
+# PANTHEON 🏛️
 
 **PANTHEON** is a deterministic data-orchestration and spatial rendering matrix engineered for highly asymmetric, heterogeneous silicon environments.
 
