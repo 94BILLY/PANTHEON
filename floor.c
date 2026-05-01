@@ -345,6 +345,14 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #define PANTHEON_BOOT_TITLE_SCALE 3
 #endif
 
+/* libdraw draw_rect_filled() adds START_OFFSET to v0 and END_OFFSET to v1 (see ps2sdk draw2d.c).
+ * draw_clear(..., 2048-320, 2048-224, 640, 448) uses framebuffer origin in GS space at (1728,1824).
+ * So pass vertex coords: v0 = fb_xy + origin - START_OFFSET, v1 = fb_xy+size + origin - END_OFFSET. */
+#define PANTHEON_DRAW_GS_FB_X0 (2048.0f - 320.0f)
+#define PANTHEON_DRAW_GS_FB_Y0 (2048.0f - 224.0f)
+#define PANTHEON_LIBDRAW_START_OFFSET 2047.5625f
+#define PANTHEON_LIBDRAW_END_OFFSET 2048.5625f
+
 static float wrap_angle_pi(float v) {
     while (v > PI_F) v -= (2.0f * PI_F);
     while (v < -PI_F) v += (2.0f * PI_F);
@@ -1202,26 +1210,41 @@ static void pantheon_boot_glyph_rows(char c, u8 rows[7]) {
     rows[0] = 0x00; rows[1] = 0x00; rows[2] = 0x00; rows[3] = 0x00;
     rows[4] = 0x00; rows[5] = 0x00; rows[6] = 0x00;
     switch (c) {
+        case '.': rows[5]=0x04; break;
         case '4': rows[0]=0x11; rows[1]=0x11; rows[2]=0x1F; rows[3]=0x01; rows[4]=0x01; break;
         case '9': rows[0]=0x0E; rows[1]=0x11; rows[2]=0x0F; rows[3]=0x01; rows[4]=0x0E; break;
         case 'B': rows[0]=0x1E; rows[1]=0x11; rows[2]=0x1E; rows[3]=0x11; rows[4]=0x11; rows[5]=0x1E; break;
+        case 'C': rows[0]=0x0E; rows[1]=0x11; rows[2]=0x10; rows[3]=0x10; rows[4]=0x11; rows[5]=0x0E; break;
         case 'D': rows[0]=0x1E; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x1E; break;
         case 'I': rows[0]=0x1F; rows[1]=0x04; rows[2]=0x04; rows[3]=0x04; rows[4]=0x04; rows[5]=0x1F; break;
         case 'L': rows[0]=0x10; rows[1]=0x10; rows[2]=0x10; rows[3]=0x10; rows[4]=0x10; rows[5]=0x1F; break;
+        case 'M': rows[0]=0x11; rows[1]=0x1B; rows[2]=0x15; rows[3]=0x15; rows[4]=0x11; rows[5]=0x11; break;
         case 'O': rows[0]=0x0E; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x0E; break;
         case 'S': rows[0]=0x0F; rows[1]=0x10; rows[2]=0x0E; rows[3]=0x01; rows[4]=0x01; rows[5]=0x1E; break;
         case 'T': rows[0]=0x1F; rows[1]=0x04; rows[2]=0x04; rows[3]=0x04; rows[4]=0x04; rows[5]=0x04; break;
         case 'U': rows[0]=0x11; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x0E; break;
+        case 'W': rows[0]=0x11; rows[1]=0x11; rows[2]=0x11; rows[3]=0x15; rows[4]=0x15; rows[5]=0x1B; break;
         case 'Y': rows[0]=0x11; rows[1]=0x11; rows[2]=0x0A; rows[3]=0x04; rows[4]=0x04; rows[5]=0x04; break;
         default: break;
     }
 }
 
+static int pantheon_boot_glyph_advance(char c, int advance, int space_advance, int dot_advance) {
+    if (c == ' ') {
+        return space_advance;
+    }
+    if (c == '.') {
+        return dot_advance;
+    }
+    return advance;
+}
+
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
-    static const char *title = "94BILLY STUDIOS";
+    static const char *title = "WWW.94BILLY.COM";
     int scale = PANTHEON_BOOT_TITLE_SCALE;
     const int advance = 6;
     const int space_advance = 3;
+    const int dot_advance = 4;
     const int glyph_h = 7;
     const int z = 1;
     rect_t rect;
@@ -1237,11 +1260,30 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
     }
     int cursor_units = 0;
 
-    /* Measure actual ink bounds so center reflects rendered pixels, not character advance. */
+    /* Measure ink vertical bounds; horizontal width uses layout_end_units (same advances as draw). */
     for (int gi = 0; title[gi] != '\0'; gi++) {
         char c = title[gi];
         if (c == ' ') {
             cursor_units += space_advance;
+            continue;
+        }
+        if (c == '.') {
+            u8 rows_dot[7];
+            pantheon_boot_glyph_rows(c, rows_dot);
+            for (int ry = 0; ry < glyph_h; ry++) {
+                u8 bits = rows_dot[ry];
+                for (int rx = 0; rx < 5; rx++) {
+                    if ((bits & (1u << (4 - rx))) == 0) {
+                        continue;
+                    }
+                    int uy0 = ry;
+                    int uy1 = uy0 + 1;
+                    if (uy0 < min_u_y) min_u_y = uy0;
+                    if (uy1 > max_u_y) max_u_y = uy1;
+                    ink_found = 1;
+                }
+            }
+            cursor_units += dot_advance;
             continue;
         }
         u8 rows[7];
@@ -1270,11 +1312,7 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
      * Centering on ink bbox alone shifts the string when spaces are present. */
     int layout_end_units = 0;
     for (int gi = 0; title[gi] != '\0'; gi++) {
-        if (title[gi] == ' ') {
-            layout_end_units += space_advance;
-        } else {
-            layout_end_units += advance;
-        }
+        layout_end_units += pantheon_boot_glyph_advance(title[gi], advance, space_advance, dot_advance);
     }
 
     int height_units = max_u_y - min_u_y;
@@ -1316,16 +1354,17 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
                 }
                 int px = start_x + ((cursor_units + rx) * scale);
                 int py = start_y + ((ry - min_u_y) * scale);
-                rect.v0.x = (float)px;
-                rect.v0.y = (float)py;
+                /* Match GS framebuffer origin used by draw_clear / draw_primitive_xyoffset (ps2sdk draw2d START/END offsets). */
+                rect.v0.x = PANTHEON_DRAW_GS_FB_X0 + (float)px - PANTHEON_LIBDRAW_START_OFFSET;
+                rect.v0.y = PANTHEON_DRAW_GS_FB_Y0 + (float)py - PANTHEON_LIBDRAW_START_OFFSET;
                 rect.v0.z = z;
-                rect.v1.x = (float)(px + scale);
-                rect.v1.y = (float)(py + scale);
+                rect.v1.x = PANTHEON_DRAW_GS_FB_X0 + (float)(px + scale) - PANTHEON_LIBDRAW_END_OFFSET;
+                rect.v1.y = PANTHEON_DRAW_GS_FB_Y0 + (float)(py + scale) - PANTHEON_LIBDRAW_END_OFFSET;
                 rect.v1.z = z;
                 q = draw_rect_filled(q, 0, &rect);
             }
         }
-        cursor_units += advance;
+        cursor_units += pantheon_boot_glyph_advance(c, advance, space_advance, dot_advance);
     }
 
     return q;
