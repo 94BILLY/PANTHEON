@@ -21,7 +21,7 @@ git rev-parse HEAD
 | Area | Behavior |
 |------|----------|
 | **Render** | **Hybrid** (`PANTHEON_RENDER_PROFILE=0`): Path1 draws skydome + floor. **CPU GIF exported floor is not drawn when the Path1 floor job runs** — avoids two coplanar floors Z-fighting (flicker). CPU path remains for probe + fallback if Path1 floor is disabled. |
-| **Floor** | World-anchored tiles (`PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER=0`), SoftImage XY→XZ swizzle on. Path1 floor uses **solid slab green** (same RGB as the old major grid lines). |
+| **Floor** | World-anchored tiles (`PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER=0`), SoftImage XY→XZ swizzle on. Path1 floor matches **v0.9.x beta sandbox grid** by default (`PANTHEON_PATH1_FLOOR_BETA_GRID=1`): bright green **major lines** + checker cells (same logic as tag `v0.9.3-beta`). Player snap uses **tiled support** so the deck stays under you on every patch. Uniform slab (flicker-calm): `EE_CFLAGS='-DPANTHEON_PATH1_FLOOR_BETA_GRID=0'`. |
 | **Intro** | Boot luma ramp + `WWW.94BILLY.COM`; libdraw GS coords fixed. **Staggered letter reveal** + **gentle vertical sine wave** on by default (`PANTHEON_BOOT_TEXT_WAVE_AMP` ~2.25f, slightly slower phase). For zero wave on strict PCSX2: `EE_CFLAGS='-DPANTHEON_BOOT_TEXT_WAVE_AMP=0.0f'`. |
 | **Sky** | `g_day01` advances over `PANTHEON_DAY_CYCLE_SECONDS` (default 24 min); `PANTHEON_ATMO_SMOOTH_ALPHA` lerps atmosphere to avoid stair-stepping. |
 | **Start palette** | **`PANTHEON_WEATHER_OVERCAST`** at **`g_day01=0.2`** → baby-blue biased overcast daylight. |

@@ -264,6 +264,11 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 /* Must match the scale applied in init_flat_floor() to floor mesh (Softimage export). */
 #define FLOOR_MESH_SCALE 14.0f
 
+/* 1 = v0.9.x beta SoftImage sandbox floor (major green lines + checker cells). 0 = uniform slab (less moiré). */
+#ifndef PANTHEON_PATH1_FLOOR_BETA_GRID
+#define PANTHEON_PATH1_FLOOR_BETA_GRID 1
+#endif
+
 #if USE_VU1_SKYDOME_MESH
 /* Scale Softimage mesh units (~radius 5 sphere) into world space. */
 #define SKYDOME_MESH_SCALE 320.0f
@@ -991,8 +996,6 @@ void init_flat_floor() {
     // Keep geometry in a sane range while validating VU1 transforms.
     // Safe type-punning using a union to satisfy strict-aliasing rules
     PantheonColorPun color_pun;
-    /* Solid slab green (avoids busy checker moiré / perceived flicker with sky). */
-    color_pun.i = (255u << 24) | (92u << 16) | (200u << 8) | 72u;
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         flat_floor[i].x *= FLOOR_MESH_SCALE;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
@@ -1005,6 +1008,43 @@ void init_flat_floor() {
 #else
         flat_floor[i].z *= FLOOR_MESH_SCALE;
         flat_floor[i].y *= FLOOR_MESH_SCALE;
+#endif
+
+#if PANTHEON_PATH1_FLOOR_BETA_GRID
+        /* v0.9.x beta: sandbox grid on world XZ (major lines + checker) — same as pinned tag floor look. */
+        {
+            float gx = flat_floor[i].x;
+            float gz = flat_floor[i].z;
+            float ax = fabsf(gx);
+            float az = fabsf(gz);
+            float fx = ax - floorf(ax);
+            float fz = az - floorf(az);
+            int on_major = (fx < 0.04f || fx > 0.96f || fz < 0.04f || fz > 0.96f) ? 1 : 0;
+            int cx = (int)floorf(ax + 0.5f);
+            int cz = (int)floorf(az + 0.5f);
+            int checker = ((cx + cz) & 1);
+            u8 r, g, b, a;
+            if (on_major) {
+                r = 72;
+                g = 200;
+                b = 92;
+                a = 255;
+            } else if (checker) {
+                r = 28;
+                g = 92;
+                b = 38;
+                a = 230;
+            } else {
+                r = 22;
+                g = 72;
+                b = 30;
+                a = 220;
+            }
+            color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
+        }
+#else
+        /* Uniform slab: same vivid green as major grid lines; calmer vs sky at distance. */
+        color_pun.i = (255u << 24) | (92u << 16) | (200u << 8) | 72u;
 #endif
 
         // Build the exact 128-bit payload the GS RGBAQ register expects!
