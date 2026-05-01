@@ -20,6 +20,7 @@
 #include <graph.h>
 #include <graph_vram.h>
 #include <draw.h>
+#include <draw2d.h>
 #include <draw3d.h>
 #include <sifrpc.h>
 #include <loadfile.h>
@@ -28,7 +29,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdarg.h>
 
 #include "floor_data.h"
 #include "skydome_data.h"
@@ -41,19 +41,49 @@
 #define PANTHEON_TEXTURE_PHASE 0
 #endif
 
+/*
+ * Visual preset 1 = stable sandbox (flat quad / floor tile, ground snap, timecycle sky, Path 1).
+ * Third-person follow by default; set PANTHEON_TRIAGE_FIRST_PERSON to 1 for optional FPV.
+ */
+#ifndef PANTHEON_VISUAL_PRESET
+#define PANTHEON_VISUAL_PRESET 1
+#endif
+
+#ifndef PANTHEON_TRIAGE_DISABLE_SKY_PASS
+#define PANTHEON_TRIAGE_DISABLE_SKY_PASS 0
+#endif
+#ifndef PANTHEON_TRIAGE_FIRST_PERSON
+#define PANTHEON_TRIAGE_FIRST_PERSON 0
+#endif
+
 #ifndef PANTHEON_SKY_CLOUD_PUFF
-#define PANTHEON_SKY_CLOUD_PUFF 0
+/* Subtle GTA-style cloud puff into timecycle colors (vertex cost only; still Path 1). */
+#define PANTHEON_SKY_CLOUD_PUFF 1
+#endif
+
+#ifndef PANTHEON_SKYDOME_PLAYER_Y_LIFT
+/* Center authored skydome above feet so horizon rim meets atmosphere clear color. */
+#define PANTHEON_SKYDOME_PLAYER_Y_LIFT 28.0f
+#endif
+
+#ifndef PANTHEON_ATMO_SMOOTH_ALPHA
+/* Per-frame lerp toward target atmosphere (0..1). Higher = snappier; lower = smoother SA-style sky. */
+#define PANTHEON_ATMO_SMOOTH_ALPHA 0.14f
+#endif
+
+#ifndef PANTHEON_CAM_DIST
+/* Third-person follow distance tuned for grounded world-surface feel. */
+#define PANTHEON_CAM_DIST 220.0f
+#endif
+#ifndef PANTHEON_CAMERA_HEIGHT_OFFSET
+#define PANTHEON_CAMERA_HEIGHT_OFFSET 18.0f
 #endif
 
 /* Authored Softimage skydome in VU1 when cruncher produced tris (else CPU placeholder). */
 #define USE_VU1_SKYDOME_MESH (SKYDOME_TRI_COUNT > 0)
 
-#ifndef PANTHEON_DEBUG_LOG
-#define PANTHEON_DEBUG_LOG 0
-#endif
-
-#ifndef PANTHEON_AGENT_TRACE
-#define PANTHEON_AGENT_TRACE 0
+#ifndef PANTHEON_FPV_EYE_HEIGHT
+#define PANTHEON_FPV_EYE_HEIGHT 20.0f
 #endif
 
 // ==================== GTA SAN ANDREAS CAMERA ====================
@@ -61,33 +91,44 @@ static char padBuf[256] __attribute__((aligned(64)));
 
 static float player_x = 0.0f, player_y = 0.0f, player_z = 0.0f;
 static float player_yaw = 0.0f;
-#ifndef PANTHEON_CAM_DIST
-#define PANTHEON_CAM_DIST 180.0f
-#endif
-#ifndef PANTHEON_CAMERA_HEIGHT_OFFSET
-#define PANTHEON_CAMERA_HEIGHT_OFFSET 20.0f
-#endif
-#ifndef PANTHEON_FIRST_PERSON_VIEW
-#define PANTHEON_FIRST_PERSON_VIEW 0
-#endif
-#ifndef PANTHEON_FIRST_PERSON_EYE_HEIGHT
-#define PANTHEON_FIRST_PERSON_EYE_HEIGHT 6.0f
-#endif
-static const float CAM_DIST = PANTHEON_CAM_DIST;
+static float g_cam_dist = PANTHEON_CAM_DIST; /* L1 = zoom out, R1 = zoom in */
 
-static VECTOR camera_position = {0.0f, 106.0f, 158.0f, 1.0f};
-static VECTOR camera_rotation = {-0.6f, 0.0f, 0.0f, 1.0f};
+/* First-frame pose before update_camera_orbit (FPV: eye over origin; orbit: legacy offset). */
+static VECTOR camera_position = {
+    0.0f,
+    PANTHEON_TRIAGE_FIRST_PERSON ? PANTHEON_FPV_EYE_HEIGHT : 62.76f,
+    PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 103.56f,
+    1.0f};
+static VECTOR camera_rotation = {
+    PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.55f,
+    0.0f,
+    0.0f,
+    1.0f};
 
-static const float PAD_DEADZONE = 24.0f;
+#ifndef PANTHEON_PAD_DEADZONE
+#if PANTHEON_VISUAL_PRESET == 1
+#define PANTHEON_PAD_DEADZONE 14.0f
+#else
+#define PANTHEON_PAD_DEADZONE 24.0f
+#endif
+#endif
+static const float PAD_DEADZONE = PANTHEON_PAD_DEADZONE;
 static const float RIGHT_YAW_SENS = 0.00135f;
 static const float RIGHT_PITCH_SENS = 0.00095f;
 static const float MOVE_SPEED = 2.15f;
 static const float PI_F = 3.14159265f;
 
 static float cam_yaw = 0.0f;
-static float cam_pitch = 0.10f;
+#if PANTHEON_VISUAL_PRESET == 1
+static float cam_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.60f;
+static float target_yaw = 0.0f;
+static float target_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.60f;
+#else
+/* Default ~0.52 rad ≈ 30° down — GTA SA-style over-the-shoulder (tweak with right stick). */
+static float cam_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.52f;
 static float target_yaw = 0.5f;
-static float target_pitch = 0.10f;
+static float target_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.52f;
+#endif
 static int pad_ready = 0;
 /* Set if padPortOpen() succeeded. Pad may not be PAD_STATE_STABLE until after a few
  * full frames; a short boot-time busy-wait is not enough, so we finish init in the main loop. */
@@ -116,7 +157,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
  * 0 = stable hybrid baseline (CPU overlay + Path1)
  * 1 = strict Path1 validation (no CPU overlay) */
 #ifndef PANTHEON_RENDER_PROFILE
-#define PANTHEON_RENDER_PROFILE 0
+#define PANTHEON_RENDER_PROFILE 1
 #endif
 #if PANTHEON_RENDER_PROFILE == 1
 #define PATH1_AB_CPU_OVERLAY 0
@@ -129,6 +170,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_STATIC_CAMERA
+/* 1 = fixed eye (whitebox). Default 0 = orbit follow — same matrices as movement (avoids view “exploding” on look). */
 #define PANTHEON_TRIAGE_STATIC_CAMERA 0
 #endif
 
@@ -137,7 +179,8 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 0
+/* 0 = world-anchored tiled floor (recommended). 1 = debug single tile under player. */
+#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 1
 #endif
 #ifndef PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 #define PANTHEON_TRIAGE_FORCE_FLAT_QUAD 0
@@ -152,11 +195,18 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 #ifndef PANTHEON_TRIAGE_PITCH_SIGN_FLIP
 /* If floor looks like a distant wall, flip pitch sign for create_world_view convention. */
-#define PANTHEON_TRIAGE_PITCH_SIGN_FLIP 1
+#define PANTHEON_TRIAGE_PITCH_SIGN_FLIP 0
 #endif
 
 #ifndef PANTHEON_CAMERA_ENVELOPE_HARDEN
 #define PANTHEON_CAMERA_ENVELOPE_HARDEN 1
+#endif
+
+#ifndef PANTHEON_PLAYER_ABYSS_FALL_STEP
+#define PANTHEON_PLAYER_ABYSS_FALL_STEP 0.55f
+#endif
+#ifndef PANTHEON_PLAYER_ABYSS_Y_MIN
+#define PANTHEON_PLAYER_ABYSS_Y_MIN -4000.0f
 #endif
 
 #ifndef PANTHEON_VIEW_NEAR
@@ -172,7 +222,7 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_VU_NEARZ
-#define PANTHEON_VU_NEARZ 0.1f
+#define PANTHEON_VU_NEARZ 0.01f
 #endif
 #ifndef PANTHEON_PATH1_GIF_USE_ST
 #define PANTHEON_PATH1_GIF_USE_ST 1
@@ -181,12 +231,29 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE 1
 #endif
 
+/* Duplicate each tri with reversed winding (2x verts). WARNING: coplanar opposite faces Z-fight
+ * badly on some hosts (black / flashing in PCSX2 Vulkan). Default OFF; use 1 only if culling hides
+ * the floor and you accept the artifact, or fix SoftImage winding instead. */
+#ifndef PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+#define PANTHEON_FLOOR_PATH1_DOUBLE_SIDED 0
+#endif
+
+#if PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+#define PANTHEON_FLOOR_PATH1_VERTS (FLOOR_TRI_COUNT * 3 * 2)
+#else
+#define PANTHEON_FLOOR_PATH1_VERTS (FLOOR_TRI_COUNT * 3)
+#endif
+
 #ifndef PANTHEON_TILE_RADIUS
-#define PANTHEON_TILE_RADIUS 1
+/* Tiles in ±radius around player (e.g. 2 => 5×5 SoftImage floor patches). */
+#define PANTHEON_TILE_RADIUS 2
 #endif
 
 #ifndef PANTHEON_TILE_SUBMIT_BUDGET
-#define PANTHEON_TILE_SUBMIT_BUDGET 9
+#define PANTHEON_TILE_SUBMIT_BUDGET 25
+#endif
+#ifndef PANTHEON_FLOOR_FOLLOW_TILE_SIZE
+#define PANTHEON_FLOOR_FOLLOW_TILE_SIZE 60.0f
 #endif
 
 #if (PANTHEON_TILE_SUBMIT_BUDGET <= 0)
@@ -205,7 +272,6 @@ static PantheonVertex flat_skydome[SKYDOME_TRI_COUNT * 3] __attribute__((aligned
 packet_t *packets[2];
 int context = 0;
 static int g_vif_context = 0;
-static int g_dbg_frame = 0;
 static int g_last_nearz_hits = 0;
 static int g_last_batch_verts = 0;
 static int g_last_vif1_qw = 0;
@@ -214,6 +280,8 @@ static const char *g_path1_mesh_stage = "unknown";
 static float g_floor_center_x = 0.0f;
 static float g_floor_center_z = 0.0f;
 static PantheonAtmosphere g_atmosphere;
+static PantheonAtmosphere g_atmosphere_target;
+static int g_atmosphere_inited = 0;
 static PantheonWeather g_weather = PANTHEON_WEATHER_CLEAR;
 static float g_day01 = 0.58f;
 /* Cross-fade between weather segment presets (avoids instant hue jumps every ~18 min). */
@@ -226,7 +294,7 @@ static int g_weather_blend_remaining = 0;
 #define PANTHEON_WEATHER_SLOT_SECONDS 300
 #endif
 #ifndef PANTHEON_DAY_CYCLE_SECONDS
-#define PANTHEON_DAY_CYCLE_SECONDS 600.0f
+#define PANTHEON_DAY_CYCLE_SECONDS 1440.0f
 #endif
 
 typedef enum PantheonRenderJobType {
@@ -242,7 +310,7 @@ typedef struct PantheonRenderJob {
 } PantheonRenderJob;
 
 // Forward declarations
-qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z);
+qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z, int frame_id);
 qword_t *render_floor_path1_count(qword_t *q, MATRIX mvp, int total_verts);
 static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *mesh_tris, int total_verts, int max_verts);
 static void update_atmosphere(int frame_id);
@@ -252,337 +320,27 @@ static qword_t *render_sky_placeholder_dome(qword_t *q, MATRIX world_view, MATRI
 #endif
 static void clamp_player_to_floor(void);
 static void apply_sky_color(PantheonVertex *v);
+static u8 pantheon_boot_reveal_luma(int frame_id);
+static int pantheon_boot_reveal_active(int frame_id);
+static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 
-static FILE *pantheon_log_stream_open(const char *primary, const char *fallback1, const char *fallback2, const char *fallback3) {
-    static FILE *dbg22_stream = NULL;
-    static FILE *debug_stream = NULL;
-    static FILE *f266a2_stream = NULL;
-    FILE **slot = NULL;
-
-    if (strcmp(primary, "host:/home/marvin/Pantheon/.cursor/debug-22f5dd.log") == 0) {
-        slot = &dbg22_stream;
-    } else if (strcmp(primary, "host:debug-a495e9.log") == 0) {
-        slot = &debug_stream;
-    } else if (strcmp(primary, "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log") == 0) {
-        slot = &f266a2_stream;
-    } else {
-        return NULL;
-    }
-    if (*slot) {
-        return *slot;
-    }
-
-    *slot = fopen(primary, "a");
-    if (!*slot && fallback1) *slot = fopen(fallback1, "a");
-    if (!*slot && fallback2) *slot = fopen(fallback2, "a");
-    if (!*slot && fallback3) *slot = fopen(fallback3, "a");
-    if (*slot) {
-        setvbuf(*slot, NULL, _IOLBF, 0);
-    }
-    return *slot;
-}
-
-static void pantheon_log_flush_maybe(FILE *f) {
-    static int log_lines = 0;
-    if (!f) {
-        return;
-    }
-    log_lines++;
-    if ((log_lines % 60) == 0) {
-        fflush(f);
-    }
-}
-
-static void dbg22_log_json(const char *run_id, const char *hypothesis_id, const char *location, const char *message, const char *data_json) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
-        "host:.cursor/debug-22f5dd.log",
-        "host:debug-22f5dd.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"22f5dd\",\"runId\":\"%s\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"%s\",\"data\":%s,\"timestamp\":0}\n",
-        run_id, hypothesis_id, location, message, data_json
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-#if PANTHEON_DEBUG_LOG
-static void debug_log(const char *run_id, const char *hypothesis_id, const char *location, const char *message, const char *data_json) {
-    FILE *f = pantheon_log_stream_open("host:debug-a495e9.log", "debug-a495e9.log", NULL, NULL);
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"pantheon\",\"runId\":\"%s\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"%s\",\"data\":%s,\"timestamp\":0}\n",
-        run_id, hypothesis_id, location, message, data_json
-    );
-    pantheon_log_flush_maybe(f);
-}
-#else
-#define debug_log(run_id, hypothesis_id, location, message, data_json) ((void)0)
+#ifndef PANTHEON_BOOT_REVEAL_ENABLE
+#define PANTHEON_BOOT_REVEAL_ENABLE 1
 #endif
 
-#if PANTHEON_AGENT_TRACE
-// #region agent log
-static void agent_dbg22_log(const char *run_id, const char *hypothesis_id, const char *location, const char *message, const char *data_json) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
-        "host:.cursor/debug-22f5dd.log",
-        "host:debug-22f5dd.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"22f5dd\",\"runId\":\"%s\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"%s\",\"data\":%s,\"timestamp\":0}\n",
-        run_id, hypothesis_id, location, message, data_json
-    );
-    pantheon_log_flush_maybe(f);
-}
-// #endregion
-#else
-#define agent_dbg22_log(run_id, hypothesis_id, location, message, data_json) ((void)0)
+#ifndef PANTHEON_BOOT_REVEAL_STEP
+#define PANTHEON_BOOT_REVEAL_STEP 2
 #endif
 
-#if PANTHEON_AGENT_TRACE
-/* H1: dma_channel_send_chain(..., qwc, ...) with qwc==0 transfers no EE data → VIF1 idle → no geometry. */
-static void agent_path1_dma_log(const char *hypothesis_id, const char *location, const char *stage, int used_qw, int dma_qwc) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"vif1_dma\",\"data\":{\"stage\":\"%s\",\"used_qw\":%d,\"dma_qwc\":%d},\"timestamp\":0}\n",
-        hypothesis_id, location, stage, used_qw, dma_qwc
-    );
-    pantheon_log_flush_maybe(f);
-}
+#ifndef PANTHEON_BOOT_REVEAL_HOLD_FRAMES
+#define PANTHEON_BOOT_REVEAL_HOLD_FRAMES 180
+#endif
 
-/* H2/H3/H4: Track VU memory layout and shader upload metadata per batch. */
-static void agent_path1_layout_log(
-    const char *hypothesis_id,
-    const char *location,
-    int shader_qwc,
-    int shader_instr,
-    int verts_this_batch,
-    int input_start,
-    int input_end,
-    int output_start,
-    int output_end,
-    int wraps,
-    int overlaps
-) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"vu1_layout\",\"data\":{\"shader_qwc\":%d,\"shader_instr\":%d,\"verts\":%d,\"in\":[%d,%d],\"out\":[%d,%d],\"wrap\":%d,\"overlap\":%d},\"timestamp\":0}\n",
-        hypothesis_id,
-        location,
-        shader_qwc,
-        shader_instr,
-        verts_this_batch,
-        input_start,
-        input_end,
-        output_start,
-        output_end,
-        wraps,
-        overlaps
-    );
-    pantheon_log_flush_maybe(f);
-}
+#define PANTHEON_BOOT_REVEAL_HALF_FRAMES (255 / PANTHEON_BOOT_REVEAL_STEP)
+#define PANTHEON_BOOT_REVEAL_TOTAL_FRAMES ((PANTHEON_BOOT_REVEAL_HALF_FRAMES * 2) + PANTHEON_BOOT_REVEAL_HOLD_FRAMES)
 
-/* H5/H6: Sample EE-side clip-space W and NDC ranges before VIF upload. */
-static void agent_path1_clip_log(
-    const char *hypothesis_id,
-    const char *location,
-    int verts_sampled,
-    int w_le_0_1_count,
-    float w_min,
-    float w_max,
-    float ndc_x_min,
-    float ndc_x_max,
-    float ndc_y_min,
-    float ndc_y_max
-) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"clip_sample\",\"data\":{\"verts\":%d,\"w_le_0_1\":%d,\"w_min\":%.5f,\"w_max\":%.5f,\"ndc_x\":[%.5f,%.5f],\"ndc_y\":[%.5f,%.5f]},\"timestamp\":0}\n",
-        hypothesis_id,
-        location,
-        verts_sampled,
-        w_le_0_1_count,
-        w_min,
-        w_max,
-        ndc_x_min,
-        ndc_x_max,
-        ndc_y_min,
-        ndc_y_max
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-/* H3/H7: Record VU/GIF contract resolved by EE for first batch. */
-static void agent_path1_contract_log(
-    const char *hypothesis_id,
-    const char *location,
-    int gif_addr,
-    int out_base,
-    int xgkick_addr,
-    int nloop
-) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"vu_gif_contract\",\"data\":{\"gif_addr\":%d,\"out_base\":%d,\"xgkick_addr\":%d,\"nloop\":%d},\"timestamp\":0}\n",
-        hypothesis_id, location, gif_addr, out_base, xgkick_addr, nloop
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-/* H7: Correlate phase ordering with alternating clear shades. */
-static void agent_path1_phase_log(const char *hypothesis_id, const char *location, const char *phase, int frame_id) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"frame_phase\",\"data\":{\"phase\":\"%s\",\"frame\":%d},\"timestamp\":0}\n",
-        hypothesis_id, location, phase, frame_id
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-/* H12: Validate emitted memory-image payload controls (PRIM/TME, ITOP, near-Z). */
-static void agent_path1_payload_log(
-    const char *hypothesis_id,
-    const char *location,
-    int nloop,
-    int prim_word,
-    int itop,
-    float nearz
-) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"path1_payload\",\"data\":{\"nloop\":%d,\"prim\":%d,\"itop\":%d,\"nearz\":%.4f},\"timestamp\":0}\n",
-        hypothesis_id, location, nloop, prim_word, itop, nearz
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-/* H13: Track packet pointer integrity and qword usage vs capacity. */
-static void agent_path1_packet_log(
-    const char *hypothesis_id,
-    const char *location,
-    const char *stage,
-    int ctx,
-    int cap_qw,
-    int used_qw,
-    int pkt_null
-) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"packet_state\",\"data\":{\"stage\":\"%s\",\"ctx\":%d,\"cap_qw\":%d,\"used_qw\":%d,\"pkt_null\":%d},\"timestamp\":0}\n",
-        hypothesis_id, location, stage, ctx, cap_qw, used_qw, pkt_null
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-/* H16/H17/H18: Camera and VIF1 chain submit diagnostics. */
-static void agent_path1_camera_log(
-    const char *hypothesis_id,
-    const char *location,
-    float cam_x,
-    float cam_y,
-    float cam_z,
-    float pitch,
-    float yaw
-) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"camera_state\",\"data\":{\"cam\":[%.3f,%.3f,%.3f],\"pitch\":%.4f,\"yaw\":%.4f},\"timestamp\":0}\n",
-        hypothesis_id, location, cam_x, cam_y, cam_z, pitch, yaw
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-/* H19: Guaranteed early boot marker before init steps. */
-static void agent_path1_boot_log(const char *hypothesis_id, const char *location, const char *phase) {
-    FILE *f = pantheon_log_stream_open(
-        "host:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log",
-        "host:.cursor/debug-f266a2.log",
-        "host:debug-f266a2.log");
-    if (!f)
-        return;
-    fprintf(
-        f,
-        "{\"sessionId\":\"f266a2\",\"runId\":\"path1\",\"hypothesisId\":\"%s\",\"location\":\"%s\",\"message\":\"boot_phase\",\"data\":{\"phase\":\"%s\"},\"timestamp\":0}\n",
-        hypothesis_id, location, phase
-    );
-    pantheon_log_flush_maybe(f);
-}
-
-#else
-#define agent_path1_dma_log(hyp, loc, stage, used_qw, dma_qwc) ((void)0)
-#define agent_path1_layout_log(hyp, loc, shader_qwc, shader_instr, verts_this_batch, input_start, input_end, output_start, output_end, wraps, overlaps) ((void)0)
-#define agent_path1_clip_log(hypothesis_id, location, verts_sampled, w_le_0_1_count, w_min, w_max, ndc_x_min, ndc_x_max, ndc_y_min, ndc_y_max) ((void)0)
-#define agent_path1_contract_log(hypothesis_id, location, gif_addr, out_base, xgkick_addr, nloop) ((void)0)
-#define agent_path1_phase_log(hypothesis_id, location, phase, frame_id) ((void)0)
-#define agent_path1_payload_log(hypothesis_id, location, nloop, prim_word, itop, nearz) ((void)0)
-#define agent_path1_packet_log(hypothesis_id, location, stage, ctx, cap_qw, used_qw, pkt_null) ((void)0)
-#define agent_path1_camera_log(hypothesis_id, location, cam_x, cam_y, cam_z, pitch, yaw) ((void)0)
-#define agent_path1_boot_log(hypothesis_id, location, phase) ((void)0)
+#ifndef PANTHEON_BOOT_TITLE_SCALE
+#define PANTHEON_BOOT_TITLE_SCALE 3
 #endif
 
 static float wrap_angle_pi(float v) {
@@ -627,237 +385,129 @@ static void try_finish_pad_init(void) {
 }
 
 static void read_pad_analog(void) {
-    static int lx_confirm = 0;
-    static int ly_confirm = 0;
-    static const int pad_left_stick_confirm_frames = 2;
     if (!pad_ready) {
-        static int not_ready_samples = 0;
-        not_ready_samples++;
-        if (not_ready_samples <= 3 || (not_ready_samples % 120) == 0) {
-            char j[128];
-            snprintf(j, sizeof(j), "{\"pad_ready\":%d,\"samples\":%d}", pad_ready, not_ready_samples);
-            // #region agent log
-            agent_dbg22_log("pre-fix", "H21", "floor.c:read_pad_analog", "pad_not_ready_early_return", j);
-            // #endregion
-        }
         return;
     }
 
     struct padButtonStatus buttons;
-    
-    // Pre-center sticks in case the read fails or analog isn't fully on yet
     buttons.ljoy_h = 128;
     buttons.ljoy_v = 128;
     buttons.rjoy_h = 128;
     buttons.rjoy_v = 128;
 
-    int read_ok = padRead(0, 0, &buttons);
-    if (read_ok == 0) {
-        static int read_fail_samples = 0;
-        read_fail_samples++;
-        if (read_fail_samples <= 3 || (read_fail_samples % 120) == 0) {
-            char j[128];
-            snprintf(j, sizeof(j), "{\"pad_ready\":%d,\"read_ok\":%d,\"samples\":%d}", pad_ready, read_ok, read_fail_samples);
-            // #region agent log
-            agent_dbg22_log("pre-fix", "H22", "floor.c:read_pad_analog", "pad_read_failed", j);
-            // #endregion
-        }
+    if (padRead(0, 0, &buttons) == 0) {
         return;
     }
 
-    float lx_raw = (float)buttons.ljoy_h - 127.5f;
-    float ly_raw = (float)buttons.ljoy_v - 127.5f;
-    float lx = lx_raw;
-    float ly = ly_raw;
-    float rx_raw = (float)buttons.rjoy_h - 127.5f;
-    float ry_raw = (float)buttons.rjoy_v - 127.5f;
-    float rx = rx_raw;
-    float ry = ry_raw;
+    float lx = (float)buttons.ljoy_h - 127.5f;
+    float ly = (float)buttons.ljoy_v - 127.5f;
+    float rx = (float)buttons.rjoy_h - 127.5f;
+    float ry = (float)buttons.rjoy_v - 127.5f;
 
     if (fabsf(lx) < PAD_DEADZONE) {
         lx = 0.0f;
-        lx_confirm = 0;
-    } else {
-        lx_confirm++;
-        if (lx_confirm < pad_left_stick_confirm_frames) lx = 0.0f;
     }
     if (fabsf(ly) < PAD_DEADZONE) {
         ly = 0.0f;
-        ly_confirm = 0;
-    } else {
-        ly_confirm++;
-        if (ly_confirm < pad_left_stick_confirm_frames) ly = 0.0f;
     }
-    if (fabsf(rx) < PAD_DEADZONE) rx = 0.0f;
-    if (fabsf(ry) < PAD_DEADZONE) ry = 0.0f;
+    if (fabsf(rx) < PAD_DEADZONE) {
+        rx = 0.0f;
+    }
+    if (fabsf(ry) < PAD_DEADZONE) {
+        ry = 0.0f;
+    }
 #if PANTHEON_TRIAGE_LOCK_RIGHT_STICK
     rx = 0.0f;
     ry = 0.0f;
 #endif
-    if (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0) {
-        char j[256];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"frame\":%d,\"rjoy_raw\":[%.2f,%.2f],\"rjoy_dz\":[%.2f,%.2f],\"target\":[%.4f,%.4f],\"cam\":[%.4f,%.4f]}",
-            g_dbg_frame,
-            rx_raw, ry_raw,
-            rx, ry,
-            target_yaw, target_pitch,
-            cam_yaw, cam_pitch
-        );
-        // #region agent log
-        dbg22_log_json("triage-run", "H7", "floor.c:read_pad_analog", "right_stick_drift", j);
-        // #endregion
-    }
 
-    /* D-pad: must work even when the left stick is slightly off-center (raw != 0). */
     u32 paddata = 0xffffu ^ (u32)buttons.btns;
-    int dpx = 0, dpy = 0;
-    if (paddata & PAD_LEFT)  dpx--;
-    if (paddata & PAD_RIGHT) dpx++;
-    if (paddata & PAD_UP)    dpy--;
-    if (paddata & PAD_DOWN)  dpy++;
 
-    float mvx, mvy;
-    if (dpx != 0 || dpy != 0) {
-        mvx = (float)dpx * 127.5f;
-        mvy = (float)dpy * 127.5f;
-    } else {
-        mvx = lx;
-        mvy = ly;
+    /* L1/R1 = camera zoom (sandbox feel). */
+    if (paddata & PAD_L1) {
+        g_cam_dist = fminf(800.0f, g_cam_dist + 4.0f);
+    }
+    if (paddata & PAD_R1) {
+        g_cam_dist = fmaxf(40.0f, g_cam_dist - 4.0f);
     }
 
-    if (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0) {
-        char j[320];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"frame\":%d,\"ljoy_raw\":[%.2f,%.2f],\"ljoy_dz\":[%.2f,%.2f],\"dpad\":[%d,%d],\"mv_pre\":[%.2f,%.2f],\"player_xz\":[%.3f,%.3f]}",
-            g_dbg_frame,
-            lx_raw, ly_raw,
-            lx, ly,
-            dpx, dpy,
-            mvx, mvy,
-            player_x, player_z
-        );
-        // #region agent log
-        dbg22_log_json("triage-run", "H35", "floor.c:read_pad_analog", "movement_intent", j);
-        // #endregion
-    }
-
-    /* "Up" pulls the ground toward the player (negate Y). Invert left/right on stick + D-pad (do not negate X). */
-    mvy = -mvy;
-    float mvx_post = mvx;
-    float mvy_post = mvy;
-
-    target_yaw   += rx * RIGHT_YAW_SENS;
+    target_yaw += rx * RIGHT_YAW_SENS;
     target_pitch += ry * RIGHT_PITCH_SENS;
     target_yaw = wrap_angle_pi(target_yaw);
 
-#if PANTHEON_CAMERA_ENVELOPE_HARDEN
-    if (target_pitch < 0.20f) target_pitch = 0.20f;
-    if (target_pitch > 1.15f) target_pitch = 1.15f;
-#else
-    if (target_pitch < 0.08f)  target_pitch = 0.08f;
-    if (target_pitch > 1.32f)  target_pitch = 1.32f;
-#endif
+    /* Sandbox limits: horizon → near-straight-down. */
+    if (target_pitch < 0.05f) {
+        target_pitch = 0.05f;
+    }
+    if (target_pitch > 1.50f) {
+        target_pitch = 1.50f;
+    }
 
-    cam_yaw   += (target_yaw   - cam_yaw)   * 0.165f;
+    cam_yaw += (target_yaw - cam_yaw) * 0.165f;
     cam_pitch += (target_pitch - cam_pitch) * 0.155f;
     cam_yaw = wrap_angle_pi(cam_yaw);
-#if PANTHEON_CAMERA_ENVELOPE_HARDEN
-    if (cam_pitch < 0.20f) cam_pitch = 0.20f;
-    if (cam_pitch > 1.15f) cam_pitch = 1.15f;
-#endif
+    if (cam_pitch < 0.05f) {
+        cam_pitch = 0.05f;
+    }
+    if (cam_pitch > 1.50f) {
+        cam_pitch = 1.50f;
+    }
 
-    // GTA-style camera-relative movement with diagonal normalization.
-    float mag = sqrtf((mvx * mvx) + (mvy * mvy));
+    /* Movement (camera-relative). */
+    float mvx = lx;
+    float mvy = ly;
+    if (paddata & (PAD_LEFT | PAD_RIGHT | PAD_UP | PAD_DOWN)) {
+        mvx = ((paddata & PAD_RIGHT) ? 127.5f : 0.0f) - ((paddata & PAD_LEFT) ? 127.5f : 0.0f);
+        mvy = ((paddata & PAD_UP) ? 127.5f : 0.0f) - ((paddata & PAD_DOWN) ? 127.5f : 0.0f);
+    }
+
+    /* DualShock: stick up is negative ly; flip Y so walk "forward"/"back" matches camera-relative math + D-pad. */
+    mvy = -mvy;
+
+    float mag = sqrtf(mvx * mvx + mvy * mvy);
     if (mag > 0.0f) {
         float nx = mvx / mag;
         float ny = mvy / mag;
         float move_scale = MOVE_SPEED * (mag / 127.5f);
-
         float move_x = (sinf(cam_yaw) * -ny) + (cosf(cam_yaw) * nx);
         float move_z = (cosf(cam_yaw) * -ny) - (sinf(cam_yaw) * nx);
 
         player_x += move_x * move_scale;
         player_z += move_z * move_scale;
         player_yaw = wrap_angle_pi(atan2f(nx, -ny) + cam_yaw);
-        if (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0) {
-            char j[320];
-            snprintf(
-                j,
-                sizeof(j),
-                "{\"frame\":%d,\"mv\":[%.2f,%.2f],\"mv_post\":[%.2f,%.2f],\"mag\":%.3f,\"move_scale\":%.3f,\"move_xz\":[%.3f,%.3f],\"player_xz\":[%.3f,%.3f],\"cam_yaw\":%.4f}",
-                g_dbg_frame,
-                mvx, mvy,
-                mvx_post, mvy_post,
-                mag,
-                move_scale,
-                move_x, move_z,
-                player_x, player_z,
-                cam_yaw
-            );
-            // #region agent log
-            dbg22_log_json("triage-run", "H31", "floor.c:read_pad_analog", "player_motion_step", j);
-            // #endregion
-        }
     }
 
     clamp_player_to_floor();
 }
 
+#if !PANTHEON_TRIAGE_STATIC_CAMERA
 static void update_camera_orbit(void) {
-#if PANTHEON_FIRST_PERSON_VIEW
+#if PANTHEON_TRIAGE_FIRST_PERSON
     camera_position[0] = player_x;
-    camera_position[1] = player_y + PANTHEON_FIRST_PERSON_EYE_HEIGHT;
+    camera_position[1] = player_y + PANTHEON_FPV_EYE_HEIGHT;
     camera_position[2] = player_z;
     camera_position[3] = 1.0f;
-
     camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? cam_pitch : -cam_pitch;
-    camera_rotation[1] = -cam_yaw;
+    camera_rotation[1] = cam_yaw;
     camera_rotation[2] = 0.0f;
     camera_rotation[3] = 1.0f;
 #else
+    /* Third-person sandbox follow (GTA SA / MGS2-style testbed). */
     float cos_p = cosf(cam_pitch);
     float sin_p = sinf(cam_pitch);
 
-    camera_position[0] = player_x + (sinf(cam_yaw) * cos_p * CAM_DIST);
-    camera_position[1] = player_y + (sin_p * CAM_DIST) + PANTHEON_CAMERA_HEIGHT_OFFSET;
-    camera_position[2] = player_z + (cosf(cam_yaw) * cos_p * CAM_DIST);
+    camera_position[0] = player_x + (sinf(cam_yaw) * cos_p * g_cam_dist);
+    camera_position[1] = player_y + (sin_p * g_cam_dist) + PANTHEON_CAMERA_HEIGHT_OFFSET;
+    camera_position[2] = player_z + (cosf(cam_yaw) * cos_p * g_cam_dist);
     camera_position[3] = 1.0f;
 
     camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? cam_pitch : -cam_pitch;
-    camera_rotation[1] = -cam_yaw;
+    camera_rotation[1] = cam_yaw;
     camera_rotation[2] = 0.0f;
     camera_rotation[3] = 1.0f;
 #endif
-    if (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0) {
-        float dx = camera_position[0] - player_x;
-        float dz = camera_position[2] - player_z;
-        float planar = sqrtf((dx * dx) + (dz * dz));
-        float floor_y_mid = 0.0f;
-        char j[320];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"frame\":%d,\"player\":[%.3f,%.3f,%.3f],\"cam\":[%.3f,%.3f,%.3f],\"offset_planar\":%.3f,\"cam_dist\":%.3f,\"pitch\":%.4f,\"floor_y_mid\":%.3f,\"cam_minus_floor\":%.3f,\"player_minus_floor\":%.3f}",
-            g_dbg_frame,
-            player_x, player_y, player_z,
-            camera_position[0], camera_position[1], camera_position[2],
-            planar,
-            CAM_DIST,
-            cam_pitch,
-            floor_y_mid,
-            camera_position[1] - floor_y_mid,
-            player_y - floor_y_mid
-        );
-        // #region agent log
-        dbg22_log_json("triage-run", "H32", "floor.c:update_camera_orbit", "camera_follow_offset", j);
-        // #endregion
-    }
 }
+#endif
 
 static void update_atmosphere(int frame_id) {
     /* Advance simulated day at a slower cadence to avoid visible clear-color stepping. */
@@ -881,22 +531,40 @@ static void update_atmosphere(int frame_id) {
         float bt = 1.0f - ((float)g_weather_blend_remaining / (float)PANTHEON_WEATHER_BLEND_FRAMES);
         PantheonAtmosphere a_from = pantheon_sample_timecycle(g_weather, g_day01);
         PantheonAtmosphere a_to = pantheon_sample_timecycle(w_target, g_day01);
-        g_atmosphere = pantheon_lerp_atmosphere(a_from, a_to, bt);
+        g_atmosphere_target = pantheon_lerp_atmosphere(a_from, a_to, bt);
         g_weather_blend_remaining--;
         if (g_weather_blend_remaining == 0) {
             g_weather = w_target;
         }
     } else {
         g_weather = w_target;
-        g_atmosphere = pantheon_sample_timecycle(g_weather, g_day01);
+        g_atmosphere_target = pantheon_sample_timecycle(g_weather, g_day01);
     }
 
+    /* Extra temporal smoothing: avoids stair-stepping when crossing timecycle slots. */
+    if (!g_atmosphere_inited) {
+        g_atmosphere = g_atmosphere_target;
+        g_atmosphere_inited = 1;
+    } else {
+        float a = PANTHEON_ATMO_SMOOTH_ALPHA;
+        if (a < 0.0f) {
+            a = 0.0f;
+        }
+        if (a > 1.0f) {
+            a = 1.0f;
+        }
+        g_atmosphere = pantheon_lerp_atmosphere(g_atmosphere, g_atmosphere_target, a);
+    }
     update_skydome_colors();
 }
 
 /* Flattened triangle stream for VU1 (CPU expand at boot; see flight log Day 4). */
 PantheonVertex flat_floor[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
-static PantheonVertex floor_tile_tris[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
+#if PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+/* Un-offset template: each mesh tri + same tri with swapped winding (proof branch technique). */
+static PantheonVertex floor_path1_ds_template[PANTHEON_FLOOR_PATH1_VERTS] __attribute__((aligned(16)));
+#endif
+static PantheonVertex floor_tile_tris[PANTHEON_FLOOR_PATH1_VERTS] __attribute__((aligned(16)));
 #if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 static PantheonVertex floor_follow_quad[6] __attribute__((aligned(16)));
 #endif
@@ -932,86 +600,58 @@ static void init_floor_walk_bounds(void) {
     floor_bound_z1 = maxz;
     floor_tile_span_x = floor_bound_x1 - floor_bound_x0;
     floor_tile_span_z = floor_bound_z1 - floor_bound_z0;
-    // #region agent log
-    {
-        char j[224];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"frame\":%d,\"floor_bounds\":{\"x\":[%.3f,%.3f],\"y\":[%.3f,%.3f],\"z\":[%.3f,%.3f]}}",
-            g_dbg_frame,
-            floor_bound_x0, floor_bound_x1,
-            floor_bound_y0, floor_bound_y1,
-            floor_bound_z0, floor_bound_z1
-        );
-        dbg22_log_json("triage-height", "H40", "floor.c:init_floor_walk_bounds", "floor_mesh_bounds", j);
+}
+
+/* True when player is over the authored floor AABB (XZ), after init_floor_walk_bounds(). */
+static int player_on_support_deck(void) {
+    if (floor_tile_span_x <= 0.0f || floor_tile_span_z <= 0.0f) {
+        return 1;
     }
-    // #endregion
+    const float pad = 1.5f;
+    return (player_x >= floor_bound_x0 - pad && player_x <= floor_bound_x1 + pad && player_z >= floor_bound_z0 - pad &&
+            player_z <= floor_bound_z1 + pad);
 }
 
 static void clamp_player_to_floor(void) {
 #if PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-    if (g_dbg_frame <= 3 || (g_dbg_frame % 240) == 0) {
-        char j[160];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"frame\":%d,\"mode\":\"triage_follow_player\",\"clamp_enabled\":0}",
-            g_dbg_frame
-        );
-        // #region agent log
-        dbg22_log_json("triage-run", "H34", "floor.c:clamp_player_to_floor", "player_clamp_bounds", j);
-        // #endregion
-    }
+    /* Treadmill mode: infinite support surface under player. */
+    player_y = 0.0f;
     return;
 #endif
-    /* SoftImage sandbox floor contract: player always stands on floor plane (y=0). */
-    player_y = 0.0f;
-
+    if (player_on_support_deck()) {
+        player_y = 0.0f;
+    } else {
+        player_y -= PANTHEON_PLAYER_ABYSS_FALL_STEP;
+        if (player_y < PANTHEON_PLAYER_ABYSS_Y_MIN) {
+            player_y = PANTHEON_PLAYER_ABYSS_Y_MIN;
+        }
+    }
     /* Keep world position in a huge envelope to avoid far-distance precision drift. */
     float limit_x = floor_tile_span_x * 100.0f;
     float limit_z = floor_tile_span_z * 100.0f;
-    float before_x = player_x;
-    float before_z = player_z;
-    int clamped_x = 0;
-    int clamped_z = 0;
     if (floor_tile_span_x > 0.0f) {
         if (player_x > limit_x) {
             player_x = limit_x;
-            clamped_x = 1;
         }
         if (player_x < -limit_x) {
             player_x = -limit_x;
-            clamped_x = 1;
         }
     }
     if (floor_tile_span_z > 0.0f) {
         if (player_z > limit_z) {
             player_z = limit_z;
-            clamped_z = 1;
         }
         if (player_z < -limit_z) {
             player_z = -limit_z;
-            clamped_z = 1;
         }
     }
-    if (clamped_x || clamped_z || g_dbg_frame <= 3 || (g_dbg_frame % 240) == 0) {
-        char j[288];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"frame\":%d,\"before\":[%.3f,%.3f],\"after\":[%.3f,%.3f],\"clamped\":[%d,%d],\"limit\":[%.3f,%.3f],\"span\":[%.3f,%.3f]}",
-            g_dbg_frame,
-            before_x, before_z,
-            player_x, player_z,
-            clamped_x, clamped_z,
-            limit_x, limit_z,
-            floor_tile_span_x, floor_tile_span_z
-        );
-        // #region agent log
-        dbg22_log_json("triage-run", "H34", "floor.c:clamp_player_to_floor", "player_clamp_bounds", j);
-        // #endregion
+}
+
+static inline float snap_floor_axis(float value, float tile_span) {
+    if (tile_span <= 0.0f) {
+        return 0.0f;
     }
+    return floorf(value / tile_span) * tile_span;
 }
 
 #if !USE_VU1_SKYDOME_MESH
@@ -1241,8 +881,9 @@ static void path1_build_memory_image(Path1MemoryImageBatch *batch, const Pantheo
 #else
     batch->giftag1 = (u64)GIF_REG_RGBAQ | ((u64)GIF_REG_XYZ2 << 4);
 #endif
-    batch->constants[0] = 320.0f;
-    batch->constants[1] = 224.0f;
+    /* VF05.xy = GS raster center (12.4 space origin); must match draw_convert_xyz(..., 2048, 2048, ...). */
+    batch->constants[0] = 2048.0f;
+    batch->constants[1] = 2048.0f;
     batch->constants[2] = 8388608.0f;
     batch->constants[3] = 1.0f;
     batch->constants[4] = 16.0f;
@@ -1256,25 +897,9 @@ static qword_t *path1_emit_memory_image_batch(qword_t *q, const Path1MemoryImage
         return q;
     }
     int batch_qwc = batch->vert_count * PATH1_VU_QW_PER_VERT;
+    /* XITOP-driven loop in shader.vsm decrements by 3 qwords per vertex,
+     * so ITOP must carry qword count, not vertex count. */
     int itops_val = batch_qwc;
-    if (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0) {
-        // #region agent log
-        agent_path1_payload_log("H12", "floor.c:path1_emit_memory_image_batch", batch->vert_count, GIF_PRIM_TRIANGLE | 8, itops_val, batch->constants[6]);
-        {
-            char j[192];
-            snprintf(
-                j,
-                sizeof(j),
-                "{\"frame\":%d,\"verts\":%d,\"in_qw_per_vert\":%d,\"batch_qwc\":%d,\"itop\":%d}",
-                g_dbg_frame,
-                batch->vert_count,
-                PATH1_VU_QW_PER_VERT,
-                batch_qwc,
-                itops_val);
-            dbg22_log_json("triage-run", "H36", "floor.c:path1_emit_memory_image_batch", "vif_itop_stride", j);
-        }
-        // #endregion
-    }
 
     q = add_dma_tag(q, 1, 1, 0, 0, VIF_CODE(P_VIF_UNPACK | 0x0c, 1, PATH1_VU_GIFTAG_ADDR));
     q->dw[0] = batch->giftag0;
@@ -1305,11 +930,10 @@ static packet_t *path1_vif_packet_begin(void) {
 }
 
 static void path1_vif_packet_submit(packet_t *pkt, qword_t *q_end, int frame_id, const char *tag) {
+    (void)frame_id;
+    (void)tag;
     int vif1_qw = (int)(q_end - pkt->data);
     g_last_vif1_qw = vif1_qw;
-    if (frame_id <= 3 || (frame_id % 120) == 0) {
-        agent_path1_dma_log("H17", "floor.c:path1_vif_packet_submit", tag, vif1_qw, vif1_qw);
-    }
     dma_channel_send_chain(DMA_CHANNEL_VIF1, (void *)PHYSICAL(pkt->data), vif1_qw, 0, 0);
     dma_wait_fast();
     g_vif_context ^= 1;
@@ -1320,8 +944,7 @@ void init_flat_floor() {
     int out_idx = 0;
     for (int i = 0; i < FLOOR_TRI_COUNT; i++) {
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-        /* SoftImage floor grid is authored in the mesh XY plane (Z≈0). Map to world XZ with
-         * Y up. (a,c,b) winding makes normals face +Y after XY→XZ (single-sided Path1). */
+        /* Path1 tiled floor: XY→XZ map flips handedness — (a,c,b) faces +Y for single-sided tris. */
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].a];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].c];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].b];
@@ -1335,23 +958,51 @@ void init_flat_floor() {
     // Keep geometry in a sane range while validating VU1 transforms.
     // Safe type-punning using a union to satisfy strict-aliasing rules
     PantheonColorPun color_pun;
-    /* Grass-ish base (Bliss-style); tune packed bytes if hue shifts on hardware. */
-    color_pun.i = (128 << 24) | (55 << 16) | (185 << 8) | 40;
-
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
-        float src_x = flat_floor[i].x;
-        float src_y = flat_floor[i].y;
+        flat_floor[i].x *= FLOOR_MESH_SCALE;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-        flat_floor[i].x = src_x * FLOOR_MESH_SCALE;
-        flat_floor[i].y = 0.0f;
-        flat_floor[i].z = src_y * FLOOR_MESH_SCALE;
+        {
+            float src_y = flat_floor[i].y;
+            /* Source floor arrives in XY plane; map to engine XZ world plane. */
+            flat_floor[i].y = 0.0f;
+            flat_floor[i].z = src_y * FLOOR_MESH_SCALE;
+        }
 #else
-        float src_z = flat_floor[i].z;
-        /* Mesh already in XZ footprint; scale both axes. */
-        flat_floor[i].x = src_x * FLOOR_MESH_SCALE;
-        flat_floor[i].y = 0.0f;
-        flat_floor[i].z = src_z * FLOOR_MESH_SCALE;
+        flat_floor[i].z *= FLOOR_MESH_SCALE;
+        flat_floor[i].y *= FLOOR_MESH_SCALE;
 #endif
+
+        /* Sandbox grid: major lines on integer world units (after scale), darker cell fill. */
+        {
+            float gx = flat_floor[i].x;
+            float gz = flat_floor[i].z;
+            float ax = fabsf(gx);
+            float az = fabsf(gz);
+            float fx = ax - floorf(ax);
+            float fz = az - floorf(az);
+            int on_major = (fx < 0.04f || fx > 0.96f || fz < 0.04f || fz > 0.96f) ? 1 : 0;
+            int cx = (int)floorf(ax + 0.5f);
+            int cz = (int)floorf(az + 0.5f);
+            int checker = ((cx + cz) & 1);
+            u8 r, g, b, a;
+            if (on_major) {
+                r = 72;
+                g = 200;
+                b = 92;
+                a = 255;
+            } else if (checker) {
+                r = 28;
+                g = 92;
+                b = 38;
+                a = 230;
+            } else {
+                r = 22;
+                g = 72;
+                b = 30;
+                a = 220;
+            }
+            color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
+        }
 
         // Build the exact 128-bit payload the GS RGBAQ register expects!
         flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
@@ -1363,22 +1014,42 @@ void init_flat_floor() {
         flat_floor[i].tex_q = 1.0f;
         flat_floor[i].pad_uv = 0.0f;
     }
+
+#if PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+    for (int t = 0; t < FLOOR_TRI_COUNT; t++) {
+        int b = t * 3;
+        int o = t * 6;
+        floor_path1_ds_template[o + 0] = flat_floor[b + 0];
+        floor_path1_ds_template[o + 1] = flat_floor[b + 1];
+        floor_path1_ds_template[o + 2] = flat_floor[b + 2];
+        floor_path1_ds_template[o + 3] = flat_floor[b + 0];
+        floor_path1_ds_template[o + 4] = flat_floor[b + 2];
+        floor_path1_ds_template[o + 5] = flat_floor[b + 1];
+    }
+#endif
 }
 
+#if !PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 static void build_floor_tile(float tile_off_x, float tile_off_z) {
-    for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
-        floor_tile_tris[i] = flat_floor[i];
+#if PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+    const PantheonVertex *src = floor_path1_ds_template;
+#else
+    const PantheonVertex *src = flat_floor;
+#endif
+    for (int i = 0; i < PANTHEON_FLOOR_PATH1_VERTS; i++) {
+        floor_tile_tris[i] = src[i];
         floor_tile_tris[i].x += tile_off_x;
         floor_tile_tris[i].z += tile_off_z;
     }
 }
+#endif
 
 #if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 static void build_floor_follow_quad(float center_x, float center_z) {
     float half_x = (floor_tile_span_x > 0.0f) ? (floor_tile_span_x * 0.5f) : 420.0f;
     float half_z = (floor_tile_span_z > 0.0f) ? (floor_tile_span_z * 0.5f) : 420.0f;
-    PantheonColorPun color_pun;
-    color_pun.i = (128 << 24) | (55 << 16) | (185 << 8) | 40;
+    /* Same vivid green as init_flat_floor() major grid lines (not the old muddy flat tint). */
+    float floor_rgbaq = pantheon_rgbaq_from_u8(72, 200, 92, 255);
 
     float x0 = center_x - half_x;
     float x1 = center_x + half_x;
@@ -1386,10 +1057,11 @@ static void build_floor_follow_quad(float center_x, float center_z) {
     float z1 = center_z + half_z;
     float y = 0.0f;
 
-    PantheonVertex v0 = {x0, y, z0, color_pun.f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
-    PantheonVertex v1 = {x1, y, z0, color_pun.f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
-    PantheonVertex v2 = {x0, y, z1, color_pun.f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f};
-    PantheonVertex v3 = {x1, y, z1, color_pun.f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
+    /* PantheonVertex order is x,y,z,w,r,g,b,a,s,t,tex_q,pad_uv — w must be 1.0f or RGBAQ lands in .w and color is garbage. */
+    PantheonVertex v0 = {x0, y, z0, 1.0f, floor_rgbaq, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+    PantheonVertex v1 = {x1, y, z0, 1.0f, floor_rgbaq, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
+    PantheonVertex v2 = {x0, y, z1, 1.0f, floor_rgbaq, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f};
+    PantheonVertex v3 = {x1, y, z1, 1.0f, floor_rgbaq, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
 
     floor_follow_quad[0] = v0;
     floor_follow_quad[1] = v2;
@@ -1449,103 +1121,12 @@ static qword_t *render_path1_tris(qword_t *q, MATRIX mvp, const PantheonVertex *
             continue;
         }
 
-        int input_start = PATH1_VU_INPUT_BASE;
-        int input_end = input_start + (verts_this_batch * 3) - 1;
-        int output_start = PATH1_VU_OUTPUT_BASE;
-        int output_end = output_start + (verts_this_batch * 3) - 1;
-        int wraps = (output_end > 1023) ? 1 : 0;
-        int overlaps = ((output_start <= input_end) && (output_end >= input_start)) ? 1 : 0;
-#if !PANTHEON_AGENT_TRACE
-        (void)wraps;
-        (void)overlaps;
-#endif
-
-        if (i == 0 && (g_dbg_frame <= 3 || (g_dbg_frame % 120) == 0)) {
-            int sample_count = (verts_this_batch < 8) ? verts_this_batch : 8;
-            int w_le_0_1_count = 0;
-            int ndc_oob_count = 0;
-            float w_min = 1.0e30f, w_max = -1.0e30f;
-            float ndc_x_min = 1.0e30f, ndc_x_max = -1.0e30f;
-            float ndc_y_min = 1.0e30f, ndc_y_max = -1.0e30f;
-            for (int sv = 0; sv < sample_count; sv++) {
-                const PantheonVertex *v = &mesh_tris[i + sv];
-                float cx = (mvp[0] * v->x) + (mvp[4] * v->y) + (mvp[8] * v->z) + (mvp[12] * v->w);
-                float cy = (mvp[1] * v->x) + (mvp[5] * v->y) + (mvp[9] * v->z) + (mvp[13] * v->w);
-                float cw = (mvp[3] * v->x) + (mvp[7] * v->y) + (mvp[11] * v->z) + (mvp[15] * v->w);
-                if (cw <= PANTHEON_VU_NEARZ) w_le_0_1_count++;
-                if (cw < w_min) w_min = cw;
-                if (cw > w_max) w_max = cw;
-                if (fabsf(cw) > 1.0e-6f) {
-                    float ndc_x = cx / cw;
-                    float ndc_y = cy / cw;
-                    if (ndc_x < ndc_x_min) ndc_x_min = ndc_x;
-                    if (ndc_x > ndc_x_max) ndc_x_max = ndc_x;
-                    if (ndc_y < ndc_y_min) ndc_y_min = ndc_y;
-                    if (ndc_y > ndc_y_max) ndc_y_max = ndc_y;
-                    if (fabsf(ndc_x) > 1.0f || fabsf(ndc_y) > 1.0f) {
-                        ndc_oob_count++;
-                    }
-                }
+        for (int sv = 0; sv < verts_this_batch; sv++) {
+            const PantheonVertex *v = &mesh_tris[i + sv];
+            float cw = (mvp[3] * v->x) + (mvp[7] * v->y) + (mvp[11] * v->z) + (mvp[15] * v->w);
+            if (cw <= PANTHEON_VU_NEARZ) {
+                batch_nearz_hits++;
             }
-            // #region agent log
-            agent_path1_layout_log(
-                "H2",
-                "floor.c:render_path1_tris",
-                (int)shader_qwc,
-                (int)shader_instr,
-                verts_this_batch,
-                input_start,
-                input_end,
-                output_start,
-                output_end,
-                wraps,
-                overlaps
-            );
-            agent_path1_contract_log(
-                "H3",
-                "floor.c:render_path1_tris",
-                PATH1_VU_GIFTAG_ADDR,
-                PATH1_VU_OUTPUT_BASE,
-                PATH1_VU_XGKICK_ADDR,
-                verts_this_batch
-            );
-            agent_path1_clip_log(
-                "H5",
-                "floor.c:render_path1_tris",
-                sample_count,
-                w_le_0_1_count,
-                w_min,
-                w_max,
-                ndc_x_min,
-                ndc_x_max,
-                ndc_y_min,
-                ndc_y_max
-            );
-            {
-                char j[256];
-                snprintf(
-                    j,
-                    sizeof(j),
-                    "{\"frame\":%d,\"mesh\":\"%s\",\"sample_count\":%d,\"w_le_nearz\":%d,\"ndc_oob\":%d,\"ndc_x\":[%.3f,%.3f],\"ndc_y\":[%.3f,%.3f],\"w_min\":%.5f,\"w_max\":%.5f,\"nearz\":%.3f}",
-                    g_dbg_frame,
-                    g_path1_mesh_stage,
-                    sample_count,
-                    w_le_0_1_count,
-                    ndc_oob_count,
-                    ndc_x_min,
-                    ndc_x_max,
-                    ndc_y_min,
-                    ndc_y_max,
-                    w_min,
-                    w_max,
-                    PANTHEON_VU_NEARZ
-                );
-                // #region agent log
-                dbg22_log_json("triage-run", "H1", "floor.c:render_path1_tris", "clipspace_w_sample", j);
-                // #endregion
-            }
-            // #endregion
-            batch_nearz_hits = w_le_0_1_count;
         }
 
         path1_build_memory_image(&batch, &mesh_tris[i], verts_this_batch);
@@ -1566,13 +1147,211 @@ static void update_skydome_colors(void) {
 }
 
 qword_t *render_floor_path1_count(qword_t *q, MATRIX mvp, int total_verts) {
+#if PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+    return render_path1_tris(q, mvp, floor_tile_tris, total_verts, PANTHEON_FLOOR_PATH1_VERTS);
+#else
     return render_path1_tris(q, mvp, flat_floor, total_verts, FLOOR_TRI_COUNT * 3);
+#endif
 }
 
-qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z) {
+static int pantheon_boot_reveal_active(int frame_id) {
+#if PANTHEON_BOOT_REVEAL_ENABLE
+    return frame_id <= PANTHEON_BOOT_REVEAL_TOTAL_FRAMES;
+#else
+    (void)frame_id;
+    return 0;
+#endif
+}
+
+static u8 pantheon_boot_reveal_luma(int frame_id) {
+#if PANTHEON_BOOT_REVEAL_ENABLE
+    int half = PANTHEON_BOOT_REVEAL_HALF_FRAMES;
+    int hold = PANTHEON_BOOT_REVEAL_HOLD_FRAMES;
+    int f = frame_id;
+    if (f <= 0) {
+        return 0u;
+    }
+    if (f <= half) {
+        int lum = f * PANTHEON_BOOT_REVEAL_STEP;
+        if (lum > 255) {
+            lum = 255;
+        }
+        return (u8)lum;
+    }
+    if (f <= (half + hold)) {
+        return 255u;
+    }
+    if (f <= (half + hold + half)) {
+        int down = f - (half + hold);
+        int lum = 255 - (down * PANTHEON_BOOT_REVEAL_STEP);
+        if (lum < 0) {
+            lum = 0;
+        }
+        return (u8)lum;
+    }
+    return 0u;
+#else
+    (void)frame_id;
+    return 0u;
+#endif
+}
+
+static float pantheon_smoothstep01(float t) {
+    if (t < 0.0f) {
+        t = 0.0f;
+    }
+    if (t > 1.0f) {
+        t = 1.0f;
+    }
+    return t * t * (3.0f - (2.0f * t));
+}
+
+static void pantheon_boot_glyph_rows(char c, u8 rows[7]) {
+    rows[0] = 0x00; rows[1] = 0x00; rows[2] = 0x00; rows[3] = 0x00;
+    rows[4] = 0x00; rows[5] = 0x00; rows[6] = 0x00;
+    switch (c) {
+        case '4': rows[0]=0x11; rows[1]=0x11; rows[2]=0x1F; rows[3]=0x01; rows[4]=0x01; break;
+        case '9': rows[0]=0x0E; rows[1]=0x11; rows[2]=0x0F; rows[3]=0x01; rows[4]=0x0E; break;
+        case 'B': rows[0]=0x1E; rows[1]=0x11; rows[2]=0x1E; rows[3]=0x11; rows[4]=0x11; rows[5]=0x1E; break;
+        case 'D': rows[0]=0x1E; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x1E; break;
+        case 'I': rows[0]=0x1F; rows[1]=0x04; rows[2]=0x04; rows[3]=0x04; rows[4]=0x04; rows[5]=0x1F; break;
+        case 'L': rows[0]=0x10; rows[1]=0x10; rows[2]=0x10; rows[3]=0x10; rows[4]=0x10; rows[5]=0x1F; break;
+        case 'O': rows[0]=0x0E; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x0E; break;
+        case 'S': rows[0]=0x0F; rows[1]=0x10; rows[2]=0x0E; rows[3]=0x01; rows[4]=0x01; rows[5]=0x1E; break;
+        case 'T': rows[0]=0x1F; rows[1]=0x04; rows[2]=0x04; rows[3]=0x04; rows[4]=0x04; rows[5]=0x04; break;
+        case 'U': rows[0]=0x11; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x0E; break;
+        case 'Y': rows[0]=0x11; rows[1]=0x11; rows[2]=0x0A; rows[3]=0x04; rows[4]=0x04; rows[5]=0x04; break;
+        default: break;
+    }
+}
+
+static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
+    static const char *title = "94BILLY STUDIOS";
+    int scale = PANTHEON_BOOT_TITLE_SCALE;
+    const int advance = 6;
+    const int space_advance = 3;
+    const int glyph_h = 7;
+    const int z = 1;
+    rect_t rect;
+    int min_u_x = 9999;
+    int max_u_x = -9999;
+    int min_u_y = 9999;
+    int max_u_y = -9999;
+    int ink_found = 0;
+
+    if (scale < 2) {
+        scale = 2;
+    }
+    if (scale > 4) {
+        scale = 4;
+    }
+    int cursor_units = 0;
+
+    /* Measure actual ink bounds so center reflects rendered pixels, not character advance. */
+    for (int gi = 0; title[gi] != '\0'; gi++) {
+        char c = title[gi];
+        if (c == ' ') {
+            cursor_units += space_advance;
+            continue;
+        }
+        u8 rows[7];
+        pantheon_boot_glyph_rows(c, rows);
+        for (int ry = 0; ry < glyph_h; ry++) {
+            u8 bits = rows[ry];
+            for (int rx = 0; rx < 5; rx++) {
+                if ((bits & (1u << (4 - rx))) == 0) {
+                    continue;
+                }
+                int ux0 = cursor_units + rx;
+                int ux1 = ux0 + 1;
+                int uy0 = ry;
+                int uy1 = uy0 + 1;
+                if (ux0 < min_u_x) min_u_x = ux0;
+                if (ux1 > max_u_x) max_u_x = ux1;
+                if (uy0 < min_u_y) min_u_y = uy0;
+                if (uy1 > max_u_y) max_u_y = uy1;
+                ink_found = 1;
+            }
+        }
+        cursor_units += advance;
+    }
+
+    if (!ink_found) {
+        return q;
+    }
+
+    int width_units = max_u_x - min_u_x;
+    int height_units = max_u_y - min_u_y;
+    while (scale > 2 && ((width_units * scale) > 592 || (height_units * scale) > 128)) {
+        scale--;
+    }
+
+    int width_px = width_units * scale;
+    int height_px = height_units * scale;
+    int start_x = (640 - width_px) / 2;
+    int start_y = (448 - height_px) / 2;
+    {
+        float intro_t = 0.0f;
+        int motion_frames = PANTHEON_BOOT_REVEAL_HALF_FRAMES + 36;
+        if (frame_id > 0) {
+            intro_t = (float)frame_id / (float)motion_frames;
+        }
+        intro_t = pantheon_smoothstep01(intro_t);
+        /* Gentle vertical settle for a more cinematic boot card feel. */
+        start_y += (int)((1.0f - intro_t) * 20.0f);
+    }
+
+    rect.color.r = 0x00;
+    rect.color.g = 0x00;
+    rect.color.b = 0x00;
+    rect.color.a = 0xFF;
+    rect.color.q = 1.0f;
+
+    cursor_units = 0;
+    for (int gi = 0; title[gi] != '\0'; gi++) {
+        char c = title[gi];
+        if (c == ' ') {
+            cursor_units += space_advance;
+            continue;
+        }
+        u8 rows[7];
+        pantheon_boot_glyph_rows(c, rows);
+        for (int ry = 0; ry < 7; ry++) {
+            u8 bits = rows[ry];
+            for (int rx = 0; rx < 5; rx++) {
+                if ((bits & (1u << (4 - rx))) == 0) {
+                    continue;
+                }
+                int px = start_x + ((cursor_units + rx - min_u_x) * scale);
+                int py = start_y + ((ry - min_u_y) * scale);
+                rect.v0.x = (float)px;
+                rect.v0.y = (float)py;
+                rect.v0.z = z;
+                rect.v1.x = (float)(px + scale);
+                rect.v1.y = (float)(py + scale);
+                rect.v1.z = z;
+                q = draw_rect_filled(q, 0, &rect);
+            }
+        }
+        cursor_units += advance;
+    }
+
+    return q;
+}
+
+qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z, int frame_id) {
+    u8 clear_r = g_atmosphere.sky_horizon.r;
+    u8 clear_g = g_atmosphere.sky_horizon.g;
+    u8 clear_b = g_atmosphere.sky_horizon.b;
+    if (pantheon_boot_reveal_active(frame_id)) {
+        u8 luma = pantheon_boot_reveal_luma(frame_id);
+        clear_r = luma;
+        clear_g = luma;
+        clear_b = luma;
+    }
     q = draw_setup_environment(q, 0, &frame[ctx], z);
     q = draw_primitive_xyoffset(q, 0, 2048 - 320, 2048 - 224);
-    /* Clear to active horizon RGB (must match skydome rim + apply_sky_color source colors). */
+    /* Optional boot reveal phase: monochrome luma ramp (black->white->black), then normal sky clear color. */
     q = draw_clear(
         q,
         0,
@@ -1580,9 +1359,9 @@ qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuff
         2048.0f - 224.0f,
         640.0f,
         448.0f,
-        g_atmosphere.sky_horizon.r,
-        g_atmosphere.sky_horizon.g,
-        g_atmosphere.sky_horizon.b);
+        clear_r,
+        clear_g,
+        clear_b);
     return q;
 }
 
@@ -1650,7 +1429,7 @@ static qword_t *render_cpu_exported_floor(qword_t *q, MATRIX world_view, MATRIX 
     if (!floor_arrays_init) {
         for (int i = 0; i < FLOOR_VERT_COUNT; i++) {
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-            /* Match Path1 init_flat_floor(): SoftImage grid in XY → world XZ, Y=0. */
+            /* Match Path1 floor swizzle so hybrid profile doesn't diverge from VU1 floor. */
             floor_positions[i][0] = floor_vertices[i].x * FLOOR_MESH_SCALE;
             floor_positions[i][1] = 0.0f;
             floor_positions[i][2] = floor_vertices[i].y * FLOOR_MESH_SCALE;
@@ -1699,7 +1478,7 @@ static qword_t *render_cpu_exported_floor(qword_t *q, MATRIX world_view, MATRIX 
         int ib = floor_indices[i].b;
         int ic = floor_indices[i].c;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-        /* Same (a,c,b) winding as Path1 floor for +Y-facing tris. */
+        /* Keep CPU overlay winding aligned with Path1 floor winding. */
         q->dw[0] = col[ia].rgbaq; q->dw[1] = xyz[ia].xyz; q++;
         q->dw[0] = col[ic].rgbaq; q->dw[1] = xyz[ic].xyz; q++;
         q->dw[0] = col[ib].rgbaq; q->dw[1] = xyz[ib].xyz; q++;
@@ -1730,36 +1509,16 @@ int main(int argc, char *argv[]) {
     }
 
     SifInitRpc(0);
-    // #region agent log
-    agent_path1_boot_log("H19", "floor.c:main", "entered_main_after_sifinit");
-    // #endregion
 
     int sio2_res = SifLoadModule("rom0:SIO2MAN", 0, NULL);
     int padman_res = SifLoadModule("rom0:PADMAN", 0, NULL);
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", (sio2_res >= 0 && padman_res >= 0) ? "pad_modules_loaded" : "pad_modules_failed");
-    // #endregion
     if (sio2_res < 0 || padman_res < 0) {
         return 1;
     }
 
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "before_pad_init");
-    // #endregion
     padInit(0);
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_pad_init");
-    // #endregion
     int pad_open_res = padPortOpen(0, 0, padBuf);
     pad_port_open_ok = (pad_open_res != 0);
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_pad_port_open");
-    {
-        char j[160];
-        snprintf(j, sizeof(j), "{\"sio2\":%d,\"padman\":%d,\"pad_open\":%d,\"pad_ready\":%d}", sio2_res, padman_res, pad_open_res, pad_ready);
-        agent_dbg22_log("pre-fix", "H23", "floor.c:main", "pad_boot_state", j);
-    }
-    // #endregion
 
     framebuffer_t frame[2];
     zbuffer_t z;
@@ -1781,28 +1540,16 @@ int main(int argc, char *argv[]) {
     }
 
     graph_initialize(frame[0].address, frame[0].width, frame[0].height, frame[0].psm, 0, 0);
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_graph_initialize");
-    // #endregion
     graph_set_framebuffer(0, frame[0].address, frame[0].width, frame[0].psm, 0, 0);
     graph_enable_output();
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_graph_enable_output");
-    // #endregion
 
     dma_channel_initialize(DMA_CHANNEL_GIF, NULL, 0);
     dma_channel_initialize(DMA_CHANNEL_VIF1, NULL, 0);
     /* Intermittent Mode Transfer: Path 3 texture uploads yield to Path 1 every 8 QW (verify vs SCE). */
     GIF_REG_MODE |= (1u << 2);
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_dma_init");
-    // #endregion
 
     packets[0] = packet_init(4000, PACKET_NORMAL);
     packets[1] = packet_init(4000, PACKET_NORMAL);
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_packet_init");
-    // #endregion
 
     {
         texbuffer_t pantheon_host_tex;
@@ -1837,14 +1584,15 @@ int main(int argc, char *argv[]) {
     init_flat_floor();
     init_floor_walk_bounds();
     MATRIX world_view, view_screen, mvp;
+#if PANTHEON_VISUAL_PRESET != 1
+    MATRIX sky_local_world;
+#endif
+    MATRIX sky_local_screen;
     /* Sample atmosphere before skydome vertex colors so apply_sky_color sees valid g_atmosphere. */
     g_atmosphere = pantheon_sample_timecycle(g_weather, g_day01);
 #if USE_VU1_SKYDOME_MESH
     init_flat_skydome();
 #endif
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "after_asset_init");
-    // #endregion
 
     update_atmosphere(0);
     create_view_screen(
@@ -1856,72 +1604,33 @@ int main(int argc, char *argv[]) {
         PANTHEON_VIEW_FRUSTUM_BT,
         PANTHEON_VIEW_NEAR,
         g_atmosphere.far_clip);
-    printf("pantheon strict_profile=%d overlay=%d tile_radius=%d tile_budget=%d\n",
+    printf("pantheon visual_preset=%d strict_profile=%d overlay=%d tile_radius=%d tile_budget=%d\n",
+           PANTHEON_VISUAL_PRESET,
            PANTHEON_RENDER_PROFILE, PATH1_AB_CPU_OVERLAY, PANTHEON_TILE_RADIUS, PANTHEON_TILE_SUBMIT_BUDGET);
-    printf("pantheon triage static_cam=%d sky=%d view_near=%.2f vu_nearz=%.2f envelope=%d\n",
+    printf("pantheon triage static_cam=%d fpv=%d eye_h=%.1f sky=%d view_near=%.2f vu_nearz=%.2f envelope=%d\n",
            PANTHEON_TRIAGE_STATIC_CAMERA,
+           PANTHEON_TRIAGE_FIRST_PERSON,
+           PANTHEON_FPV_EYE_HEIGHT,
            PANTHEON_TRIAGE_ENABLE_SKYDOME,
            PANTHEON_VIEW_NEAR,
            PANTHEON_VU_NEARZ,
            PANTHEON_CAMERA_ENVELOPE_HARDEN);
-    printf("pantheon skydome mesh path=%d tris=%d\n", USE_VU1_SKYDOME_MESH, SKYDOME_TRI_COUNT);
-    {
-        char j[320];
-        snprintf(
-            j,
-            sizeof(j),
-            "{\"static_cam\":%d,\"sky\":%d,\"view_near\":%.3f,\"vu_nearz\":%.3f,\"envelope\":%d,\"yaw_guard\":%d,\"pitch_flip\":%d,\"frustum_lr\":%.1f,\"frustum_bt\":%.1f}",
-            PANTHEON_TRIAGE_STATIC_CAMERA,
-            PANTHEON_TRIAGE_ENABLE_SKYDOME,
-            PANTHEON_VIEW_NEAR,
-            PANTHEON_VU_NEARZ,
-            PANTHEON_CAMERA_ENVELOPE_HARDEN,
-            PANTHEON_TRIAGE_WORLDVIEW_YAW_GUARD,
-            PANTHEON_TRIAGE_PITCH_SIGN_FLIP,
-            PANTHEON_VIEW_FRUSTUM_LR,
-            PANTHEON_VIEW_FRUSTUM_BT
-        );
-        // #region agent log
-        dbg22_log_json("triage-run", "H4", "floor.c:main", "triage_config", j);
-        // #endregion
-    }
-    // #region agent log
-    agent_path1_boot_log("H20", "floor.c:main", "before_main_loop");
-    // #endregion
 
     while (1) {
         static int dbg_frame = 0;
         dbg_frame++;
-        g_dbg_frame = dbg_frame;
         update_atmosphere(dbg_frame);
         packet_reset(packets[context]);
         qword_t *q = packets[context]->data;
+        int boot_reveal = pantheon_boot_reveal_active(dbg_frame);
         const PantheonRenderJob render_jobs[] = {
             {PANTHEON_RENDER_JOB_CLEAR, 1},
-            {PANTHEON_RENDER_JOB_CPU_DEBUG, PATH1_AB_CPU_OVERLAY},
-            {PANTHEON_RENDER_JOB_PATH1_SKY, (RENDER_STAGE >= 2) && PANTHEON_TRIAGE_ENABLE_SKYDOME},
-            {PANTHEON_RENDER_JOB_PATH1_FLOOR, RENDER_STAGE >= 2}
+            {PANTHEON_RENDER_JOB_CPU_DEBUG, PATH1_AB_CPU_OVERLAY && !boot_reveal},
+            {PANTHEON_RENDER_JOB_PATH1_SKY,
+             (RENDER_STAGE >= 2) && !boot_reveal && PANTHEON_TRIAGE_ENABLE_SKYDOME && !PANTHEON_TRIAGE_DISABLE_SKY_PASS},
+            {PANTHEON_RENDER_JOB_PATH1_FLOOR, (RENDER_STAGE >= 2) && !boot_reveal}
         };
 
-        if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-            int pad_state = padGetState(0, 0);
-            char j[256];
-            snprintf(
-                j,
-                sizeof(j),
-                "{\"frame\":%d,\"pad_ready\":%d,\"pad_state\":%d,\"render_stage\":%d,\"cam\":[%.3f,%.3f,%.3f],\"rot\":[%.4f,%.4f]}",
-                dbg_frame,
-                pad_ready,
-                pad_state,
-                RENDER_STAGE,
-                camera_position[0], camera_position[1], camera_position[2],
-                camera_rotation[0], camera_rotation[1]
-            );
-            // #region agent log
-            agent_dbg22_log("pre-fix", "H24", "floor.c:main_loop", "frame_input_camera_state", j);
-            dbg22_log_json("triage-run", "H2", "floor.c:main_loop", "camera_pose_sample", j);
-            // #endregion
-        }
 #if PANTHEON_MIN_TELEMETRY
         if ((dbg_frame % 300) == 0) {
             printf("pantheon frame=%d overlay=%d cam=(%.2f,%.2f,%.2f)\n",
@@ -1932,17 +1641,25 @@ int main(int argc, char *argv[]) {
 #endif
 
         try_finish_pad_init();
-#if !PANTHEON_TRIAGE_STATIC_CAMERA
+        /* Ground invariant: keep Y anchored on the deck before input integration. */
+        if (player_on_support_deck()) {
+            player_y = 0.0f;
+        }
         read_pad_analog();
+        /* Ground invariant: while supported by the floor deck, lock vertical position. */
+        if (player_on_support_deck()) {
+            player_y = 0.0f;
+        }
+#if !PANTHEON_TRIAGE_STATIC_CAMERA
         update_camera_orbit();
 #else
-        /* Center sandbox camera over the authored 6x6 floor grid. */
-        camera_position[0] = g_floor_center_x;
-        camera_position[1] = 260.0f;
-        camera_position[2] = g_floor_center_z;
+        /* Fixed eye; use same pitch/yaw convention as update_camera_orbit (never +cam_pitch here). */
+        camera_position[0] = 0.0f;
+        camera_position[1] = 63.0f;
+        camera_position[2] = 101.0f;
         camera_position[3] = 1.0f;
-        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? 1.15f : -1.15f;
-        camera_rotation[1] = 0.0f;
+        camera_rotation[0] = PANTHEON_TRIAGE_PITCH_SIGN_FLIP ? cam_pitch : -cam_pitch;
+        camera_rotation[1] = cam_yaw;
         camera_rotation[2] = 0.0f;
         camera_rotation[3] = 1.0f;
 #endif
@@ -1965,79 +1682,36 @@ int main(int argc, char *argv[]) {
             create_world_view(world_view, camera_position, world_view_rotation);
         }
         matrix_multiply(mvp, world_view, view_screen);
-        if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-            float cx = (mvp[0] * g_floor_center_x) + (mvp[4] * 0.0f) + (mvp[8] * g_floor_center_z) + mvp[12];
-            float cy = (mvp[1] * g_floor_center_x) + (mvp[5] * 0.0f) + (mvp[9] * g_floor_center_z) + mvp[13];
-            float cw = (mvp[3] * g_floor_center_x) + (mvp[7] * 0.0f) + (mvp[11] * g_floor_center_z) + mvp[15];
-            float ndc_x = (fabsf(cw) > 1.0e-6f) ? (cx / cw) : 9999.0f;
-            float ndc_y = (fabsf(cw) > 1.0e-6f) ? (cy / cw) : 9999.0f;
-            char j[256];
-            snprintf(
-                j,
-                sizeof(j),
-                "{\"frame\":%d,\"floor_center\":[%.2f,%.2f],\"cw\":%.4f,\"ndc\":[%.3f,%.3f],\"cam\":[%.2f,%.2f,%.2f]}",
-                dbg_frame,
-                g_floor_center_x, g_floor_center_z,
-                cw, ndc_x, ndc_y,
-                camera_position[0], camera_position[1], camera_position[2]
-            );
-            // #region agent log
-            dbg22_log_json("triage-run", "H6", "floor.c:main_loop", "floor_center_view", j);
-            {
-                char j2[224];
-                snprintf(
-                    j2,
-                    sizeof(j2),
-                    "{\"frame\":%d,\"cam_y\":%.3f,\"player_y\":%.3f,\"cam_minus_player_y\":%.3f,\"cam_dist\":%.3f,\"pitch\":%.4f,\"yaw_guard\":%d,\"view_lrbt\":[-%.1f,%.1f,-%.1f,%.1f],\"near_far\":[%.3f,%.1f]}",
-                    dbg_frame,
-                    camera_position[1],
-                    player_y,
-                    camera_position[1] - player_y,
-                    CAM_DIST,
-                    cam_pitch,
-                    PANTHEON_TRIAGE_WORLDVIEW_YAW_GUARD,
-                    PANTHEON_VIEW_FRUSTUM_LR,
-                    PANTHEON_VIEW_FRUSTUM_LR,
-                    PANTHEON_VIEW_FRUSTUM_BT,
-                    PANTHEON_VIEW_FRUSTUM_BT,
-                    PANTHEON_VIEW_NEAR,
-                    g_atmosphere.far_clip
-                );
-                dbg22_log_json("triage-height", "H42", "floor.c:main_loop", "camera_view_envelope", j2);
-            }
-            // #endregion
+#if PANTHEON_VISUAL_PRESET == 1
+        /* Apr 30 stable: skydome used world mvp (dome at origin, no player-relative lift). */
+        memcpy(sky_local_screen, mvp, sizeof(MATRIX));
+#else
+        {
+            VECTOR sky_pos = {
+                player_x,
+                player_y + PANTHEON_SKYDOME_PLAYER_Y_LIFT,
+                player_z,
+                1.0f
+            };
+            VECTOR sky_rot = {0.0f, 0.0f, 0.0f, 1.0f};
+            create_local_world(sky_local_world, sky_pos, sky_rot);
+            create_local_screen(sky_local_screen, sky_local_world, world_view, view_screen);
         }
-        if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-            // #region agent log
-            agent_path1_phase_log("H16", "floor.c:main_loop", "frame_enter", dbg_frame);
-            agent_path1_camera_log("H18", "floor.c:main_loop", camera_position[0], camera_position[1], camera_position[2], camera_rotation[0], camera_rotation[1]);
-            // #endregion
-        }
+#endif
 
         if (render_jobs[0].enabled) {
-            q = render_clear_and_setup(q, context, frame, &z);
+            q = render_clear_and_setup(q, context, frame, &z, dbg_frame);
+            if (boot_reveal) {
+                q = render_boot_title_overlay(q, dbg_frame);
+            }
         }
 
-        int cpu_qw_before = (int)(q - packets[context]->data);
         if (render_jobs[1].enabled) {
             q = render_cpu_probe(q, world_view, view_screen);
             q = render_cpu_exported_floor(q, world_view, view_screen);
         }
-        if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-            int cpu_qw_after = (int)(q - packets[context]->data);
-            char j[128];
-            snprintf(j, sizeof(j), "{\"frame\":%d,\"cpu_qw_added\":%d}", dbg_frame, cpu_qw_after - cpu_qw_before);
-            // #region agent log
-            agent_dbg22_log("pre-fix", "H25", "floor.c:main_loop", "cpu_path_qw_usage", j);
-            // #endregion
-        }
 
         FlushCache(0);
-        if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-            // #region agent log
-            agent_path1_phase_log("H16", "floor.c:main_loop", "gif_send", dbg_frame);
-            // #endregion
-        }
         {
             int gif_qw = (int)(q - packets[context]->data);
             dma_channel_send_normal(DMA_CHANNEL_GIF, (void *)PHYSICAL(packets[context]->data), gif_qw, 0, 0);
@@ -2051,100 +1725,28 @@ int main(int argc, char *argv[]) {
                 packet_t *vif_pkt = path1_vif_packet_begin();
                 q = vif_pkt->data;
                 g_path1_mesh_stage = "skydome";
-                q = render_path1_tris(q, mvp, flat_skydome, SKYDOME_TRI_COUNT * 3, SKYDOME_TRI_COUNT * 3);
+                q = render_path1_tris(q, sky_local_screen, flat_skydome, SKYDOME_TRI_COUNT * 3, SKYDOME_TRI_COUNT * 3);
                 q = add_dma_tag(q, 0, 7, 0, 0, 0);
                 FlushCache(0);
-                if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                    int vif1_qw = (int)(q - vif_pkt->data);
-                    agent_path1_phase_log("H7", "floor.c:main_loop", "skydome_send", dbg_frame);
-                    agent_path1_packet_log("H13", "floor.c:main_loop", "skydome_send", g_vif_context, (int)vif_pkt->qwords, vif1_qw, 0);
-                    (void)vif1_qw;
-                }
                 path1_vif_packet_submit(vif_pkt, q, dbg_frame, "skydome");
             }
         #endif
             if (render_jobs[3].enabled) {
-                int path1_vert_count = FLOOR_TRI_COUNT * 3;
+                int path1_vert_count = PANTHEON_FLOOR_PATH1_VERTS;
                 int tile_submits = 0;
 #if PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
                 {
                     packet_t *vif_pkt = path1_vif_packet_begin();
                     q = vif_pkt->data;
-                    /* Triage: keep one floor tile centered on player to validate camera/placement without world paging noise. */
-                    g_floor_center_x = player_x;
-                    g_floor_center_z = player_z;
+                    /* Treadmill behavior: snap follow patch to fixed gameplay tile boundaries. */
+                    g_floor_center_x = snap_floor_axis(player_x, PANTHEON_FLOOR_FOLLOW_TILE_SIZE);
+                    g_floor_center_z = snap_floor_axis(player_z, PANTHEON_FLOOR_FOLLOW_TILE_SIZE);
 #if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
-                    build_floor_follow_quad(player_x, player_z);
+                    build_floor_follow_quad(g_floor_center_x, g_floor_center_z);
                     path1_vert_count = 6;
 #else
-                    build_floor_tile(player_x, player_z);
+                    build_floor_tile(g_floor_center_x, g_floor_center_z);
 #endif
-                    if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                        const PantheonVertex *sample_mesh = floor_tile_tris;
-                        int tile_n = FLOOR_TRI_COUNT * 3;
-#if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
-                        sample_mesh = floor_follow_quad;
-                        tile_n = 6;
-#endif
-                        float tile_y_min = sample_mesh[0].y;
-                        float tile_y_max = sample_mesh[0].y;
-                        float ndc_x_min = 9999.0f;
-                        float ndc_x_max = -9999.0f;
-                        float ndc_y_min = 9999.0f;
-                        float ndc_y_max = -9999.0f;
-                        int ndc_valid = 0;
-                        for (int vi = 1; vi < tile_n; vi++) {
-                            float vy = sample_mesh[vi].y;
-                            if (vy < tile_y_min) tile_y_min = vy;
-                            if (vy > tile_y_max) tile_y_max = vy;
-                            if ((vi % 32) == 0) {
-                                float vx = sample_mesh[vi].x;
-                                float vz = sample_mesh[vi].z;
-                                float cx = (mvp[0] * vx) + (mvp[4] * vy) + (mvp[8] * vz) + mvp[12];
-                                float cy = (mvp[1] * vx) + (mvp[5] * vy) + (mvp[9] * vz) + mvp[13];
-                                float cw = (mvp[3] * vx) + (mvp[7] * vy) + (mvp[11] * vz) + mvp[15];
-                                if (fabsf(cw) > 1.0e-6f) {
-                                    float nx = cx / cw;
-                                    float ny = cy / cw;
-                                    if (nx < ndc_x_min) ndc_x_min = nx;
-                                    if (nx > ndc_x_max) ndc_x_max = nx;
-                                    if (ny < ndc_y_min) ndc_y_min = ny;
-                                    if (ny > ndc_y_max) ndc_y_max = ny;
-                                    ndc_valid++;
-                                }
-                            }
-                        }
-                        char j[352];
-                        snprintf(
-                            j,
-                            sizeof(j),
-                            "{\"frame\":%d,\"tile_center\":[%.3f,%.3f],\"player_xz\":[%.3f,%.3f],\"cam_xz\":[%.3f,%.3f],\"tile_y\":[%.3f,%.3f],\"player_y\":%.3f,\"cam_y\":%.3f,\"yaw_pitch\":[%.4f,%.4f]}",
-                            dbg_frame,
-                            g_floor_center_x, g_floor_center_z,
-                            player_x, player_z,
-                            camera_position[0], camera_position[2],
-                            tile_y_min, tile_y_max,
-                            player_y, camera_position[1],
-                            cam_yaw, cam_pitch
-                        );
-                        // #region agent log
-                        dbg22_log_json("triage-run", "H33", "floor.c:main_loop", "floor_submit_center", j);
-                        dbg22_log_json("triage-height", "H41", "floor.c:main_loop", "floor_tile_height_sample", j);
-                        if (ndc_valid > 0) {
-                            char j_cov[192];
-                            snprintf(
-                                j_cov,
-                                sizeof(j_cov),
-                                "{\"frame\":%d,\"ndc_x\":[%.3f,%.3f],\"ndc_y\":[%.3f,%.3f],\"samples\":%d}",
-                                dbg_frame,
-                                ndc_x_min, ndc_x_max,
-                                ndc_y_min, ndc_y_max,
-                                ndc_valid
-                            );
-                            dbg22_log_json("triage-height", "H43", "floor.c:main_loop", "floor_ndc_coverage", j_cov);
-                        }
-                        // #endregion
-                    }
                     g_path1_mesh_stage = "floor_player";
 #if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
                     q = render_path1_tris(q, mvp, floor_follow_quad, path1_vert_count, path1_vert_count);
@@ -2189,21 +1791,14 @@ int main(int argc, char *argv[]) {
                     g_floor_center_x = 0.0f;
                     g_floor_center_z = 0.0f;
                     g_path1_mesh_stage = "floor_single";
+#if PANTHEON_FLOOR_PATH1_DOUBLE_SIDED
+                    build_floor_tile(0.0f, 0.0f);
+#endif
                     q = render_floor_path1_count(q, mvp, path1_vert_count);
                     q = add_dma_tag(q, 0, 7, 0, 0, 0);
                     FlushCache(0);
-                    if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                        // #region agent log
-                        agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_begin", dbg_frame);
-                        // #endregion
-                    }
                     path1_vif_packet_submit(vif_pkt, q, dbg_frame, "floor_single");
                     tile_submits = 1;
-                    if (dbg_frame <= 3 || (dbg_frame % 120) == 0) {
-                        // #region agent log
-                        agent_path1_phase_log("H17", "floor.c:main_loop", "vif1_wait_end", dbg_frame);
-                        // #endregion
-                    }
                 }
 #endif
                 g_last_tile_submits = tile_submits;
@@ -2219,23 +1814,6 @@ int main(int argc, char *argv[]) {
                            camera_rotation[0], camera_rotation[1],
                            PANTHEON_VIEW_NEAR,
                            PANTHEON_VU_NEARZ);
-                    {
-                        char j[256];
-                        snprintf(
-                            j,
-                            sizeof(j),
-                            "{\"frame\":%d,\"vif_qw\":%d,\"nearz_hits\":%d,\"tiles\":%d,\"cam\":[%.2f,%.2f,%.2f],\"rot\":[%.3f,%.3f]}",
-                            dbg_frame,
-                            g_last_vif1_qw,
-                            g_last_nearz_hits,
-                            g_last_tile_submits,
-                            camera_position[0], camera_position[1], camera_position[2],
-                            camera_rotation[0], camera_rotation[1]
-                        );
-                        // #region agent log
-                        dbg22_log_json("triage-run", "H3", "floor.c:main_loop", "path1_perf_sample", j);
-                        // #endregion
-                    }
                 }
                 #endif
             }
