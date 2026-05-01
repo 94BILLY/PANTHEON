@@ -157,7 +157,8 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
  * 0 = stable hybrid baseline (CPU overlay + Path1)
  * 1 = strict Path1 validation (no CPU overlay) */
 #ifndef PANTHEON_RENDER_PROFILE
-#define PANTHEON_RENDER_PROFILE 1
+/* 0 = hybrid (CPU GIF floor + Path1): reliable floor during intro + matches buttery baseline. */
+#define PANTHEON_RENDER_PROFILE 0
 #endif
 #if PANTHEON_RENDER_PROFILE == 1
 #define PATH1_AB_CPU_OVERLAY 0
@@ -179,8 +180,8 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-/* 0 = world-anchored tiled floor (recommended). 1 = debug single tile under player. */
-#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 1
+/* 0 = world-anchored tiled floor (recommended). 1 = follow patch (can drift vs authored mesh span). */
+#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 0
 #endif
 #ifndef PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 #define PANTHEON_TRIAGE_FORCE_FLAT_QUAD 0
@@ -1301,11 +1302,16 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
         start_y += (int)((1.0f - intro_t) * 20.0f);
     }
 
-    rect.color.r = 0x00;
-    rect.color.g = 0x00;
-    rect.color.b = 0x00;
-    rect.color.a = 0xFF;
-    rect.color.q = 1.0f;
+    /* Contrast with monochrome boot ramp: dark bg -> light glyphs, peak white -> dark glyphs. */
+    {
+        u8 lum = pantheon_boot_reveal_luma(frame_id);
+        u8 ink = (lum < 200u) ? 0xFFu : 0x00u;
+        rect.color.r = ink;
+        rect.color.g = ink;
+        rect.color.b = ink;
+        rect.color.a = 0xFF;
+        rect.color.q = 1.0f;
+    }
 
     cursor_units = 0;
     for (int gi = 0; title[gi] != '\0'; gi++) {
