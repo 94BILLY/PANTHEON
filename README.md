@@ -1,122 +1,42 @@
 # Pantheon
 
-Pantheon is a PlayStation 2 engine project focused on **Path 1 rendering**: the Emotion Engine (EE) orchestrates DMA/VIF1 work while VU1 executes transform and kick logic directly to the GS.
+**PANTHEON** is a deterministic data-orchestration and spatial rendering matrix engineered for highly asymmetric, heterogeneous silicon environments.
 
-The long-term goal is to build a professional-grade PS2 engine platform for full game production, with the same level of architectural intent that modern teams expect from engines like RAGE or Unreal in their own domains, but purpose-built for PS2 hardware realities.
+Operating at the bare-metal layer, it enforces a rigorous manager–worker execution protocol: the Primary Logic Matrix sequences high-bandwidth 128-bit DMA/VIF command chains while an isolated VLIW vector co-processor executes cycle-accurate microcode. The result is mathematically deterministic performance with zero-overhead hardware authority.
 
-## Vision
+## Core Capabilities
 
-Pantheon is being designed as:
+- **Asymmetric Data Plane Orchestration** — Strict conductor-node protocol that decouples stream orchestration from spatial compute.
+- **Double-Buffered Asynchronous Pipeline** — Zero-latency handoff between command preparation and vector-unit execution.
+- **Strategic VRAM Word-Map** — Explicit 4 MB linear allocator enforcing 8 KB page alignment and 256-byte block boundaries.
+- **Production-Grade Asset Bridge** — Automated offline pipeline that ingests native Softimage `.hrc` hierarchies and flattens them into hardware-safe sequential arrays.
+- **Hardware-Level Safeguards** — Active Near-Z culling, quadword alignment enforcement, and chromatic stability across dynamic atmospheric transitions.
 
-- A **Path 1-first engine architecture** (EE manager, VU1 worker).
-- A **hardware-authentic pipeline** that respects PS2 constraints instead of abstracting them away.
-- A **content pipeline for real production work**, starting with Softimage-authored assets and moving toward scalable world workflows.
+## Phase 1 — Golden Build (Locked)
 
-In practical terms, Pantheon aims to become a reusable PS2 engine foundation for shipping large, cohesive experiences, not just isolated rendering demos.
+The engine has reached its Phase 1 baseline (`pantheon-base-60fps`):
 
-## Why Pantheon Exists
+- Stable, locked 60 FPS asynchronous rendering in a pure Path 1 environment.
+- Pure Path 1 rendering of complex environment geometry and atmospheric skydomes.
+- Precision-sampled GTA-style orbital camera telemetry with deadzone-aware analog input.
+- Verified zero-overlap memory layout audited via boot-time telemetry.
 
-Many homebrew graphics examples demonstrate effects, but fewer establish a cohesive engine direction around VU1/GS-era production patterns. Pantheon exists to close that gap by building a durable Path 1 framework with clear rules:
+## Key Architectural Invariants
 
-- EE schedules and streams.
-- VU1 performs transform/packing/kick responsibilities.
-- Data contracts stay explicit and stable between C and VU microcode.
+- **Manager–Worker Separation**: The host processor acts solely as a stream orchestrator; all geometric transformation, perspective division, and raster output is delegated to the vector co-processor.
+- **Deterministic Memory Discipline**: Linear word-bump allocator with strict 16-byte quadword alignment for all DMA-facing structures.
+- **VLIW Execution Parallelism**: Bespoke microprogram (`shader.vsm`) utilizing dual-issue floating-point and integer math with direct XGKICK to the rasterizer.
+- **Automated Telemetry Bridge**: Offline asset-compression pipeline (`hrc2ps2.py`) that enforces hardware-safe alignment and padding.
 
-## Current State
+## Current Roadmap
 
-Pantheon currently has a stable baseline that includes:
+- **Phase 2**: VRAM Texture Foundation — IMAGE-mode host uploads and STQ homogeneous coordinate parsing.
+- **Terrain / Scene Chunking**: EE-side spatial partitioning to manage large world data within the 16 KB co-processor limit.
+- **Atmospheric Pacing**: San Andreas-style temporal lerping between discrete timecycle palettes.
 
-- 60 FPS locked runtime baseline in current test scene.
-- Path 1 floor and skydome rendering active.
-- VU1 microprogram (`shader.vsm`) integrated into the build.
-- GTA-style camera/input controls active in the current test harness.
-- Asset ingestion flow from Softimage `.hrc` through conversion tooling into engine headers.
+## Platform Implementation Context
 
-This baseline is tracked in git with a dedicated tag:
+While designed as a study in modern asymmetric computational topologies, Pantheon is currently implemented as a **Path 1 PlayStation 2 engine**. It rejects modern abstraction layers in favor of treating legacy silicon with the same discipline applied to contemporary high-performance systems.
 
-- `pantheon-base-60fps`
-
-## Core Architecture Principles
-
-Pantheon development is guided by the following principles:
-
-- **EE as manager, VU1 as worker**  
-  EE builds DMA/VIF command streams and manages frame orchestration; VU1 performs vertex path work and GS kick.
-
-- **Path 1 memory contract discipline**  
-  Shared address and packet contracts between `floor.c` and `shader.vsm` are treated as core engine interfaces.
-
-- **Hardware-safe data rules**  
-  16-byte alignment, bounded batch sizing, and explicit packing semantics are first-class requirements.
-
-- **Evidence-driven iteration**  
-  Runtime logs and verification loops are used to validate behavior before locking in architectural changes.
-
-## Rendering Pipeline (Current)
-
-At a high level:
-
-1. EE builds command/data packets in C (`floor.c`).
-2. VIF1 uploads constants, matrices, and vertex payloads.
-3. VU1 (`shader.vsm`) transforms, packs, and performs `xgkick`.
-4. GS receives and rasterizes output.
-
-This is intentionally optimized around Path 1 behavior, not a generic abstraction layer.
-
-## Asset Pipeline (Current)
-
-Current pipeline centers on Softimage `.hrc` source assets:
-
-1. Export `.hrc` from Softimage.
-2. Convert to ASCII when needed (`hrcConvert.exe ... -a` on NT workflow).
-3. Run `hrc2ps2.py` to produce `*_data.h` mesh payloads.
-4. Build and run in the EE/VU1 test harness.
-
-Primary generated asset headers in this repo include:
-
-- `floor_data.h`
-- `skydome_data.h`
-
-## Build
-
-Build the current executable with:
-
-```bash
-cd /home/marvin/Pantheon
-make -f Makefile.world
-```
-
-Optional host texture upload slice (VRAM telemetry always on; upload only when `PANTHEON_TEXTURE_PHASE=1`):
-
-```bash
-make -f Makefile.world PANTHEON_TEXTURE_PHASE=1
-```
-
-Output:
-
-- `floor.elf`
-
-## Repository Landmarks
-
-- `floor.c` - Main EE-side orchestration, render path setup, input/camera, packet assembly.
-- `shader.vsm` - VU1 microprogram implementing transform/packing/kick behavior.
-- `Makefile.world` - PS2SDK-based build entry for the current world/test executable.
-- `hrc2ps2.py` - Asset conversion tool for `.hrc` mesh data.
-- `pantheon_vram.c` / `pantheon_vram.h` - GS VRAM word layout telemetry and overlap checks vs `graph_vram_allocate`.
-- `pantheon_texture_host.c` - Optional (`PANTHEON_TEXTURE_PHASE=1`) host→GS texture upload via libdraw (`draw_texture_transfer` / `draw_texture_flush`).
-
-## Roadmap
-
-Pantheon is in active engine-foundation phase. Planned work includes:
-
-- Path 1 renderer hardening and regression-safe contracts.
-- Terrain/scene chunking for VU memory and streaming constraints.
-- Extended content pipeline (UV/texture workflows, richer material handling).
-- Higher-level engine systems around world assembly and gameplay integration.
-- Tooling and documentation quality suitable for sustained production use.
-
-## Status
-
-Pantheon is early but real: the core rendering path is active, a baseline is versioned, and the project direction is explicit.
-
-The project is not affiliated with Sony. It is an independent PS2 engine effort built with respect for platform constraints and first-party-era architectural patterns.
+**Official Repository:** https://github.com/94BILLY/Pantheon  
+**Author:** [94BILLY](https://github.com/94BILLY)
