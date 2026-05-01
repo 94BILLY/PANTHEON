@@ -358,7 +358,8 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #define PANTHEON_BOOT_TEXT_ANIMATE 1
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_AMP
-#define PANTHEON_BOOT_TEXT_WAVE_AMP 3.5f
+/* 0 = no vertical shimmer (avoids “flicker” on PCSX2); enable wave via EE_CFLAGS if desired. */
+#define PANTHEON_BOOT_TEXT_WAVE_AMP 0.0f
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_SPEED
 #define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.11f
@@ -985,6 +986,8 @@ void init_flat_floor() {
     // Keep geometry in a sane range while validating VU1 transforms.
     // Safe type-punning using a union to satisfy strict-aliasing rules
     PantheonColorPun color_pun;
+    /* Solid slab green (avoids busy checker moiré / perceived flicker with sky). */
+    color_pun.i = (255u << 24) | (92u << 16) | (200u << 8) | 72u;
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         flat_floor[i].x *= FLOOR_MESH_SCALE;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
@@ -998,38 +1001,6 @@ void init_flat_floor() {
         flat_floor[i].z *= FLOOR_MESH_SCALE;
         flat_floor[i].y *= FLOOR_MESH_SCALE;
 #endif
-
-        /* Sandbox grid: major lines on integer world units (after scale), darker cell fill. */
-        {
-            float gx = flat_floor[i].x;
-            float gz = flat_floor[i].z;
-            float ax = fabsf(gx);
-            float az = fabsf(gz);
-            float fx = ax - floorf(ax);
-            float fz = az - floorf(az);
-            int on_major = (fx < 0.04f || fx > 0.96f || fz < 0.04f || fz > 0.96f) ? 1 : 0;
-            int cx = (int)floorf(ax + 0.5f);
-            int cz = (int)floorf(az + 0.5f);
-            int checker = ((cx + cz) & 1);
-            u8 r, g, b, a;
-            if (on_major) {
-                r = 72;
-                g = 200;
-                b = 92;
-                a = 255;
-            } else if (checker) {
-                r = 28;
-                g = 92;
-                b = 38;
-                a = 230;
-            } else {
-                r = 22;
-                g = 72;
-                b = 30;
-                a = 220;
-            }
-            color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
-        }
 
         // Build the exact 128-bit payload the GS RGBAQ register expects!
         flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
@@ -1379,7 +1350,8 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
                 int px = start_x + ((cursor_units + rx) * scale);
                 int py = start_y + ((ry - min_u_y) * scale);
 #if PANTHEON_BOOT_TEXT_ANIMATE
-                if (frame_id >= (int)(gi * PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR)) {
+                if (PANTHEON_BOOT_TEXT_WAVE_AMP > 0.0f &&
+                    frame_id >= (int)(gi * PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR)) {
                     float wobble = sinf(
                         ((float)frame_id * PANTHEON_BOOT_TEXT_WAVE_SPEED) +
                         ((float)cursor_units * PANTHEON_BOOT_TEXT_WAVE_SPACING));
@@ -1771,7 +1743,10 @@ int main(int argc, char *argv[]) {
 
         if (render_jobs[1].enabled) {
             q = render_cpu_probe(q, world_view, view_screen);
-            q = render_cpu_exported_floor(q, world_view, view_screen);
+            /* Do not draw CPU GIF floor when Path1 floor is active: coplanar surfaces Z-fight (flicker). */
+            if (!render_jobs[3].enabled) {
+                q = render_cpu_exported_floor(q, world_view, view_screen);
+            }
         }
 
         FlushCache(0);
