@@ -897,7 +897,9 @@ static void update_atmosphere(int frame_id) {
 /* Flattened triangle stream for VU1 (CPU expand at boot; see flight log Day 4). */
 PantheonVertex flat_floor[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
 static PantheonVertex floor_tile_tris[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
+#if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 static PantheonVertex floor_follow_quad[6] __attribute__((aligned(16)));
+#endif
 
 /* Walk bounds: X/Y/Z AABB of scaled floor mesh. */
 static float floor_bound_x0, floor_bound_x1, floor_bound_y0, floor_bound_y1, floor_bound_z0, floor_bound_z1;
@@ -1317,9 +1319,17 @@ static void path1_vif_packet_submit(packet_t *pkt, qword_t *q_end, int frame_id,
 void init_flat_floor() {
     int out_idx = 0;
     for (int i = 0; i < FLOOR_TRI_COUNT; i++) {
+#if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
+        /* SoftImage floor grid is authored in the mesh XY plane (Z≈0). Map to world XZ with
+         * Y up. (a,c,b) winding makes normals face +Y after XY→XZ (single-sided Path1). */
+        flat_floor[out_idx++] = floor_vertices[floor_indices[i].a];
+        flat_floor[out_idx++] = floor_vertices[floor_indices[i].c];
+        flat_floor[out_idx++] = floor_vertices[floor_indices[i].b];
+#else
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].a];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].b];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].c];
+#endif
     }
 
     // Keep geometry in a sane range while validating VU1 transforms.
@@ -1330,11 +1340,18 @@ void init_flat_floor() {
 
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         float src_x = flat_floor[i].x;
+        float src_y = flat_floor[i].y;
+#if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
+        flat_floor[i].x = src_x * FLOOR_MESH_SCALE;
+        flat_floor[i].y = 0.0f;
+        flat_floor[i].z = src_y * FLOOR_MESH_SCALE;
+#else
         float src_z = flat_floor[i].z;
-        /* Strict planar mapping: authored grid X/Z -> world X/Z, with Y locked to floor. */
+        /* Mesh already in XZ footprint; scale both axes. */
         flat_floor[i].x = src_x * FLOOR_MESH_SCALE;
         flat_floor[i].y = 0.0f;
         flat_floor[i].z = src_z * FLOOR_MESH_SCALE;
+#endif
 
         // Build the exact 128-bit payload the GS RGBAQ register expects!
         flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
@@ -1356,6 +1373,7 @@ static void build_floor_tile(float tile_off_x, float tile_off_z) {
     }
 }
 
+#if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 static void build_floor_follow_quad(float center_x, float center_z) {
     float half_x = (floor_tile_span_x > 0.0f) ? (floor_tile_span_x * 0.5f) : 420.0f;
     float half_z = (floor_tile_span_z > 0.0f) ? (floor_tile_span_z * 0.5f) : 420.0f;
@@ -1380,6 +1398,7 @@ static void build_floor_follow_quad(float center_x, float center_z) {
     floor_follow_quad[4] = v2;
     floor_follow_quad[5] = v3;
 }
+#endif
 
 #if USE_VU1_SKYDOME_MESH
 static void init_flat_skydome(void) {
