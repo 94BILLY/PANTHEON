@@ -3,6 +3,8 @@
 PantheonShader:
 ; Path 1 shared contract:
 ;   giftag @ 240, output @ 241, xgkick @ 240, input @ 8
+;   Each vertex: 3 qw — position, courier RGBA (packed float), EE STQ (s,t,tex_q,pad).
+;   GIF PACKED: RGBAQ (0x01), ST (0x02 float STQ), XYZ2 (0x05).
 nop lq VF06, 240(VI00) ; GIF tag
 nop lq VF05, 2(VI00) ; VF05.xy = GS center (2048,2048); .z = Z bias (from EE unpack)
 nop lq VF07, 3(VI00) ; VF07.x=XY scale, y=Z scale, z=nearZ(0.1), w=maxXY(2047)
@@ -21,11 +23,12 @@ nop iaddiu VI03, VI00, 241 ; Output buffer starts at 241
 
 VertexLoop:
 nop ibeq VI01, VI00, EndLoop
-nop iaddi VI01, VI01, -2
+nop iaddi VI01, VI01, -3
 
 nop lq VF08, 0(VI02) ; Load Position
-nop lq VF09, 1(VI02) ; Load Pre-packed Color
-nop iaddi VI02, VI02, 2
+nop lq VF09, 1(VI02) ; Load courier RGBA (packed float in .x / EE convention)
+nop lq VF12, 2(VI02) ; Load EE STQ — typically (s, t, 1.0, 0)
+nop iaddi VI02, VI02, 3
 
 mulax ACC, VF01, VF08x nop
 madday ACC, VF02, VF08y nop
@@ -40,22 +43,27 @@ mulq.xyzw VF10, VF10, q nop
 mulaw.xyzw ACC, VF05, VF00w nop
 madd.xyzw VF10, VF10, VF05 nop ; VF10 = screen-space float
 
+; Perspective STQ for GS ST register (float path): scale S,T,Q by 1/W from EE side ST.
+; VF12 (s,t,1,0) * q -> (s/W, t/W, 1/W, 0) — GS uses ST/Q for perspective-correct lookup.
+mulq.xyzw VF13, VF12, q nop
+
 ; Bound projected X/Y to [0, maxScreen] before integer conversion.
 max.xy VF10, VF10, VF00 nop
 miniw.xy VF10, VF10, VF07 nop
 maxz.z VF10, VF10, VF00 nop ; keep depth non-negative after near-Z clamp
 
-; Use explicit bounded pack scale path through VF11.
+; Use explicit bounded pack scale path through VF11 (positions only).
 mulx.xy VF11, VF10, VF07 nop
+; ftoi0 applies to VF10/VF11 for XYZ packing — never to VF09/VF13 courier/ST streams.
 ftoi0.xy VF10, VF11 nop
 muly.z VF11, VF10, VF07 nop
 ftoi0.z VF10, VF11 nop
 
-; PACKED stream with NREG=2: write RGBAQ then XYZ2 as separate qwords.
-; VF09 is courier payload from EE (pre-packed RGBA + q) and must not be converted here.
+; Output: RGBAQ (courier), ST (perspective-corrected float STQ), XYZ2 packed.
 nop sq VF09, 0(VI03)
-nop sq VF10, 1(VI03)
-nop iaddi VI03, VI03, 2
+nop sq VF13, 1(VI03)
+nop sq VF10, 2(VI03)
+nop iaddi VI03, VI03, 3
 
 nop b VertexLoop
 nop nop

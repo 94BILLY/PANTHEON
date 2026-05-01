@@ -17,9 +17,10 @@
 #define PATH1_VU_CONST_PERSPECTIVE_ADDR 0
 #define PATH1_VU_CONST_SCREEN_ADDR 2
 #define PATH1_VU_CONST_MVP_ADDR 4
-#define PATH1_VU_MAX_BATCH_VERTS 108
+/* Three quadwords per vertex: position, courier RGBA, EE STQ (s,t,tex_q,pad). */
+#define PATH1_VU_MAX_BATCH_VERTS 72
 #define PATH1_VU_MEM_QW 1024
-#define PATH1_VU_QW_PER_VERT 2
+#define PATH1_VU_QW_PER_VERT 3
 #define PATH1_VU_BATCH_QW (PATH1_VU_MAX_BATCH_VERTS * PATH1_VU_QW_PER_VERT)
 
 typedef union PantheonColorPun {
