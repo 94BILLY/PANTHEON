@@ -1,6 +1,6 @@
 # PANTHEON 🏛️
 
-**PANTHEON** is a deterministic, contract-driven rendering and data-orchestration framework engineered for the **PlayStation 2** architecture [1, 2]. Operating at the bare-metal layer, the platform enforces a rigorous manager–worker execution protocol: the **Emotion Engine (EE)** functions as a high-bandwidth stream orchestrator, sequencing 128-bit **DMA/VIF command chains** to **Vector Unit 1 (VU1)** [3-5].
+**PANTHEON** is a deterministic, contract-driven rendering and data-orchestration framework engineered for the **PlayStation 2** architecture. Operating at the bare-metal layer, the platform enforces a rigorous manager–worker execution protocol: the **Emotion Engine (EE)** functions as a high-bandwidth stream orchestrator, sequencing 128-bit **DMA/VIF command chains** to **Vector Unit 1 (VU1)** [3-5].
 
 By utilizing a **strict Path 1 pipeline**, Pantheon extracts maximum theoretical throughput from the silicon to achieve a **locked 60 FPS high-fidelity baseline** [6-8]. All massive spatial transformations, VLIW microcode-based processing, and hardware-direct **XGKICK** operations are autonomously delegated to the isolated VU1 node, bypassing standard software bottlenecks to saturate the **Graphics Synthesizer (GS)** [9-12].
 
@@ -28,7 +28,9 @@ While designed as a study in **asymmetric computational topologies**, this frame
 
 
 **Official Repository:** https://github.com/94BILLY/Pantheon  
+
 **Author:** [94BILLY](https://github.com/94BILLY)
+
 **Website:** https://www.94BILLY.com
 
 
