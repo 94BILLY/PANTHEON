@@ -358,11 +358,11 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #define PANTHEON_BOOT_TEXT_ANIMATE 1
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_AMP
-/* 0 = no vertical shimmer (avoids “flicker” on PCSX2); enable wave via EE_CFLAGS if desired. */
-#define PANTHEON_BOOT_TEXT_WAVE_AMP 0.0f
+/* Gentle sine wave on letters (WWW.94BILLY.COM “buttery” boot). Lower = calmer; 0 = off for picky backends. */
+#define PANTHEON_BOOT_TEXT_WAVE_AMP 2.25f
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_SPEED
-#define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.11f
+#define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.095f
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_SPACING
 #define PANTHEON_BOOT_TEXT_WAVE_SPACING 0.085f
