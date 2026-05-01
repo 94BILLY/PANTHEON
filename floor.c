@@ -630,14 +630,19 @@ static void init_floor_walk_bounds(void) {
     floor_tile_span_z = floor_bound_z1 - floor_bound_z0;
 }
 
-/* True when player is over the authored floor AABB (XZ), after init_floor_walk_bounds(). */
+/* True when player is over the Path1 floor surface (XZ), including all world-anchored tile repeats.
+ * Must match how build_floor_tile() offsets patches: only the origin AABB was wrong once you walk
+ * onto neighbor tiles — player_y would drop (abyss) while floor stayed at y=0 (floor "above" you). */
 static int player_on_support_deck(void) {
     if (floor_tile_span_x <= 0.0f || floor_tile_span_z <= 0.0f) {
         return 1;
     }
     const float pad = 1.5f;
-    return (player_x >= floor_bound_x0 - pad && player_x <= floor_bound_x1 + pad && player_z >= floor_bound_z0 - pad &&
-            player_z <= floor_bound_z1 + pad);
+    /* Same tile index as main loop: player_tile_* = floorf(player / span); tile_off = index * span. */
+    float lx = player_x - floorf(player_x / floor_tile_span_x) * floor_tile_span_x;
+    float lz = player_z - floorf(player_z / floor_tile_span_z) * floor_tile_span_z;
+    return (lx >= floor_bound_x0 - pad && lx <= floor_bound_x1 + pad && lz >= floor_bound_z0 - pad &&
+            lz <= floor_bound_z1 + pad);
 }
 
 static void clamp_player_to_floor(void) {
