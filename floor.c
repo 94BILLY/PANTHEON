@@ -1649,9 +1649,16 @@ static qword_t *render_cpu_exported_floor(qword_t *q, MATRIX world_view, MATRIX 
 
     if (!floor_arrays_init) {
         for (int i = 0; i < FLOOR_VERT_COUNT; i++) {
+#if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
+            /* Match Path1 init_flat_floor(): SoftImage grid in XY → world XZ, Y=0. */
+            floor_positions[i][0] = floor_vertices[i].x * FLOOR_MESH_SCALE;
+            floor_positions[i][1] = 0.0f;
+            floor_positions[i][2] = floor_vertices[i].y * FLOOR_MESH_SCALE;
+#else
             floor_positions[i][0] = floor_vertices[i].x * FLOOR_MESH_SCALE;
             floor_positions[i][1] = floor_vertices[i].y * FLOOR_MESH_SCALE;
             floor_positions[i][2] = floor_vertices[i].z * FLOOR_MESH_SCALE;
+#endif
             floor_positions[i][3] = floor_vertices[i].w;
             float r = floor_vertices[i].r;
             float g = floor_vertices[i].g;
@@ -1691,9 +1698,16 @@ static qword_t *render_cpu_exported_floor(qword_t *q, MATRIX world_view, MATRIX 
         int ia = floor_indices[i].a;
         int ib = floor_indices[i].b;
         int ic = floor_indices[i].c;
+#if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
+        /* Same (a,c,b) winding as Path1 floor for +Y-facing tris. */
+        q->dw[0] = col[ia].rgbaq; q->dw[1] = xyz[ia].xyz; q++;
+        q->dw[0] = col[ic].rgbaq; q->dw[1] = xyz[ic].xyz; q++;
+        q->dw[0] = col[ib].rgbaq; q->dw[1] = xyz[ib].xyz; q++;
+#else
         q->dw[0] = col[ia].rgbaq; q->dw[1] = xyz[ia].xyz; q++;
         q->dw[0] = col[ib].rgbaq; q->dw[1] = xyz[ib].xyz; q++;
         q->dw[0] = col[ic].rgbaq; q->dw[1] = xyz[ic].xyz; q++;
+#endif
     }
     q = draw_prim_end(q, 2, DRAW_RGBAQ_REGLIST);
     return q;
