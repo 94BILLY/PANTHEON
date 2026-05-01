@@ -1,44 +1,36 @@
 # PANTHEON 🏛️
 
-**PANTHEON** is a deterministic data-orchestration and spatial rendering matrix engineered for highly asymmetric, heterogeneous silicon environments.
+**PANTHEON** is a deterministic, contract-driven rendering and data-orchestration framework engineered for the **PlayStation 2** architecture [1, 2]. Operating at the bare-metal layer, the platform enforces a rigorous manager–worker execution protocol: the **Emotion Engine (EE)** functions as a high-bandwidth stream orchestrator, sequencing 128-bit **DMA/VIF command chains** to **Vector Unit 1 (VU1)** [3-5].
 
-Operating at the bare-metal layer, it enforces a rigorous manager–worker execution protocol: the Primary Logic Matrix sequences high-bandwidth 128-bit DMA/VIF command chains while an isolated VLIW vector co-processor executes cycle-accurate microcode. The result is mathematically deterministic performance with zero-overhead hardware authority.
+By utilizing a **strict Path 1 pipeline**, Pantheon extracts maximum theoretical throughput from the silicon to achieve a **locked 60 FPS high-fidelity baseline** [6-8]. All massive spatial transformations, VLIW microcode-based processing, and hardware-direct **XGKICK** operations are autonomously delegated to the isolated VU1 node, bypassing standard software bottlenecks to saturate the **Graphics Synthesizer (GS)** [9-12].
 
-## Core Capabilities
+## **Core Architectural Invariants**
 
-- **Asymmetric Data Plane Orchestration** — Strict conductor-node protocol that decouples stream orchestration from spatial compute.
-- **Double-Buffered Asynchronous Pipeline** — Zero-latency handoff between command preparation and vector-unit execution.
-- **Strategic VRAM Word-Map** — Explicit 4 MB linear allocator enforcing 8 KB page alignment and 256-byte block boundaries.
-- **Production-Grade Asset Bridge** — Automated offline pipeline that ingests native Softimage `.hrc` hierarchies and flattens them into hardware-safe sequential arrays.
-- **Hardware-Level Safeguards** — Active Near-Z culling, quadword alignment enforcement, and chromatic stability across dynamic atmospheric transitions.
+*   **Path 1 Data Plane Orchestration:** Pantheon rejects high-level wrappers to establish a direct conductor-node protocol [13, 14]. The **Emotion Engine** manages high-level world logic and world-sectoring while the **VU1** operates as a standalone geometry processor via the **VIF1 interface** [5, 15-17].
+*   **VLIW Execution Parallelism:** A bespoke microprogram (`shader.vsm`) facilitates dual-issue floating-point and integer math, executing two instructions per clock cycle to perform high-speed matrix multiplication and perspective division in parallel [18-20].
+*   **Deterministic Memory Contract:** The framework is hardened by an **explicit 4MB strategic VRAM map**, enforcing strict **32-bit word-aligned** page (8KB) and block (256-byte) boundaries to facilitate zero-latency data transfers and prevent memory overlap [21-24].
+*   **Automated Asset Telemetry:** An offline "Cruncher" pipeline (`hrc2ps2.py`) digests native **Softimage 3D (.hrc)** hierarchy data, enforcing **128-bit Quadword alignment** and W-axis padding to ensure hardware-safe data burst rates [25-27].
+*   **Hardware-Level Safeguards:** The engine implements active **Near-Z culling** ($W \le 0.1f$) within the VU1 microcode to prevent coordinate saturation and maintains a strict color courier path to ensure chromatic stability across dynamic atmospheric transitions [11, 28, 29].
 
-## Phase 1 — Golden Build (Locked)
+## **Operational Status: Phase 1 "Golden Build"**
 
-The engine has reached its Phase 1 baseline (`pantheon-base-60fps`):
+The framework has successfully achieved its **Phase 1 baseline** (git tag: `pantheon-base-60fps`), verifying the following performance matrix on **physical silicon**:
 
-- Stable, locked 60 FPS asynchronous rendering in a pure Path 1 environment.
-- Pure Path 1 rendering of complex environment geometry and atmospheric skydomes.
-- Precision-sampled GTA-style orbital camera telemetry with deadzone-aware analog input.
-- Verified zero-overlap memory layout audited via boot-time telemetry.
+*   **Locked 60 FPS:** Sustained asynchronous rendering in a pure Path 1 environment [7, 30].
+*   **Geometry Stability:** Flicker-free Path 1 rendering of complex Softimage world geometry and skydomes [30].
+*   **Deterministic Telemetry:** GTA-style spherical orbital camera and XZ movement controls with precision deadzone clamping [7, 30].
+*   **Memory Discipline:** Verified zero-overlap **VRAM layout** audited via boot-time telemetry [31, 32].
 
-## Key Architectural Invariants
+---
 
-- **Manager–Worker Separation**: The host processor acts solely as a stream orchestrator; all geometric transformation, perspective division, and raster output is delegated to the vector co-processor.
-- **Deterministic Memory Discipline**: Linear word-bump allocator with strict 16-byte quadword alignment for all DMA-facing structures.
-- **VLIW Execution Parallelism**: Bespoke microprogram (`shader.vsm`) utilizing dual-issue floating-point and integer math with direct XGKICK to the rasterizer.
-- **Automated Telemetry Bridge**: Offline asset-compression pipeline (`hrc2ps2.py`) that enforces hardware-safe alignment and padding.
+### **Platform Implementation Context**
+While designed as a study in **asymmetric computational topologies**, this framework is currently implemented as a **Path 1 PlayStation 2 engine** [1, 13]. It treats legacy silicon like analog studio gear, bridging a 30-year technology gap to replicate the production-grade discipline of elite first-party development teams.
 
-## Current Roadmap
-
-- **Phase 2**: VRAM Texture Foundation — IMAGE-mode host uploads and STQ homogeneous coordinate parsing.
-- **Terrain / Scene Chunking**: EE-side spatial partitioning to manage large world data within the 16 KB co-processor limit.
-- **Atmospheric Pacing**: San Andreas-style temporal lerping between discrete timecycle palettes.
-
-## Platform Implementation Context
-
-While designed as a study in modern asymmetric computational topologies, Pantheon is currently implemented as a **Path 1 PlayStation 2 engine**. It rejects modern abstraction layers in favor of treating legacy silicon with the same discipline applied to contemporary high-performance systems.
 
 **Official Repository:** https://github.com/94BILLY/Pantheon  
 **Author:** [94BILLY](https://github.com/94BILLY)
+**Website:** https://www.94BILLY.com
 
-**Beta baseline (pinned defaults + strict Path1 note):** see [`BETA_RELEASE.md`](BETA_RELEASE.md).
+
+
+ 
