@@ -353,6 +353,23 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #define PANTHEON_LIBDRAW_START_OFFSET 2047.5625f
 #define PANTHEON_LIBDRAW_END_OFFSET 2048.5625f
 
+/* Boot title only: EE-friendly animation (many tiny GIF sprites — no Path1/floor/sky changes). */
+#ifndef PANTHEON_BOOT_TEXT_ANIMATE
+#define PANTHEON_BOOT_TEXT_ANIMATE 1
+#endif
+#ifndef PANTHEON_BOOT_TEXT_WAVE_AMP
+#define PANTHEON_BOOT_TEXT_WAVE_AMP 3.5f
+#endif
+#ifndef PANTHEON_BOOT_TEXT_WAVE_SPEED
+#define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.11f
+#endif
+#ifndef PANTHEON_BOOT_TEXT_WAVE_SPACING
+#define PANTHEON_BOOT_TEXT_WAVE_SPACING 0.085f
+#endif
+#ifndef PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR
+#define PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR 2
+#endif
+
 static float wrap_angle_pi(float v) {
     while (v > PI_F) v -= (2.0f * PI_F);
     while (v < -PI_F) v += (2.0f * PI_F);
@@ -1344,6 +1361,13 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
             cursor_units += space_advance;
             continue;
         }
+#if PANTHEON_BOOT_TEXT_ANIMATE
+        /* Staggered reveal: keep layout centered on full string; skip draws until this slot's frame. */
+        if (frame_id < (int)(gi * PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR)) {
+            cursor_units += pantheon_boot_glyph_advance(c, advance, space_advance, dot_advance);
+            continue;
+        }
+#endif
         u8 rows[7];
         pantheon_boot_glyph_rows(c, rows);
         for (int ry = 0; ry < 7; ry++) {
@@ -1354,6 +1378,14 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
                 }
                 int px = start_x + ((cursor_units + rx) * scale);
                 int py = start_y + ((ry - min_u_y) * scale);
+#if PANTHEON_BOOT_TEXT_ANIMATE
+                if (frame_id >= (int)(gi * PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR)) {
+                    float wobble = sinf(
+                        ((float)frame_id * PANTHEON_BOOT_TEXT_WAVE_SPEED) +
+                        ((float)cursor_units * PANTHEON_BOOT_TEXT_WAVE_SPACING));
+                    py += (int)(wobble * PANTHEON_BOOT_TEXT_WAVE_AMP);
+                }
+#endif
                 /* Match GS framebuffer origin used by draw_clear / draw_primitive_xyoffset (ps2sdk draw2d START/END offsets). */
                 rect.v0.x = PANTHEON_DRAW_GS_FB_X0 + (float)px - PANTHEON_LIBDRAW_START_OFFSET;
                 rect.v0.y = PANTHEON_DRAW_GS_FB_Y0 + (float)py - PANTHEON_LIBDRAW_START_OFFSET;
