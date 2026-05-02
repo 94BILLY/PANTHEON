@@ -10,6 +10,21 @@ Path 1 on PlayStation 2 has a learning curve. **GETTING_STARTED.md** covers tool
 
 ---
 
+## Media (real hardware)
+
+Whitebox demo captured **on a retail PS2** (not emulation). In-repo previews (after clone): [`docs/media/`](docs/media/).
+
+| Asset | Role |
+| --- | --- |
+| [`pantheon-ps2-boot-4586.gif`](docs/media/pantheon-ps2-boot-4586.gif) | Short boot / title legibility |
+| [`pantheon-ps2-world-4587.gif`](docs/media/pantheon-ps2-world-4587.gif) | Floor, skydome, camera motion |
+| [`pantheon-hero-world-4587.png`](docs/media/pantheon-hero-world-4587.png) | Still hero — PS2 + Path 1 world (1280 px) |
+| [`pantheon-hero-boot-4586.png`](docs/media/pantheon-hero-boot-4586.png) | Still — shorter clip / alternate crop |
+
+Source phone videos (`IMG_4586.MOV`, `IMG_4587.MOV`) stay **local**—they are gitignored (~4K, ~0.8 GB combined).
+
+![Pantheon Path 1 — real PS2 capture](docs/media/pantheon-ps2-world-4587.gif)
+
 ## What’s in the tree
 
 - **Path 1 end-to-end** — EE chains, VU1 kick, contract headers.
