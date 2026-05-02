@@ -9,3 +9,12 @@
 *:Zone.Identifier:Zone.Identifier
 .cursor/debug-*.log
 agent-tools/
+__pycache__/
+*.pyc
+_backup_archive/
+.ref_frames/
+backups/
+TempFolder/
+Notes.txt
+world.c
+README claude.md
