@@ -14,7 +14,7 @@ No middleware pretense, no engine-within-the-engine—**EE schedules, VU1 comput
 - **VRAM discipline** — Linear allocator, page/block alignment, boot-time layout audit when telemetry is on.
 - **Hybrid & strict profiles** — Default avoids coplanar floor Z-fight; strict mode validates full Path 1 floor + skydome (see [`BETA_RELEASE.md`](BETA_RELEASE.md)).
 - **Softimage-native asset path** — `.hrc` through `hrc2ps2.py` into headers the DMA path consumes as-is.
-- **Atmosphere & boot** — Timecycle-smoothed sky; luma ramp + **94BILLY STUDIOS** title path (bitmap glyphs, no texture tax for the logo).
+- **Atmosphere & boot** — Timecycle-smoothed sky; luma ramp + **WWW.94BILLY.COM** title (bitmap glyphs, stagger + optional wave; no texture upload for the logo).
 
 ## Phase 1 — Golden build (locked)
 
