@@ -1,6 +1,8 @@
 # Pantheon — technical appendix (build & run)
 
-This file is for **people who are already compiling PS2 software** and want **the same reproducibility** as the author. It is **not** a gentle introduction. If you need a conceptual overview of Path 1, **stop here** and read the **EE / VIF / VU / GS** documentation and first-party-adjacent references first.
+**How to read this page:** Requirements → Steps 1–5 (toolchain through PCSX2) → **Build profiles** → **Asset pipeline** (only if you replace meshes) → **Common issues**. For *what the default binary does* in one screen, open **[`BETA_RELEASE.md`](BETA_RELEASE.md)** first.
+
+**Audience:** people who are **already building PS2 ELFs** and want the same **reproducible** commands as the author. This is not a conceptual introduction to Path 1—use the **EE / VIF / VU / GS** manuals and **ps2sdk** samples for that foundation.
 
 **Pantheon** is bare-metal **Path 1**: the **EE** issues **DMA/VIF** work; **VU1** runs **`shader.vsm`** and **XGKICK**; the **GS** draws. No EE-side vertex soup.
 

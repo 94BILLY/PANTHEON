@@ -13,6 +13,9 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 ### Changed
 
 - **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
+- **README:** Restructured for **Apple-style scanability** (tables, short sections) while keeping **Sony-style technical precision** (Path 1, artifact name, doc map); reduced gatekeeping in the lede.
+- **GETTING_STARTED.md:** Opening **navigation paragraph** (“how to read this page”) before audience disclaimer.
+- **BASELINE_ACCEPTANCE.md:** Removed stale `floor_hybrid_baseline.elf` / `floor_path1_strict.elf` names; single artifact **`floor.elf`** + pointer to `BETA_RELEASE.md`.
 
 ## [1.0.0-beta] - 2026-05-02
 
