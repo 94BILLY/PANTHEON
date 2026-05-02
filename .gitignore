@@ -7,8 +7,11 @@
 *.Zone.Identifier
 *:Zone.Identifier
 *:Zone.Identifier:Zone.Identifier
-.cursor/debug-*.log
+.cursor/
 agent-tools/
+_notebooklm/
+cube/
+scripts/
 __pycache__/
 *.pyc
 _backup_archive/

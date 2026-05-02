@@ -279,7 +279,7 @@ python3 hrc2ps2.py model_ascii.hrc
 
 Output: `model_data.h`
 
-**Skydome (shipping headers):** to match the repo’s gradient behavior with `skydome.hrc`, use the same flags as the root `Makefile` asset rule:
+**Skydome (shipping headers):** to match the repo’s gradient behavior when regenerating from `skydome.hrc`, use:
 
 ```bash
 python3 hrc2ps2.py skydome.hrc -o skydome_data.h --color-mode gradient
