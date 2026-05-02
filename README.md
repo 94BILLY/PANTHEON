@@ -12,7 +12,19 @@ Output: `floor.elf` (stripped).
 
 ## Scope
 
-The current baseline includes a boot sequence (WWW.94BILLY.COM), timecycle skydome, walkable floor grid, third-person orbit camera, and DualShock input. Default build uses a hybrid render path: the floor deck is drawn via the CPU GIF path and the skydome via Path 1, which avoids coplanar Z-fighting between two floor submissions. A strict Path 1 profile enables VU1 floor tiles and disables the CPU overlay; behavior for the tagged beta is summarized in BETA_RELEASE.md. Acceptance and regression expectations are listed in BASELINE_ACCEPTANCE.md. The implementation targets a stable 60 Hz for this whitebox.
+The reference `floor.elf` is a fixed-timeline whitebox: boot title, outdoor sky, ground plane, orbit camera, and controller input.
+
+Included in this baseline:
+
+- Boot sequence (WWW.94BILLY.COM)
+- Timecycle skydome
+- Walkable floor grid
+- Third-person orbit camera
+- DualShock movement and look
+
+By default the build uses a hybrid path: CPU GIF draws the floor; Path 1 draws the skydome. That split avoids two floor layers fighting at the same depth. For a single-Path1 floor pass, use the strict profile described in BETA_RELEASE.md.
+
+Pinned defaults and flags for the current beta tag are in BETA_RELEASE.md. Acceptance checks are in BASELINE_ACCEPTANCE.md. Target frame rate for this whitebox is 60 Hz.
 
 ## Audience
 
