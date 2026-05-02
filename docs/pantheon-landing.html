@@ -1,118 +1,105 @@
 <!--
-  Pantheon — 94billy.com / Pantheon (WordPress: Custom HTML block)
-  Visual language aligned with 94billy.com/nova/ — serif editorial, numbered sections, EXEC bar, shadow frames.
-
-  Paste everything *below* the closing --> into the block.
-
-  Optional: LOGO_SRC (Media Library URL) · VIDEO_ID (YouTube id only).
-  Captures: GitHub raw (94BILLY/PANTHEON main). Dark standalone page: docs/pantheon-94billy.html
+  Pantheon — 94billy.com / Pantheon (WordPress Custom HTML block)
+  Media: raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/…
+  Paste the <div class="pantheon-landing">…</div> below into WordPress, or paste this whole file minus this comment.
 -->
-<div class="pantheon-landing-nova" style="font-family: 'Times New Roman', 'Times', serif; max-width: 820px; margin: 0 auto; color: #111; line-height: 1.55; padding: 8px 18px 28px 18px; background: #fff;">
+<div class="pantheon-landing" style="font-family: 'Times New Roman', Times, serif; max-width: 850px; margin: 0 auto; color: #000; line-height: 1.5; padding: 5px 20px 20px 20px;">
 
-  <!-- Hero — Nova pattern: logo, H1, role line, pull-quote -->
-  <div style="text-align: center; padding-bottom: 18px; margin-bottom: 22px; border-bottom: 2px solid #000;">
-    <div style="margin-bottom: 12px;">
-      <img src="LOGO_SRC" alt="Pantheon" width="108" height="108" style="object-fit: contain; display: inline-block; vertical-align: middle;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
-      <div style="display: none; font-size: 3.5rem; line-height: 1; font-weight: bold; letter-spacing: -2px; vertical-align: middle;">Π</div>
+    <div style="border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align: center;">
+        <div style="margin-bottom: 10px;">
+            <img src="https://94billy.com/wp-content/uploads/2026/05/Pantheon-300x300.png" alt="Pantheon Logo" width="114" height="114" />
+        </div>
+        <h1 style="font-size: 3.8rem; margin: 0; font-weight: bold; line-height: 1; letter-spacing: -1px;">PANTHEON</h1>
+        <h2 style="font-size: 1.5rem; margin: 5px 0; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">The Path 1 PlayStation 2 Engine</h2>
+        <p style="font-size: 1.15rem; margin-top: 5px; font-style: italic; opacity: 0.8;">The first Path 1 PlayStation 2 homebrew Game Engine.</p>
     </div>
-    <h1 style="font-size: 3.5rem; margin: 0; font-weight: bold; line-height: 1; letter-spacing: -0.02em;">PANTHEON</h1>
-    <h2 style="font-size: 1.45rem; margin: 10px 0 6px 0; font-weight: bold; letter-spacing: 0.04em;">Path 1 Game Engine for the Playstation 2</h2>
-    <p style="font-size: 0.95rem; margin: 0 0 14px 0; font-weight: bold; letter-spacing: 0.18em; text-transform: uppercase; color: #333;">PlayStation 2 · Path 1 · VU1 · 60 FPS</p>
-    <p style="font-size: 1.2rem; margin: 0 auto; max-width: 34em; font-style: italic; color: #222;">&ldquo;The performance and discipline of first-party silicon: the CPU streams work to the hardware; a vector unit prepares geometry and feeds the graphics chip directly.&rdquo;</p>
-  </div>
 
-  <!-- Release bar — matches Nova &ldquo;v1.5 RELEASED&rdquo; weight -->
-  <div style="background: #000; color: #fff; padding: 13px 14px; text-align: center; font-weight: bold; letter-spacing: 0.22em; margin-bottom: 28px; font-size: 1.05rem; text-transform: uppercase;">
-    v1.0.0-beta &mdash; released
-  </div>
-
-  <!-- Editorial lede — Nova-style single column -->
-  <section style="margin-bottom: 32px; text-align: justify; font-size: 1.08rem;">
-    <p style="margin: 0 0 14px 0;"><strong>Pantheon</strong> is a <strong>bare-metal Path 1</strong> PlayStation 2 engine: the <strong>Emotion Engine</strong> issues <strong>DMA/VIF1</strong> work; <strong>VU1</strong> microcode in <code style="font-size: 0.92em;">shader.vsm</code> transforms vertices, packs GIF primitives, and <strong>XGKICK</strong>s the <strong>Graphics Synthesizer</strong>—the same architectural line as late first-party titles, without a thick software renderer in the middle.</p>
-    <p style="margin: 0;">This repository is a <strong>public technical record</strong> and a reproducible whitebox (boot, skydome, floor, orbit camera). It is <strong>not</strong> a starter kit; there is <strong>no</strong> <code style="font-size: 0.92em;">LICENSE</code>. Tools <code style="font-size: 0.92em;">hrc2ps2.py</code> and <code style="font-size: 0.92em;">obj2ps2.py</code> emit data in the shape the bus expects—integration is on you. Policy and build details: <strong>README</strong> and <strong>GETTING_STARTED.md</strong> on GitHub.</p>
-  </section>
-
-  <section style="margin-bottom: 32px;">
-    <h3 style="font-size: 1.15rem; margin: 0 0 14px 0; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 6px;">1. What&rsquo;s included</h3>
-    <ul style="margin: 0; padding-left: 22px; font-size: 1.05rem;">
-      <li style="margin-bottom: 10px;"><strong>Path 1 pipeline:</strong> EE &rarr; VIF1 &rarr; VU1 &rarr; GIF &rarr; GS.</li>
-      <li style="margin-bottom: 10px;"><strong>Asset workflow:</strong> Softimage <code style="font-size: 0.92em;">.hrc</code> via <code style="font-size: 0.92em;">hrc2ps2.py</code>; Wavefront <code style="font-size: 0.92em;">.obj</code> via <code style="font-size: 0.92em;">obj2ps2.py</code>.</li>
-      <li style="margin-bottom: 10px;"><strong>Walkable floor grid</strong> and <strong>timecycle sky</strong> (smoothed palettes).</li>
-      <li style="margin-bottom: 0;"><strong>60 FPS</strong> target for this whitebox; boot sequence <strong>WWW.94BILLY.COM</strong> and orbit camera included.</li>
-    </ul>
-  </section>
-
-  <section style="margin-bottom: 32px;">
-    <h3 style="font-size: 1.15rem; margin: 0 0 14px 0; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 6px;">2. Field demonstration</h3>
-    <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0 #c8c8c8;">
-      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
-        <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" title="Pantheon — Path 1 capture" src="https://www.youtube.com/embed/VIDEO_ID?rel=0&amp;modestbranding=1" allowfullscreen="allowfullscreen"></iframe>
-      </div>
+    <div style="color: #000; padding: 12px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 1.2rem;">
+        v1.0.0-beta RELEASED
     </div>
-    <p style="font-size: 0.92rem; margin-top: 12px; font-style: italic; text-align: center; color: #333;">Fig 2.1: Long-form video (set <code style="font-size: 0.9em;">VIDEO_ID</code> when ready). Until then, section 3 shows retail PS2 captures.</p>
-  </section>
 
-  <section style="margin-bottom: 32px;">
-    <h3 style="font-size: 1.15rem; margin: 0 0 14px 0; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 6px;">3. Field demonstration: hardware captures</h3>
-    <p style="font-size: 1.02rem; margin-bottom: 20px; text-align: justify;">Stills and loops from <strong>docs/media/</strong> on GitHub (<a style="color: #000; font-weight: bold;" href="https://github.com/94BILLY/PANTHEON/tree/main/docs/media" target="_blank" rel="noopener">browse</a>). Raw URLs hotlink below.</p>
+    <section style="margin-bottom: 35px; text-align: justify;">
+        <p style="font-size: 1.1rem; margin-bottom: 15px;">Pantheon is a bare-metal Path 1 PlayStation 2 engine built from scratch in C and VU1 vector assembly — utilizing the same pipeline architecture that powered the most technically demanding titles of the PlayStation 2 era. Engineered for zero abstraction, Pantheon eliminates every software layer between the developer and the silicon, delegating all geometric transformation and rasterization authority directly to Vector Unit 1.</p>
+        <p style="font-size: 1.1rem; margin: 0;">Born on March 23rd, 2026, Pantheon enforces a strict manager–worker execution contract: the Emotion Engine sequences 128-bit DMA command chains while VU1 executes a bespoke VLIW microprogram — <strong>shader.vsm</strong> — that transforms vertices, builds GIF packets, and fires <strong>XGKICK</strong> directly to the Graphics Synthesizer. Geometry originates in <strong>Softimage 3D 3.92</strong>, the same production tool used by Kojima Productions and Rockstar North. The EE never touches a vertex.</p>
+    </section>
 
-    <p style="font-size: 0.98rem; font-weight: bold; margin: 18px 0 8px 0;">Boot &rarr; title &rarr; world</p>
-    <div style="border: 1px solid #000; padding: 6px; margin-bottom: 6px; background: #fafafa; box-shadow: 5px 5px 0 #c8c8c8;">
-      <img src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-boot-to-world.gif" alt="Pantheon — boot through Path 1 world on real PS2" style="width: 100%; max-width: 620px; height: auto; display: block; margin: 0 auto;" />
+    <section style="margin-bottom: 35px;">
+        <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">1. Phase 1 Baseline — v1.0.0-beta</h3>
+        <ul style="list-style-type: disc; padding-left: 25px; font-size: 1.1rem; margin: 0;">
+            <li style="margin-bottom: 10px;"><strong>60 FPS Locked:</strong> Sustained asynchronous rendering in a pure Path 1 environment. Verified on PCSX2 2.7.x and real PS2 hardware.</li>
+            <li style="margin-bottom: 10px;"><strong>VU1 Skydome:</strong> Hemisphere geometry authored in Softimage 3D, crunched through the offline pipeline, rendered entirely by VU1 microcode via XGKICK.</li>
+            <li style="margin-bottom: 10px;"><strong>San Andreas-Style Timecycle:</strong> Four weather presets across eight time slots with per-channel linear RGB interpolation. 24-minute game day cycle.</li>
+            <li style="margin-bottom: 10px;"><strong>GTA-Style Orbital Camera:</strong> Spherical camera telemetry with analog deadzone, pitch/yaw smoothing, and dynamic zoom.</li>
+            <li style="margin-bottom: 10px;"><strong>Compile-Time Memory Contract:</strong> Shared EE/VU1 address layout enforced by <strong>pantheon_path1_contract.h</strong>. Misalignment is a build error, not a runtime failure.</li>
+            <li style="margin-bottom: 10px;"><strong>Strategic VRAM Allocator:</strong> Linear word-bump allocator over 4 MB GS local memory. Zero-overlap layout audited via boot-time telemetry.</li>
+            <li style="margin-bottom: 10px;"><strong>94BILLY STUDIOS Boot Sequence:</strong> Luma ramp with bitmap title. Path 1 world deferred until reveal completes.</li>
+        </ul>
+    </section>
+
+    <section style="margin-bottom: 35px;">
+        <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">2. Field Demonstration: v1.0.0-beta</h3>
+
+        <!-- Fig 2.1: world + skydome (retail PS2 capture) -->
+        <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0px #ccc; margin-bottom: 15px;">
+            <img style="width: 100%; height: auto; display: block;" src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-world-hero.png" alt="Pantheon Path 1 skydome and floor on retail PS2" />
+        </div>
+        <p style="font-size: 0.9rem; margin-top: -5px; margin-bottom: 20px; font-style: italic; text-align: center;">Fig 2.1: Path 1 skydome and world (VU1 + hybrid floor). Retail PS2 capture.</p>
+
+        <!-- Fig 2.2: boot title WWW.94BILLY.COM (frame from phone capture IMG_4586.MOV ~30s) -->
+        <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0px #ccc; margin-bottom: 15px;">
+            <img style="width: 100%; height: auto; display: block;" src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/still-boot-title-4586.png" alt="94BILLY STUDIOS boot sequence" />
+        </div>
+        <p style="font-size: 0.9rem; margin-top: -5px; margin-bottom: 20px; font-style: italic; text-align: center;">Fig 2.2: 94BILLY STUDIOS boot — bitmap title on hardware.</p>
+
+        <!-- Fig 2.3: orbit / floor + sky loop -->
+        <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0px #ccc;">
+            <img style="width: 100%; height: auto; display: block;" src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-orbit.gif" alt="Pantheon engine — world orbit loop" />
+        </div>
+        <p style="font-size: 0.9rem; margin-top: 10px; font-style: italic; text-align: center;">Fig 2.3: Walkable floor deck + Path 1 sky. 60 FPS target. Retail PS2 capture (GIF).</p>
+    </section>
+
+    <section style="margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 25px 0;">
+        <h3 style="margin-top: 0; font-size: 1.25rem; font-weight: bold; text-transform: uppercase;">3. The VU1 Microprogram</h3>
+        <p style="font-size: 1.1rem; margin-bottom: 20px;">Pantheon's <strong>shader.vsm</strong> is compiled with <strong>dvp-as</strong> and linked directly into the ELF binary as a standard object. The entry point <strong>PantheonShader</strong> resolves to a non-zero address at link time. The memory contract it executes against is defined in <strong>pantheon_path1_contract.h</strong> and verified at compile time:</p>
+
+        <div style="margin-bottom: 10px;">
+            <p style="font-size: 1rem; margin-bottom: 5px; font-weight: bold; color: #555;">PIPELINE: EE → VIF1 → VU1 → XGKICK → GS</p>
+            <div style="padding: 10px 0 10px 15px; border-left: 2px solid #000; font-family: monospace; font-size: 0.85rem; word-break: break-all; background: #f9f9f9;">
+                <strong>MPG:</strong> Upload shader.vsm to VU1 instruction memory<br>
+                <strong>UNPACK:</strong> Burst MVP matrix + vertex stream into VU1 data memory<br>
+                <strong>MSCAL:</strong> Execute PantheonShader — transform, perspective divide, pack GIF tags<br>
+                <strong>XGKICK:</strong> Fire packed GIF packet directly to Graphics Synthesizer<br>
+                <strong>FLUSHE:</strong> Synchronize VU1 pipeline before next batch
+            </div>
+        </div>
+    </section>
+
+    <section style="margin-bottom: 35px;">
+        <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">4. Build Sequence</h3>
+        <p style="font-size: 1.1rem; margin-bottom: 10px;"><strong>Requirements:</strong> ps2sdk · ee-gcc 15.2.0 · dvp-as · PCSX2 2.7.x · Python 3.x</p>
+        <p style="font-size: 1.1rem; margin-bottom: 10px;"><strong>Option A — Default Hybrid Build (Recommended):</strong></p>
+        <ol style="padding-left: 25px; font-size: 1.1rem; margin-bottom: 20px;">
+            <li style="margin-bottom: 10px;"><strong>Clone:</strong> <code>git clone https://github.com/94BILLY/PANTHEON.git</code></li>
+            <li style="margin-bottom: 10px;"><strong>Build:</strong> <code>make -f Makefile.world</code></li>
+            <li style="margin-bottom: 10px;"><strong>Deploy:</strong> Open <strong>floor.elf</strong> in PCSX2 2.7.x or copy to PS2 hardware via OPL.</li>
+        </ol>
+        <p style="font-size: 1.1rem; margin-bottom: 10px;"><strong>Option B — Strict Path 1 Validation:</strong></p>
+        <ol style="padding-left: 25px; font-size: 1.1rem; margin: 0;">
+            <li style="margin-bottom: 10px;"><strong>Build:</strong> <code>make -f Makefile.world EE_CFLAGS='-DPANTHEON_RENDER_PROFILE=1'</code></li>
+            <li style="margin-bottom: 10px;"><strong>Result:</strong> VU1 renders all geometry. CPU GIF overlay disabled. Pure Path 1 pipeline validation.</li>
+        </ol>
+    </section>
+
+    <!-- Wallpaper / hero still (README + landing) -->
+    <div style="border-top: 1px solid #000; padding-top: 5px; margin-bottom: 5px; text-align: center;">
+        <img style="width: 100%; max-width: 800px; height: auto; border: 1px solid #000; display: block; margin: 0 auto;" src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/screenshot_beta1.png" alt="Pantheon — Path 1 whitebox on retail PS2" />
     </div>
-    <p style="font-size: 0.8rem; margin: 0 0 16px 0; text-align: center; color: #444;"><a style="color: #000;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-boot-to-world.gif" target="_blank" rel="noopener">raw</a> · <a style="color: #000;" href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-boot-to-world.gif" target="_blank" rel="noopener">GitHub</a> · <code style="font-size: 0.88em;">loop-boot-to-world.gif</code></p>
+    <p style="font-size: 0.85rem; margin-top: 8px; font-style: italic; text-align: center; opacity: 0.85;">Pantheon wallpaper — same frame as <code>docs/screenshot_beta1.png</code> / README hero.</p>
 
-    <p style="font-size: 0.98rem; font-weight: bold; margin: 18px 0 8px 0;">RGB proof (still, 1:11)</p>
-    <div style="border: 1px solid #000; padding: 6px; margin-bottom: 6px; background: #fafafa; box-shadow: 5px 5px 0 #c8c8c8;">
-      <img src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-rgb-proof.png" alt="Pantheon — RGB proof on retail PS2" style="width: 100%; max-width: 780px; height: auto; display: block; margin: 0 auto;" />
+    <div style="text-align: center; border-top: 2px solid #000; padding-top: 15px; margin-top: 0;">
+        <a style="color: #000; font-weight: bold; font-size: 1.8rem; text-decoration: underline;" href="https://github.com/94BILLY/PANTHEON" target="_blank" rel="noopener">View on GitHub</a>
+        <p style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px;">&ldquo;Imagination unleashed.&rdquo;</p>
+        <p style="margin-top: 5px; font-size: 0.85rem; opacity: 0.6;">Engineered by 94BILLY</p>
     </div>
-    <p style="font-size: 0.8rem; margin: 0 0 16px 0; text-align: center; color: #444;"><a style="color: #000;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-rgb-proof.png" target="_blank" rel="noopener">raw</a> · <a style="color: #000;" href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-rgb-proof.png" target="_blank" rel="noopener">GitHub</a> · <code style="font-size: 0.88em;">still-rgb-proof.png</code></p>
 
-    <p style="font-size: 0.98rem; font-weight: bold; margin: 18px 0 8px 0;">World orbit loop</p>
-    <div style="border: 1px solid #000; padding: 6px; margin-bottom: 6px; background: #fafafa; box-shadow: 5px 5px 0 #c8c8c8;">
-      <img src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-orbit.gif" alt="Pantheon — Path 1 world orbit" style="width: 100%; max-width: 620px; height: auto; display: block; margin: 0 auto;" />
-    </div>
-    <p style="font-size: 0.8rem; margin: 0 0 16px 0; text-align: center; color: #444;"><a style="color: #000;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-orbit.gif" target="_blank" rel="noopener">raw</a> · <a style="color: #000;" href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-orbit.gif" target="_blank" rel="noopener">GitHub</a> · <code style="font-size: 0.88em;">loop-world-orbit.gif</code></p>
-
-    <p style="font-size: 0.98rem; font-weight: bold; margin: 18px 0 8px 0;">Additional assets</p>
-    <ul style="font-size: 1rem; margin: 0; padding-left: 22px; line-height: 1.75;">
-      <li><a style="color: #000; font-weight: bold;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-vertical.gif" target="_blank" rel="noopener">loop-world-vertical.gif</a> — vertical crop</li>
-      <li><a style="color: #000; font-weight: bold;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/clip-power-on.gif" target="_blank" rel="noopener">clip-power-on.gif</a> — power moment</li>
-      <li><a style="color: #000; font-weight: bold;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-wide.gif" target="_blank" rel="noopener">loop-world-wide.gif</a> — wide loop</li>
-      <li><a style="color: #000; font-weight: bold;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-particles.png" target="_blank" rel="noopener">still-ps2-particles.png</a> · <a style="color: #000; font-weight: bold;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-waves.png" target="_blank" rel="noopener">still-ps2-waves.png</a></li>
-    </ul>
-  </section>
-
-  <section style="margin-bottom: 32px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 24px 0;">
-    <h3 style="font-size: 1.15rem; margin: 0 0 14px 0; font-weight: bold;">4. Operational protocol: build artifact</h3>
-    <p style="font-size: 1.05rem; margin-bottom: 16px;">On a host with <strong>PS2SDK</strong> and <code style="font-size: 0.92em;">ee-gcc</code>, reproduce the reference ELF exactly as in the repo:</p>
-    <div style="padding: 14px 16px; font-family: 'Courier New', Courier, monospace; font-size: 0.82rem; word-break: break-all; background: #000; color: #fff; border-left: 4px solid #fff; line-height: 1.45;"><strong style="color: #fff;">EXEC:</strong> git clone https://github.com/94BILLY/PANTHEON.git &amp;&amp; cd PANTHEON &amp;&amp; make -f Makefile.world clean &amp;&amp; make -f Makefile.world</div>
-  </section>
-
-  <section style="margin-bottom: 32px;">
-    <h3 style="font-size: 1.15rem; margin: 0 0 14px 0; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 6px;">5. From mesh to build</h3>
-    <p style="font-size: 1.05rem; margin-bottom: 16px;">Reference wiring lives in <code style="font-size: 0.92em;">floor.c</code>:</p>
-    <ol style="padding-left: 22px; font-size: 1.05rem; margin: 0; line-height: 1.65;">
-      <li style="margin-bottom: 14px;"><strong>Clone and build</strong><br /><code style="font-size: 0.92em;">git clone https://github.com/94BILLY/PANTHEON.git &amp;&amp; cd PANTHEON &amp;&amp; make -f Makefile.world</code></li>
-      <li style="margin-bottom: 14px;"><strong>Create geometry</strong> — Blender / DCC: <code style="font-size: 0.92em;">python3 obj2ps2.py your_model.obj your_model_data.c model_vertices</code><br />Softimage: ASCII <code style="font-size: 0.92em;">.hrc</code> → <code style="font-size: 0.92em;">python3 hrc2ps2.py your_model_ascii.hrc</code></li>
-      <li style="margin-bottom: 14px;"><strong>Integrate</strong> — wire generated <code style="font-size: 0.92em;">.c</code> / headers like <code style="font-size: 0.92em;">floor_data.h</code>; rebuild.</li>
-      <li style="margin-bottom: 0;"><strong>Run</strong> — <code style="font-size: 0.92em;">floor.elf</code> in PCSX2 or on PS2.</li>
-    </ol>
-    <p style="font-size: 1rem; margin-top: 22px; color: #333;">Left stick = move · Right stick = orbit · L1/R1 = zoom</p>
-  </section>
-
-  <div style="border-top: 1px solid #000; padding-top: 8px; margin-bottom: 8px; text-align: center;">
-    <p style="font-size: 0.95rem; font-weight: bold; margin: 0 0 10px 0;">Pantheon RTM still</p>
-    <div style="border: 1px solid #000; padding: 6px; display: inline-block; max-width: 100%; box-shadow: 5px 5px 0 #c8c8c8;">
-      <img style="width: 100%; max-width: 800px; height: auto; display: block; margin: 0 auto;" src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-world-hero.png" alt="Pantheon — floor and sky on retail PS2" />
-    </div>
-    <p style="font-size: 0.8rem; margin: 10px 0 0 0; color: #555;"><code style="font-size: 0.88em;">still-world-hero.png</code> · <a style="color: #000; font-weight: bold;" href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-world-hero.png" target="_blank" rel="noopener">raw</a> · <a style="color: #000; font-weight: bold;" href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-world-hero.png" target="_blank" rel="noopener">GitHub</a></p>
-  </div>
-
-  <div style="text-align: center; border-top: 2px solid #000; padding-top: 20px; margin-top: 8px;">
-    <a style="color: #000; font-weight: bold; font-size: 1.75rem; text-decoration: underline;" href="https://github.com/94BILLY/PANTHEON" target="_blank" rel="noopener">View on GitHub</a>
-    <p style="margin-top: 14px; font-size: 0.9rem; color: #555;">Licensing and project policy: README on GitHub.</p>
-    <p style="margin-top: 18px; font-size: 1.25rem; font-weight: bold; letter-spacing: 0.03em;">&ldquo;Anything is possible.&rdquo;</p>
-    <p style="margin-top: 8px; font-size: 0.88rem; color: #666;">Engineered by 94BILLY</p>
-  </div>
 </div>
