@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versioning follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Removed
+
+- **Repo hygiene:** NotebookLM snapshot (`_notebooklm/`), Cursor editor rules (`.cursor/rules/`), PS2SDK-template `cube/` sample, legacy root `Makefile`, `fix_shader.py`, `obj2ps2.py`, and `scripts/export_notebooklm_snapshot.py`. Public tree is **Path 1 + docs + asset cruncher** only; use `Makefile.world` and `GETTING_STARTED.md`.
+
 ## [1.0.0-beta.2] - 2026-05-02
 
 ### Added
