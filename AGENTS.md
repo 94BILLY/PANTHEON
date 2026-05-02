@@ -8,6 +8,7 @@
 - **If using PCSX2 AppImage here:** FUSE may be missing — extract instead of running the AppImage directly:  
   `./pcsx2-*.AppImage --appimage-extract` then run `squashfs-root/usr/bin/pcsx2-qt` with `LD_LIBRARY_PATH` set to `squashfs-root/usr/lib`. Install **`libxcb-cursor0`** if Qt reports the xcb platform plugin failing.
 - **Flicker / Z-fight:** See `BETA_RELEASE.md` — do not enable double-sided Path1 floor with overlapping coplanar passes; hybrid mode skips the CPU GIF floor when the Path1 floor job is on to avoid Z-fighting.
+- **GIF sync:** Every frame’s libdraw chain must end with **`draw_finish` + `draw_wait_finish`** after `dma_wait_fast` on `DMA_CHANNEL_GIF` (same pattern as `ps2sdk` `cube.c`). Missing FINISH wait can tear / flicker and make Path1 layers look “gone” on some emulators.
 - **“Upside-down RGB triangle”:** That was the **CPU debug probe** (`render_cpu_probe`), not Path1. Default **`PATH1_AB_CPU_OVERLAY=0`**; set **`PATH1_AB_CPU_OVERLAY=1`** only for A/B. If Path1 floor vanishes after **XY→XZ** swizzle, check triangle **winding faces +Y** (wrong order → GS culls the whole deck; swizzled mesh needs **`(a,c,b)`** here).
 - **Strict Path1-only:** `make -f Makefile.world EE_CFLAGS='-DPANTHEON_RENDER_PROFILE=1'` (disables CPU fallback paths; documented in `BETA_RELEASE.md`).
 

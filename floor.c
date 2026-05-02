@@ -1631,6 +1631,7 @@ int main(int argc, char *argv[]) {
     graph_enable_output();
 
     dma_channel_initialize(DMA_CHANNEL_GIF, NULL, 0);
+    dma_channel_fast_waits(DMA_CHANNEL_GIF);
     dma_channel_initialize(DMA_CHANNEL_VIF1, NULL, 0);
     /* Intermittent Mode Transfer: Path 3 texture uploads yield to Path 1 every 8 QW (verify vs SCE). */
     GIF_REG_MODE |= (1u << 2);
@@ -1802,12 +1803,17 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        /* Required for libdraw GIF chains: GS FINISH + wait (see ps2sdk cube.c). Without this,
+         * clear/overlay can race vsync / VU1 kicks → visible flicker and “missing” Path1 layers. */
+        q = draw_finish(q);
+
         FlushCache(0);
         {
             int gif_qw = (int)(q - packets[context]->data);
             dma_channel_send_normal(DMA_CHANNEL_GIF, (void *)PHYSICAL(packets[context]->data), gif_qw, 0, 0);
         }
         dma_wait_fast();
+        draw_wait_finish();
 
         if (render_jobs[2].enabled || render_jobs[3].enabled) {
         #if USE_VU1_SKYDOME_MESH

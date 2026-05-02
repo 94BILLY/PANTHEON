@@ -50,3 +50,4 @@ This sets **`PATH1_AB_CPU_OVERLAY=0`**: no CPU GIF floor/overlay — only VU1 Pa
 
 - Keep **`PANTHEON_FLOOR_PATH1_DOUBLE_SIDED=0`** (default): double-sided coplanar floor tris can Z-fight on some PCSX2 backends.
 - **Do not** draw CPU GIF floor and Path1 floor on the **same** plane in the same frame (default hybrid now avoids this).
+- **GS FINISH:** The GIF DMA chain includes **`draw_finish`** and **`draw_wait_finish`** so clears/overlays don’t race VU1 kicks (reduces full-frame flicker on PCSX2 Software).
