@@ -9,8 +9,15 @@
   2) VIDEO_ID     → YouTube video ID only (the part after /embed/ in share → embed).
   3) HERO_IMG_SRC → full-width screenshot or key art (or hide the <img> block if unused).
 
-  Optional: commit the same assets under docs/ on GitHub and use raw.githubusercontent.com
-  URLs so the landing and repo stay in sync.
+  Repo ships web-sized captures under docs/media/ (GIF + PNG). After push, paste absolute
+  raw URLs for WordPress (replace BRANCH if needed):
+
+    HERO_IMG_SRC → https://raw.githubusercontent.com/94BILLY/Pantheon/main/docs/media/pantheon-hero-world-4587.png
+    Optional extra still: pantheon-hero-boot-4586.png (same folder).
+
+  GIFs (real PS2 + on-screen Path 1): pantheon-ps2-boot-4586.gif, pantheon-ps2-world-4587.gif.
+  Regenerate from local .MOV with ffmpeg if you re-shoot (example): trim from ~45s/6s and
+  ~48s/8s respectively, scale 560px wide, palette GIF — see repo README Media section.
 
   Repo baseline: v1.0.0-beta (see README / BETA_RELEASE.md).
 -->
