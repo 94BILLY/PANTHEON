@@ -5,86 +5,115 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pantheon — media</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 920px; margin: 0 auto; padding: 24px; color: #111; line-height: 1.5; background: #fafafa; font-size: 15px; }
-    h1 { font-size: 1.35rem; font-weight: 600; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-    h2 { font-size: 0.75rem; font-weight: 600; margin-top: 28px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
-    .note { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; margin: 14px 0; font-size: 0.9rem; color: #333; }
-    figure { margin: 14px 0; padding: 12px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; }
-    figcaption { font-size: 0.8rem; margin-top: 8px; color: #666; }
-    img { max-width: 100%; height: auto; display: block; border: 1px solid #eee; border-radius: 4px; }
-    a { color: #0066cc; font-weight: 500; text-decoration: none; } a:hover { text-decoration: underline; }
-    .path { font-family: ui-monospace, monospace; font-size: 0.72rem; word-break: break-all; background: #f0f0f0; padding: 8px 10px; border-radius: 6px; margin: 8px 0; }
-    ul { padding-left: 1.2rem; }
-    code { font-size: 0.88em; background: #f5f5f5; padding: 1px 5px; border-radius: 4px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 920px; margin: 0 auto; padding: 24px; color: #1d1d1f; line-height: 1.5; background: #f5f5f7; font-size: 15px; }
+    h1 { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .sub { color: #6e6e73; font-size: 0.9rem; margin-bottom: 20px; }
+    h2 { font-size: 0.72rem; font-weight: 600; margin-top: 32px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #6e6e73; }
+    .note { background: #fff; border: 1px solid #d2d2d7; border-radius: 12px; padding: 16px 18px; margin: 16px 0; font-size: 0.9rem; }
+    .quick { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: #fff; border: 1px solid #d2d2d7; border-radius: 12px; overflow: hidden; }
+    .quick th, .quick td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e8e8ed; vertical-align: top; }
+    .quick th { background: #fafafa; font-weight: 600; color: #424245; }
+    .quick tr:last-child td { border-bottom: none; }
+    .quick code { font-size: 0.85em; }
+    figure { margin: 16px 0; padding: 14px; background: #fff; border: 1px solid #d2d2d7; border-radius: 12px; }
+    figcaption { font-size: 0.85rem; margin-top: 10px; color: #424245; }
+    .gh { font-size: 0.78rem; margin-top: 8px; color: #6e6e73; }
+    .gh a { margin-right: 10px; }
+    img { max-width: 100%; height: auto; display: block; border: 1px solid #e8e8ed; border-radius: 8px; }
+    a { color: #0066cc; text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.7rem; word-break: break-all; background: #e8e8ed; padding: 10px 12px; border-radius: 8px; margin: 12px 0; color: #1d1d1f; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; background: #f5f5f7; padding: 2px 6px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <h1>Media</h1>
-  <p class="path"><span id="here"></span></p>
-  <p>File names describe <strong>behavior</strong> (still vs loop vs clip). Open this HTML from disk; assets load from the same folder.</p>
+  <p class="sub">Local previews use files next to this HTML. <strong>GitHub</strong> links track <code>main</code> on <code>94BILLY/PANTHEON</code> (swap branch in the URL if needed).</p>
+  <p class="path" id="here"></p>
 
   <div class="note">
-    <strong>Naming</strong>
-    <ul style="margin: 8px 0 0 0;">
-      <li><code>still-*</code> — single frame</li>
-      <li><code>loop-*</code> — repeating motion</li>
-      <li><code>clip-*</code> — short one-off beat</li>
-    </ul>
-    <p style="margin: 10px 0 0 0;"><strong>Carousel:</strong> <code>loop-boot-to-world.gif</code> → <code>still-rgb-proof.png</code> (<strong>IMG_4587.MOV</strong> 1:11) → <code>loop-world-orbit.gif</code></p>
+    <strong>Names</strong> — <code>still-*</code> one frame · <code>loop-*</code> repeating · <code>clip-*</code> short beat.<br />
+    <strong>Carousel</strong> — <code>loop-boot-to-world.gif</code> → <code>still-rgb-proof.png</code> (1:11 in <code>IMG_4587.MOV</code>) → <code>loop-world-orbit.gif</code>
   </div>
+
+  <h2>All assets — links</h2>
+  <table class="quick">
+    <thead><tr><th>File</th><th>Raw (hotlink / download)</th><th>On GitHub</th></tr></thead>
+    <tbody>
+      <tr><td><code>still-ps2-particles.png</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-particles.png">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-ps2-particles.png">blob</a></td></tr>
+      <tr><td><code>still-ps2-waves.png</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-waves.png">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-ps2-waves.png">blob</a></td></tr>
+      <tr><td><code>still-rgb-proof.png</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-rgb-proof.png">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-rgb-proof.png">blob</a></td></tr>
+      <tr><td><code>still-world-hero.png</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-world-hero.png">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-world-hero.png">blob</a></td></tr>
+      <tr><td><code>loop-boot-to-world.gif</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-boot-to-world.gif">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-boot-to-world.gif">blob</a></td></tr>
+      <tr><td><code>loop-world-vertical.gif</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-vertical.gif">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-vertical.gif">blob</a></td></tr>
+      <tr><td><code>clip-power-on.gif</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/clip-power-on.gif">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/clip-power-on.gif">blob</a></td></tr>
+      <tr><td><code>loop-world-wide.gif</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-wide.gif">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-wide.gif">blob</a></td></tr>
+      <tr><td><code>loop-world-orbit.gif</code></td><td><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-orbit.gif">raw</a></td><td><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-orbit.gif">blob</a></td></tr>
+    </tbody>
+  </table>
 
   <h2>Stills</h2>
   <figure>
-    <img src="still-ps2-particles.png" alt="PS2 particles" />
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-particles.png" title="Open full size (raw)"><img src="still-ps2-particles.png" alt="PS2 particles" /></a>
     <figcaption><code>still-ps2-particles.png</code> — system UI reference frame.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-particles.png">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-ps2-particles.png">GitHub</a></div>
   </figure>
   <figure>
-    <img src="still-ps2-waves.png" alt="PS2 waves" />
-    <figcaption><code>still-ps2-waves.png</code> — alternate system frame; A/B thumbnails.</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-waves.png" title="Open full size (raw)"><img src="still-ps2-waves.png" alt="PS2 waves" /></a>
+    <figcaption><code>still-ps2-waves.png</code> — alternate system frame.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-ps2-waves.png">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-ps2-waves.png">GitHub</a></div>
   </figure>
   <figure>
-    <img src="still-rgb-proof.png" alt="RGB proof on hardware" />
-    <figcaption><code>still-rgb-proof.png</code> — vertex-color proof + hardware; <strong>IMG_4587.MOV</strong> at <strong>1:11</strong>, 1600px wide.</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-rgb-proof.png" title="Open full size (raw)"><img src="still-rgb-proof.png" alt="RGB proof on hardware" /></a>
+    <figcaption><code>still-rgb-proof.png</code> — vertex-color proof + hardware · <strong>IMG_4587.MOV</strong> <strong>1:11</strong> · 1600px wide.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-rgb-proof.png">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-rgb-proof.png">GitHub</a></div>
   </figure>
 
-  <h2>Loops</h2>
+  <h2>Loops &amp; clips</h2>
   <figure>
-    <img src="loop-boot-to-world.gif" alt="Boot through world" width="520" />
-    <figcaption><code>loop-boot-to-world.gif</code> — boot → title → Path 1 world (<strong>IMG_4586.MOV</strong> segments).</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-boot-to-world.gif" title="Open GIF (raw)"><img src="loop-boot-to-world.gif" alt="Boot through world" width="520" /></a>
+    <figcaption><code>loop-boot-to-world.gif</code> — boot → <code>WWW.94BILLY.COM</code> → Path 1 world (<strong>IMG_4586.MOV</strong>).</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-boot-to-world.gif">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-boot-to-world.gif">GitHub</a></div>
   </figure>
   <figure>
-    <img src="loop-world-vertical.gif" alt="Vertical world" width="480" />
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-vertical.gif" title="Open GIF (raw)"><img src="loop-world-vertical.gif" alt="Vertical world" width="480" /></a>
     <figcaption><code>loop-world-vertical.gif</code> — vertical crop (Shorts / Reels / TikTok).</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-vertical.gif">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-vertical.gif">GitHub</a></div>
   </figure>
   <figure>
-    <img src="clip-power-on.gif" alt="Power on" width="520" />
-    <figcaption><code>clip-power-on.gif</code> — power interaction; <strong>IMG_4587.MOV</strong> ~1:44.</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/clip-power-on.gif" title="Open GIF (raw)"><img src="clip-power-on.gif" alt="Power on" width="520" /></a>
+    <figcaption><code>clip-power-on.gif</code> — power interaction · <strong>IMG_4587.MOV</strong> ~1:44.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/clip-power-on.gif">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/clip-power-on.gif">GitHub</a></div>
   </figure>
   <figure>
-    <img src="loop-world-wide.gif" alt="World wide" width="580" />
-    <figcaption><code>loop-world-wide.gif</code> — landscape loop; <strong>IMG_4586.MOV</strong>.</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-wide.gif" title="Open GIF (raw)"><img src="loop-world-wide.gif" alt="World wide" width="580" /></a>
+    <figcaption><code>loop-world-wide.gif</code> — landscape loop · <strong>IMG_4586.MOV</strong>.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-wide.gif">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-wide.gif">GitHub</a></div>
   </figure>
   <figure>
-    <img src="loop-world-orbit.gif" alt="World orbit" width="560" />
-    <figcaption><code>loop-world-orbit.gif</code> — primary world loop; <strong>IMG_4587.MOV</strong>.</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-orbit.gif" title="Open GIF (raw)"><img src="loop-world-orbit.gif" alt="World orbit" width="560" /></a>
+    <figcaption><code>loop-world-orbit.gif</code> — primary world loop · <strong>IMG_4587.MOV</strong>.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/loop-world-orbit.gif">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/loop-world-orbit.gif">GitHub</a></div>
   </figure>
 
   <h2>Hero</h2>
   <figure>
-    <img src="still-world-hero.png" alt="World hero" width="1280" />
-    <figcaption><code>still-world-hero.png</code> — landing / Open Graph (PS2 + world).</figcaption>
+    <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-world-hero.png" title="Open full size (raw)"><img src="still-world-hero.png" alt="World hero" width="1280" /></a>
+    <figcaption><code>still-world-hero.png</code> — landing / Open Graph (PS2 + world). WordPress <code>HERO_IMG_SRC</code> can point at the <strong>Raw</strong> URL above.</figcaption>
+    <div class="gh"><a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/still-world-hero.png">Raw</a><a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/media/still-world-hero.png">GitHub</a></div>
   </figure>
 
-  <h2>Source (local)</h2>
+  <h2>Source masters (local only)</h2>
+  <p class="sub">Not in git — keep on disk for re-exports.</p>
   <ul>
     <li><a href="../../IMG_4586.MOV">IMG_4586.MOV</a></li>
     <li><a href="../../IMG_4587.MOV">IMG_4587.MOV</a></li>
   </ul>
 
-  <p style="margin-top: 24px;"><a href="https://github.com/94BILLY/Pantheon">github.com/94BILLY/Pantheon</a></p>
+  <p style="margin-top: 28px;"><a href="https://github.com/94BILLY/PANTHEON">github.com/94BILLY/PANTHEON</a> · <a href="https://github.com/94BILLY/PANTHEON/tree/main/docs/media"><code>docs/media/</code></a> · WordPress: <a href="https://github.com/94BILLY/PANTHEON/blob/main/docs/pantheon-landing.html"><code>docs/pantheon-landing.html</code></a></p>
 
   <script>
-    document.getElementById('here').textContent = window.location.href;
+    document.getElementById('here').textContent = window.location.href || '';
   </script>
 </body>
 </html>
