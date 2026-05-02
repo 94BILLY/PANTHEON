@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Pantheon — bare-metal Path 1 PlayStation 2 engine. VU1. 60 FPS." />
+  <title>Pantheon — 94BILLY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e6e3;
+      --muted: #8a8784;
+      --line: #2a2826;
+      --accent: #c4a574;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 1.125rem;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    /* subtle film grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.07;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    /* scanlines */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.04;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.45) 2px,
+        rgba(0,0,0,0.45) 4px
+      );
+    }
+    .hero {
+      position: relative;
+      min-height: 72vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 5vw, 3rem) clamp(3rem, 8vw, 5rem);
+      background-color: #111;
+      background-image:
+        linear-gradient(to top, var(--bg) 0%, rgba(10,10,10,0.75) 35%, rgba(10,10,10,0.35) 100%),
+        url("https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/screenshot_beta1.png");
+      background-size: cover;
+      background-position: center 40%;
+    }
+    .hero-inner { max-width: 56rem; }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(3rem, 10vw, 5.5rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 0.95;
+      text-shadow: 0 2px 24px rgba(0,0,0,0.8);
+    }
+    .tagline {
+      margin: 1rem 0 0;
+      font-size: clamp(1.15rem, 2.8vw, 1.65rem);
+      font-weight: 500;
+      font-style: italic;
+      max-width: 36em;
+      color: rgba(232,230,227,0.95);
+      text-shadow: 0 1px 12px rgba(0,0,0,0.7);
+    }
+    .wrap { max-width: 42rem; margin: 0 auto; padding: 2.5rem clamp(1.25rem, 5vw, 2rem) 4rem; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+      gap: 1px;
+      margin: 2.5rem 0;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .stat {
+      background: var(--bg);
+      padding: 1.25rem 1rem;
+      text-align: center;
+    }
+    .stat strong {
+      display: block;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+    .stat span { font-size: 1.05rem; font-weight: 600; }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .cta {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.85rem 1.35rem;
+      border: 1px solid var(--fg);
+      color: var(--fg);
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cta:hover { background: var(--fg); color: var(--bg); }
+    .cta.secondary { border-color: var(--muted); color: var(--muted); }
+    .cta.secondary:hover { background: var(--muted); color: var(--bg); }
+    .what {
+      border-top: 1px solid var(--line);
+      padding-top: 2rem;
+      margin-top: 0.5rem;
+    }
+    .what p { margin: 0 0 1rem; color: #d4d1cc; }
+    .what p:last-child { margin-bottom: 0; }
+    .code-wrap {
+      margin: 2.5rem 0;
+      border: 1px solid var(--line);
+      background: #0d0d0d;
+      overflow: auto;
+    }
+    .code-wrap .label {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--line);
+    }
+    pre {
+      margin: 0;
+      padding: 1rem 1.1rem 1.25rem;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      color: #c8c4be;
+      overflow-x: auto;
+    }
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 2rem clamp(1.25rem, 5vw, 2rem) 3rem;
+      text-align: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>PANTHEON</h1>
+      <p class="tagline">A bare-metal Path 1 PS2 engine. Built the way Kojima and Rockstar built theirs.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="stats">
+      <div class="stat"><strong>Target</strong><span>60 FPS locked</span></div>
+      <div class="stat"><strong>Pipeline</strong><span>Path 1 · VU1</span></div>
+      <div class="stat"><strong>Assets</strong><span>Softimage 3D pipeline</span></div>
+    </div>
+
+    <div class="cta-row">
+      <a class="cta" href="https://github.com/94BILLY/PANTHEON" target="_blank" rel="noopener">View on GitHub</a>
+      <a class="cta secondary" href="https://github.com/94BILLY/PANTHEON/blob/main/FLIGHT_LOG.md" target="_blank" rel="noopener">Read the Flight Log</a>
+    </div>
+
+    <section class="what">
+      <p><strong>Pantheon</strong> is Path 1 on real silicon: the EE streams DMA and VIF work; VU1 microcode transforms vertices, packs GIF primitives, and XGKICKs the Graphics Synthesizer—no thick software renderer in between.</p>
+      <p>This repository is a <strong>public technical record</strong> and a reproducible whitebox (boot, skydome, floor, camera)—not a starter kit and not permission to ship derivatives.</p>
+      <p>Build <code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;">floor.elf</code> with PS2SDK, run it in PCSX2 or on hardware, and read the contract in <code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;">pantheon_path1_contract.h</code> next to the microcode in <code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;">shader.vsm</code>.</p>
+    </section>
+
+    <div class="code-wrap">
+      <div class="label">shader.vsm — entry (VU1)</div>
+      <pre>.vu
+.global PantheonShader
+PantheonShader:
+; Path 1 shared contract:
+;   giftag @ 240, output @ 241, xgkick @ 240, input @ 8
+nop lq VF06, 240(VI00) ; GIF tag
+nop lq VF05, 2(VI00)   ; GS center (2048,2048); Z bias
+nop lq VF07, 3(VI00)   ; XY scale, Z scale, nearZ, maxXY
+nop lq VF01, 4(VI00)   ; MVP row 0
+nop lq VF02, 5(VI00)   ; MVP row 1
+nop lq VF03, 6(VI00)   ; MVP row 2
+nop lq VF04, 7(VI00)   ; MVP row 3
+nop sq VF06, 240(VI00)
+nop xitop VI01
+VertexLoop:
+nop ibeq VI01, VI00, EndLoop
+; … transform, pack, xgkick …</pre>
+    </div>
+  </main>
+
+  <footer>
+    © 2026 <a href="https://www.94billy.com">94BILLY</a> · All Rights Reserved ·
+    <a href="https://github.com/94BILLY/PANTHEON/tree/main/docs/pantheon-landing.html">Classic landing (WordPress)</a>
+  </footer>
+</body>
+</html>

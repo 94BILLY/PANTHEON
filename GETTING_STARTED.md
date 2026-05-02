@@ -1,6 +1,15 @@
 # Pantheon — build and run
 
-**How to read this page:** Requirements → Steps 1–5 (toolchain through PCSX2) → **Build profiles** → **Asset pipeline** (only if you replace meshes) → **Common issues**. For *what the default binary does* in one screen, open **[`BETA_RELEASE.md`](BETA_RELEASE.md)** first.
+## TL;DR
+
+1. Build [ps2toolchain](https://github.com/ps2dev/ps2toolchain) (`ee-gcc` + `dvp-as`) and install [ps2sdk](https://github.com/ps2dev/ps2sdk) — see **Step 1** and **Step 2** below if you have not already.
+2. `git clone https://github.com/94BILLY/PANTHEON.git`
+3. `cd PANTHEON && make -f Makefile.world`
+4. Open **`floor.elf`** in **PCSX2** (or deploy to hardware — **Running on Real PS2 Hardware**).
+
+Experienced PS2 devs often stop here. Everyone else: read the full guide.
+
+**How to read this page:** Requirements → Steps 1–5 → **Build profiles** → **Asset pipeline** (only if you replace meshes) → **Understanding `shader.vsm`** → **Running on Real PS2 Hardware** → **References** → **Common issues** (last). For *what the default binary does* in one screen, open **[`BETA_RELEASE.md`](BETA_RELEASE.md)** first.
 
 **Audience:** people who are **already building PS2 ELFs** and want the same **reproducible** commands as the author. This is not a conceptual introduction to Path 1—use the **EE / VIF / VU / GS** manuals and **ps2sdk** samples for that foundation. For the big-picture story, pair this file with **HANDOFF.md** and official manuals.
 
@@ -386,7 +395,20 @@ PS3 BC (backward-compatible) also works for upscaled output.
 
 ---
 
-## Common Issues
+## References
+
+- [ps2dev/ps2sdk](https://github.com/ps2dev/ps2sdk)
+- [ps2dev/ps2toolchain](https://github.com/ps2dev/ps2toolchain)
+- [ps2dev/dvp](https://github.com/ps2dev/dvp)
+- [PCSX2](https://pcsx2.net)
+- Sony PS2 Runtime Library Release 3.0 — official VU1 programming samples
+- Funslower / soopadoopa (2001, scene.org) — Path 1 demoscene reference
+- `FLIGHT_LOG.md` — development journal, Day 1 → Day 7
+- `HANDOFF.md` — SCE tree paths and doc index
+
+---
+
+## Common issues
 
 **Black screen, no boot title**  
 VU1 microprogram not executing. Check that `shader.o` was built by `dvp-as`
@@ -408,16 +430,3 @@ the two floor layers on separate render passes, or disable one.
 
 **`cannot find -ldraw`**  
 ps2sdk not installed or `PS2SDK` env var not set. See Step 2.
-
----
-
-## References
-
-- [ps2dev/ps2sdk](https://github.com/ps2dev/ps2sdk)
-- [ps2dev/ps2toolchain](https://github.com/ps2dev/ps2toolchain)
-- [ps2dev/dvp](https://github.com/ps2dev/dvp)
-- [PCSX2](https://pcsx2.net)
-- Sony PS2 Runtime Library Release 3.0 — official VU1 programming samples
-- Funslower / soopadoopa (2001, scene.org) — Path 1 demoscene reference
-- `FLIGHT_LOG.md` — development journal, Day 1 → Day 7
-- `HANDOFF.md` — SCE tree paths and doc index
