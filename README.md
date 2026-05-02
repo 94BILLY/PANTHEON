@@ -1,6 +1,6 @@
 # Pantheon
 
-**Pantheon** is a **Path 1** PlayStation 2 engine: the **Emotion Engine** issues **DMA/VIF1** work; **VU1** runs **`shader.vsm`** (transform, GIF pack, **XGKICK** to the **Graphics Synthesizer**). Geometry is aligned to the bus in software—**Wavefront `.obj`** (**`obj2ps2.py`**) or **Softimage `.hrc`** (**`hrc2ps2.py`**) into headers the demo consumes.
+**Pantheon** is a **Path 1** PlayStation 2 engine: the **Emotion Engine** issues **DMA/VIF1** work; **VU1** runs **`shader.vsm`** (transform, GIF pack, **XGKICK** to the **Graphics Synthesizer**). In-tree crunchers (**`obj2ps2.py`**, **`hrc2ps2.py`**) exist to align mesh data to the same bus format the **reference `floor.elf`** uses—**not** positioned as a kit for shipping unrelated titles.
 
 **Build:** `make -f Makefile.world` → **`floor.elf`** (stripped EE ELF).
 
@@ -12,7 +12,7 @@
 |---|---|
 | **What you get** | Boot sequence (**WWW.94BILLY.COM**), timecycle skydome, walkable floor grid, third-person orbit camera, DualShock movement |
 | **Default render** | **Hybrid** — CPU GIF draws the floor deck; **Path 1** draws the skydome (avoids coplanar Z-fight). **Strict Path 1** turns on VU1 floor tiles and turns off the CPU overlay — see [`BETA_RELEASE.md`](BETA_RELEASE.md) |
-| **Target** | **60 FPS** whitebox; acceptance criteria in [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) |
+| **Target** | **60 FPS** reference whitebox; acceptance criteria in [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) |
 
 ---
 

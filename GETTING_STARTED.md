@@ -56,7 +56,7 @@ between your code and the silicon.
 
 You do not need Softimage to build and run Pantheon. The repository includes
 pre-crunched geometry headers (`floor_data.h`, `skydome_data.h`). Softimage
-is required only if you want to author your own geometry.
+is required only if you are **regenerating those headers** or replacing meshes **inside this reference tree**—not as encouragement to fork into a general “make a game” workflow.
 
 ---
 
@@ -241,10 +241,9 @@ counts, and near-Z cull hits to the console. Disable for release builds.
 
 ---
 
-## Asset Pipeline — Authoring Your Own Geometry
+## Asset pipeline — mesh regeneration (reference tree)
 
-This is the full Softimage → PS2 pipeline used by Pantheon.
-Skip this section if you are using the included geometry headers.
+This documents the **Softimage → header** and **OBJ → .c** paths the **author** uses to keep `floor_data.h` / `skydome_data.h` (and related) consistent with `floor.c`. Skip if you only build against the committed headers.
 
 ### Requirements
 
@@ -299,7 +298,7 @@ Export a triangulated (or n-gon) mesh as `.obj`, then from the repo root:
 python3 obj2ps2.py your_model.obj your_model_data.c your_array_name
 ```
 
-This emits a `.c` file with `PantheonVertex` arrays and a `PantheonVIFHeader` stub. Wire it into your EE DMA path to match `pantheon_path1_contract.h` and the kick layout used in `floor.c` (the shipping demo uses `hrc2ps2.py` headers; OBJ output is a parallel path you integrate explicitly).
+This emits a `.c` file with `PantheonVertex` arrays and a `PantheonVIFHeader` stub. Wiring it to the EE DMA path is **your** integration burden; the committed reference uses **`hrc2ps2.py`** headers for the shipped floor/skydome. OBJ is an alternate crunch path documented for completeness, not an invitation to treat the repo as a game template.
 
 ### Step 4 — Include in your build
 

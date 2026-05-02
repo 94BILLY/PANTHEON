@@ -16,6 +16,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 - **README:** Restructured for **Apple-style scanability** (tables, short sections) while keeping **Sony-style technical precision** (Path 1, artifact name, doc map); reduced gatekeeping in the lede.
 - **GETTING_STARTED.md:** Opening **navigation paragraph** (“how to read this page”) before audience disclaimer.
 - **BASELINE_ACCEPTANCE.md:** Removed stale `floor_hybrid_baseline.elf` / `floor_path1_strict.elf` names; single artifact **`floor.elf`** + pointer to `BETA_RELEASE.md`.
+- **Positioning:** Removed **“make your own PS2 games / demos”** style framing from repo copy; crunchers and asset sections are described as **reference-tree / reproducibility**, not a general game-making invitation (`README.md`, `GETTING_STARTED.md`, `docs/pantheon-landing.html`).
 
 ## [1.0.0-beta] - 2026-05-02
 
