@@ -20,7 +20,7 @@ git rev-parse HEAD
 
 | Area | Behavior |
 |------|----------|
-| **Floor** | **`main` @ `0164abe` + `fea19da`** line (also `origin/fix/softimage-grid-snap-noflicker`): **world-anchored Path1 tiles** (`PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER=0`), **XY→XZ** + **`(a,c,b)` winding**, **hybrid** render, **CPU GIF floor skipped when Path1 floor runs** (no Z-fight). **`player_on_support_deck`** uses **tile-local XZ** so the deck stays under you on every patch. Grid vs slab: `PANTHEON_PATH1_FLOOR_BETA_GRID` (default 1). |
+| **Floor** | **`main` @ `0164abe` + `fea19da`** line: **world-anchored Path1 tiles**, **XY→XZ** + **`(a,c,b)`**, **hybrid**, **CPU GIF floor skipped when Path1 floor runs**. **`player_on_support_deck`** tile-local XZ. **Default `PANTHEON_PATH1_FLOOR_BETA_GRID=0`** → **solid slab green** (same RGB always); checker grid: `EE_CFLAGS='-DPANTHEON_PATH1_FLOOR_BETA_GRID=1'`. |
 | **Render** | **Hybrid** (`PANTHEON_RENDER_PROFILE=0`): Path1 **skydome then floor**. |
 | **RTM Gold floor** | If you need the alternate **`58cf3f8`** follow-quad recipe, build from branch **`origin/release/rtm-gold`** — it is **not** the default on `main` anymore (it hid the walkable grid for many setups). |
 | **Intro** | Boot luma ramp + `WWW.94BILLY.COM`; libdraw GS coords fixed. **Staggered letter reveal** + **gentle vertical sine wave** on by default (`PANTHEON_BOOT_TEXT_WAVE_AMP` ~2.25f, slightly slower phase). For zero wave on strict PCSX2: `EE_CFLAGS='-DPANTHEON_BOOT_TEXT_WAVE_AMP=0.0f'`. |

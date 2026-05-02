@@ -264,9 +264,9 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 /* Must match the scale applied in init_flat_floor() to floor mesh (Softimage export). */
 #define FLOOR_MESH_SCALE 14.0f
 
-/* 1 = v0.9.x beta SoftImage sandbox floor (major green lines + checker cells). 0 = uniform slab (less moiré). */
+/* 1 = sandbox grid (major lines + checker — cells are not all the same green). 0 = one vivid slab green (always). */
 #ifndef PANTHEON_PATH1_FLOOR_BETA_GRID
-#define PANTHEON_PATH1_FLOOR_BETA_GRID 1
+#define PANTHEON_PATH1_FLOOR_BETA_GRID 0
 #endif
 
 #if USE_VU1_SKYDOME_MESH
