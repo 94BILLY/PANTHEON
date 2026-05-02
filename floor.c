@@ -1803,8 +1803,18 @@ int main(int argc, char *argv[]) {
         dma_wait_fast();
 
         if (render_jobs[2].enabled || render_jobs[3].enabled) {
-        /* Floor before skydome: on some GS paths (esp. Software + large inward dome) the dome can
-         * win depth in the lower screen where the walkable plane should read — draw ground first. */
+        #if USE_VU1_SKYDOME_MESH
+            /* Skydome first, then floor: floor must win Z in the lower screen (inside dome; floor-first lets sky overwrite). */
+            if (render_jobs[2].enabled) {
+                packet_t *vif_pkt = path1_vif_packet_begin();
+                q = vif_pkt->data;
+                g_path1_mesh_stage = "skydome";
+                q = render_path1_tris(q, sky_local_screen, flat_skydome, SKYDOME_TRI_COUNT * 3, SKYDOME_TRI_COUNT * 3);
+                q = add_dma_tag(q, 0, 7, 0, 0, 0);
+                FlushCache(0);
+                path1_vif_packet_submit(vif_pkt, q, dbg_frame, "skydome");
+            }
+        #endif
             if (render_jobs[3].enabled) {
                 int path1_vert_count = PANTHEON_FLOOR_PATH1_VERTS;
                 int tile_submits = 0;
@@ -1891,17 +1901,6 @@ int main(int argc, char *argv[]) {
                 }
 #endif
             }
-#if USE_VU1_SKYDOME_MESH
-            if (render_jobs[2].enabled) {
-                packet_t *vif_pkt = path1_vif_packet_begin();
-                q = vif_pkt->data;
-                g_path1_mesh_stage = "skydome";
-                q = render_path1_tris(q, sky_local_screen, flat_skydome, SKYDOME_TRI_COUNT * 3, SKYDOME_TRI_COUNT * 3);
-                q = add_dma_tag(q, 0, 7, 0, 0, 0);
-                FlushCache(0);
-                path1_vif_packet_submit(vif_pkt, q, dbg_frame, "skydome");
-            }
-#endif
         }
 
         graph_wait_vsync();
