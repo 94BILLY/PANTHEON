@@ -1,0 +1,10 @@
+---
+description: Git attribution for Pantheon — no Cursor co-author on GitHub
+alwaysApply: true
+---
+
+# Git identity
+
+- Do **not** add `Co-authored-by: Cursor` or any Cursor attribution to commits pushed to GitHub.
+- Use the project identity **94BILLY** / **CONTACT@94billy.com** (or the user’s configured `user.name` / `user.email`) for author and committer when making commits in this repo.
+- If the environment injects co-author trailers into `git commit`, use `git commit-tree` with explicit `-m` messages, or amend after disabling the injection in Cursor settings (disable “Add co-author” / similar for Git).
