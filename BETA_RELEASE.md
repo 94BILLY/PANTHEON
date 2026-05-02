@@ -6,13 +6,13 @@ This document pins the **default** configuration that matches:
 
 ## Git tag
 
-- **`v1.0.0-beta.1`** — SemVer pre-release: hybrid render (CPU walkable deck + Path1 skydome), boot sequence (**94BILLY STUDIOS**), timecycle sky, anti–Z-fight floor split. Points to commit `134e663`.
+- **`v1.0.0-beta.2`** — SemVer pre-release: same runtime baseline as beta.1 (hybrid render, **94BILLY STUDIOS** boot, timecycle sky, anti–Z-fight floor split) plus in-repo documentation pack (`GETTING_STARTED.md`, `FLIGHT_LOG.md`, `HANDOFF.md`) and git index hygiene. Peel commit: `git rev-parse v1.0.0-beta.2^{}`.
 
 Recreate this tree locally:
 
 ```bash
-git fetch origin tag v1.0.0-beta.1
-git checkout v1.0.0-beta.1
+git fetch origin tag v1.0.0-beta.2
+git checkout v1.0.0-beta.2
 git rev-parse HEAD
 ```
 

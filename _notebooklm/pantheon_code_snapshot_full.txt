@@ -90,7 +90,7 @@ Primary generated asset headers in this repo include:
 Build the current executable with:
 
 ```bash
-cd /home/marvin/Pantheon
+cd /home/user/Pantheon
 make -f Makefile.world
 ```
 
@@ -1705,9 +1705,9 @@ static void debug_log(const char *run_id, const char *hypothesis_id, const char 
 #if PANTHEON_AGENT_TRACE
 // #region agent log
 static void agent_dbg22_log(const char *run_id, const char *hypothesis_id, const char *location, const char *message, const char *data_json) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-22f5dd.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-22f5dd.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-22f5dd.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-22f5dd.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-22f5dd.log", "a");
     if (!f)
@@ -1729,9 +1729,9 @@ static void agent_dbg22_log(const char *run_id, const char *hypothesis_id, const
 #if PANTHEON_AGENT_TRACE
 /* H1: dma_channel_send_chain(..., qwc, ...) with qwc==0 transfers no EE data → VIF1 idle → no geometry. */
 static void agent_path1_dma_log(const char *hypothesis_id, const char *location, const char *stage, int used_qw, int dma_qwc) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1760,9 +1760,9 @@ static void agent_path1_layout_log(
     int wraps,
     int overlaps
 ) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1800,9 +1800,9 @@ static void agent_path1_clip_log(
     float ndc_y_min,
     float ndc_y_max
 ) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1835,9 +1835,9 @@ static void agent_path1_contract_log(
     int xgkick_addr,
     int nloop
 ) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1854,9 +1854,9 @@ static void agent_path1_contract_log(
 
 /* H7: Correlate phase ordering with alternating clear shades. */
 static void agent_path1_phase_log(const char *hypothesis_id, const char *location, const char *phase, int frame_id) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1880,9 +1880,9 @@ static void agent_path1_payload_log(
     int itop,
     float nearz
 ) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1907,9 +1907,9 @@ static void agent_path1_packet_log(
     int used_qw,
     int pkt_null
 ) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1934,9 +1934,9 @@ static void agent_path1_camera_log(
     float pitch,
     float yaw
 ) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
@@ -1953,9 +1953,9 @@ static void agent_path1_camera_log(
 
 /* H19: Guaranteed early boot marker before init steps. */
 static void agent_path1_boot_log(const char *hypothesis_id, const char *location, const char *phase) {
-    FILE *f = fopen("host:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+    FILE *f = fopen("host:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
-        f = fopen("host0:/home/marvin/Pantheon/.cursor/debug-f266a2.log", "a");
+        f = fopen("host0:/home/user/Pantheon/.cursor/debug-f266a2.log", "a");
     if (!f)
         f = fopen("host:.cursor/debug-f266a2.log", "a");
     if (!f)
