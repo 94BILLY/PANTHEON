@@ -1,6 +1,6 @@
 # Pantheon — pinned baseline (floor + boot + sky)
 
-**Internal record:** default `#define` / profile behavior for the **`v1.0.0-beta`** tree. For builders who already have **PS2SDK** and want to match the author’s hybrid vs strict configuration—not a tutorial.
+**Reference:** default `#define` / profile behavior for the **`v1.0.0-beta`** tree. Use alongside **GETTING_STARTED.md** once your toolchain is set up; it documents **hybrid** vs **strict** Path 1 profiles so you can match this baseline.
 
 Reproduces with:
 

@@ -4,9 +4,9 @@
 
 Offline mesh paths: **Softimage `.hrc` → `hrc2ps2.py`**, **Wavefront `.obj` → `obj2ps2.py`**—data lands in the shape the bus expects.
 
-If that paragraph reads like noise, **you’re not the audience yet**. The PS2 doesn’t negotiate. Go read **EE Users Manual / VU / GS**, SCE samples, and **late-era shipping titles**—then come back. The gap between “homebrew demo” and **this** will make sense.
+Path 1 on PlayStation 2 has a learning curve. **GETTING_STARTED.md** covers toolchain, build, and run; **HANDOFF.md** points to SCE documentation and reference paths if you want to dig into the hardware story.
 
-**This repository is a public record of the work**—not a product, not a starter kit, not an invitation to fork for your ROM. **No `LICENSE`.** No rights to copy, redistribute, or reuse without **written permission**. **Issues, pull requests, and contributions are not accepted.**
+**This repository is a public showcase** of the work. There is **no** `LICENSE`; rights are **not** granted to copy, redistribute, or reuse the code without **written permission**. **Issues, pull requests, and contributions are not accepted.**
 
 ---
 
@@ -32,7 +32,7 @@ Locked **60 FPS** target for this whitebox: floor grid, skydome, boot overlay, o
 
 **Versioning:** [SemVer 2.0](https://semver.org/). Pre-release tag **`v1.0.0-beta`**; next **`v1.0.1-beta`**, …; first RTM **`v1.0.0`**. [Tags](https://github.com/94BILLY/PANTHEON/tags).
 
-**Reproducibility (for people who compile):** `make -f Makefile.world` → `floor.elf`. Pinned defaults and flags: [`BETA_RELEASE.md`](BETA_RELEASE.md). Deeper toolchain notes: [`GETTING_STARTED.md`](GETTING_STARTED.md) (technical appendix, not a hand-hold).
+**Build:** `make -f Makefile.world` → `floor.elf`. Pinned defaults: [`BETA_RELEASE.md`](BETA_RELEASE.md). Full setup and troubleshooting: [`GETTING_STARTED.md`](GETTING_STARTED.md).
 
 **Docs:** [`GETTING_STARTED.md`](GETTING_STARTED.md) · [`BETA_RELEASE.md`](BETA_RELEASE.md) · [`FLIGHT_LOG.md`](FLIGHT_LOG.md) · [`HANDOFF.md`](HANDOFF.md) · [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) · [`CHANGELOG.md`](CHANGELOG.md)
 
