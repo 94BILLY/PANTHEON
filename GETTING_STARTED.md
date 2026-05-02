@@ -171,7 +171,7 @@ cp floor.elf /mnt/c/Users/YOUR_USERNAME/Desktop/pantheon.elf
 ### Expected behaviour on first boot
 
 - Black screen with luma ramp
-- **94BILLY STUDIOS** title appears
+- **WWW.94BILLY.COM** title appears (staggered reveal + gentle wave)
 - Sky fades in (timecycle atmosphere, overcast daylight by default)
 - Green floor deck renders
 - Left stick moves player. Right stick orbits camera.
@@ -206,7 +206,7 @@ The CPU deck is off — only VU1 geometry appears.
 make -f Makefile.world EE_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0'
 ```
 
-Skips the 94BILLY STUDIOS luma ramp and title. World renders on frame 1.
+Skips the luma ramp and URL title. World renders on frame 1.
 Useful for fast iteration during development.
 
 ### Texture Phase Preview (Phase 2)

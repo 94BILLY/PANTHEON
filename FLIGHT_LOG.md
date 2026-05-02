@@ -95,7 +95,7 @@ Next: steady the floor grid. Lock the pipeline details.
 **Day 7 — 5/2/2026**
 
 Repo created. Made public.
-Custom boot sequence added — 94BILLY STUDIOS.
+Custom boot sequence — WWW.94BILLY.COM (ramp + stagger + wave).
 Patched sky flicker regression after boot.
 v1.0.0-beta.1 shipped; documentation pack lands in v1.0.0-beta.2.
 

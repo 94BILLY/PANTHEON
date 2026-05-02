@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Versioning follows [Sem
 
 ## Unreleased
 
+### Changed
+
+- **Boot:** Match GitHub-style intro on the stable baseline — **WWW.94BILLY.COM**, longer white hold (180 frames), default glyph wave (~2.25f). Path1 still waits until **full** `PANTHEON_BOOT_REVEAL_TOTAL_FRAMES` (no early-world strobing); `vif_packets`, solid floor, and Z/clear path unchanged from the flicker-fixed tree.
+
 ### Removed
 
 - **Repo hygiene:** NotebookLM snapshot (`_notebooklm/`), Cursor editor rules (`.cursor/rules/`), PS2SDK-template `cube/` sample, legacy root `Makefile`, `fix_shader.py`, `obj2ps2.py`, and `scripts/export_notebooklm_snapshot.py`. Public tree is **Path 1 + docs + asset cruncher** only; use `Makefile.world` and `GETTING_STARTED.md`.
@@ -29,7 +33,7 @@ All notable changes to this project are documented here. Versioning follows [Sem
 
 ### Changed
 
-- **Boot:** Default-on luma ramp; title **94BILLY STUDIOS**; Path1 enabled only after full boot duration (reduces clear/world strobing).
+- **Boot:** Default-on luma ramp; **WWW.94BILLY.COM** title with stagger + glyph wave; Path1 enabled only after full boot duration (reduces clear/world strobing).
 - **Hybrid profile:** CPU GIF exported floor + Path1 **skydome**; Path1 **floor tiles disabled** by default to prevent coplanar Z-fighting with the CPU deck.
 - **Strict profile** (`PANTHEON_RENDER_PROFILE=1`): Path1 floor tiles on, CPU overlay off (VU1 validation).
 - **Docs:** `BETA_RELEASE.md` aligned with `floor.c` defaults; README versioning line.

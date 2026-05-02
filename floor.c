@@ -338,7 +338,7 @@ static int pantheon_path1_world_enabled(int frame_id);
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 
 /* 0 = no ramp/title (immediate gameplay clear).
- * 1 = luma ramp + 94BILLY STUDIOS title; Path1 hands off only after TOTAL_FRAMES (no mid-boot strobing).
+ * 1 = luma ramp + bitmap URL/title; Path1 hands off only after TOTAL_FRAMES (no mid-boot strobing).
  * Override: EE_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0' */
 #ifndef PANTHEON_BOOT_REVEAL_ENABLE
 #define PANTHEON_BOOT_REVEAL_ENABLE 1
@@ -349,7 +349,8 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #endif
 
 #ifndef PANTHEON_BOOT_REVEAL_HOLD_FRAMES
-#define PANTHEON_BOOT_REVEAL_HOLD_FRAMES 90
+/* Longer white hold reads closer to a “cinema” ramp; shorter = snappier handoff to world. */
+#define PANTHEON_BOOT_REVEAL_HOLD_FRAMES 180
 #endif
 
 #define PANTHEON_BOOT_REVEAL_HALF_FRAMES (255 / PANTHEON_BOOT_REVEAL_STEP)
@@ -372,8 +373,8 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #define PANTHEON_BOOT_TEXT_ANIMATE 1
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_AMP
-/* 0 = steady glyphs (fewer PCSX2 sparkle artifacts); raise for “buttery” motion. */
-#define PANTHEON_BOOT_TEXT_WAVE_AMP 0.0f
+/* 0 = steady glyphs (fewer PCSX2 sparkle artifacts); ~2.25f = gentle sine “butter” on letters. */
+#define PANTHEON_BOOT_TEXT_WAVE_AMP 2.25f
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_SPEED
 #define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.095f
@@ -1252,7 +1253,7 @@ static int pantheon_boot_glyph_advance(char c, int advance, int space_advance, i
 }
 
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
-    static const char *title = "94BILLY STUDIOS";
+    static const char *title = "WWW.94BILLY.COM";
     int scale = PANTHEON_BOOT_TITLE_SCALE;
     const int advance = 6;
     const int space_advance = 3;
@@ -1374,7 +1375,8 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
                 int px = start_x + ((cursor_units + rx) * scale);
                 int py = start_y + ((ry - min_u_y) * scale);
 #if PANTHEON_BOOT_TEXT_ANIMATE
-                if (frame_id >= (int)(gi * PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR)) {
+                if (PANTHEON_BOOT_TEXT_WAVE_AMP > 0.0f &&
+                    frame_id >= (int)(gi * PANTHEON_BOOT_TEXT_REVEAL_FRAMES_PER_CHAR)) {
                     float wobble = sinf(
                         ((float)frame_id * PANTHEON_BOOT_TEXT_WAVE_SPEED) +
                         ((float)cursor_units * PANTHEON_BOOT_TEXT_WAVE_SPACING));
