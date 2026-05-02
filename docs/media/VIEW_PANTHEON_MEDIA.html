@@ -3,91 +3,85 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pantheon — media &amp; viral picks (local)</title>
+  <title>Pantheon — media</title>
   <style>
-    body { font-family: Georgia, 'Times New Roman', serif; max-width: 920px; margin: 0 auto; padding: 24px; color: #111; line-height: 1.55; background: #fafafa; }
-    h1 { font-size: 1.55rem; border-bottom: 2px solid #000; padding-bottom: 8px; }
-    h2 { font-size: 1.05rem; margin-top: 26px; text-transform: uppercase; letter-spacing: 0.07em; }
-    .note { background: #fff; border: 1px solid #000; padding: 12px 14px; margin: 14px 0; font-size: 0.95rem; }
-    figure { margin: 14px 0; padding: 12px; background: #fff; border: 1px solid #000; }
-    figcaption { font-size: 0.88rem; margin-top: 8px; opacity: 0.88; }
-    img { max-width: 100%; height: auto; display: block; border: 1px solid #ccc; }
-    a { color: #000; font-weight: bold; }
-    .path { font-family: ui-monospace, monospace; font-size: 0.78rem; word-break: break-all; background: #eee; padding: 8px 10px; border-left: 3px solid #000; margin: 8px 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 920px; margin: 0 auto; padding: 24px; color: #111; line-height: 1.5; background: #fafafa; font-size: 15px; }
+    h1 { font-size: 1.35rem; font-weight: 600; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+    h2 { font-size: 0.75rem; font-weight: 600; margin-top: 28px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
+    .note { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; margin: 14px 0; font-size: 0.9rem; color: #333; }
+    figure { margin: 14px 0; padding: 12px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; }
+    figcaption { font-size: 0.8rem; margin-top: 8px; color: #666; }
+    img { max-width: 100%; height: auto; display: block; border: 1px solid #eee; border-radius: 4px; }
+    a { color: #0066cc; font-weight: 500; text-decoration: none; } a:hover { text-decoration: underline; }
+    .path { font-family: ui-monospace, monospace; font-size: 0.72rem; word-break: break-all; background: #f0f0f0; padding: 8px 10px; border-radius: 6px; margin: 8px 0; }
     ul { padding-left: 1.2rem; }
-    code { font-size: 0.9em; }
+    code { font-size: 0.88em; background: #f5f5f5; padding: 1px 5px; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <h1>Pantheon — media preview</h1>
-  <p>Double-click this file or drag it into a browser tab. Paths are relative to <code>docs/media/</code>.</p>
+  <h1>Media</h1>
   <p class="path"><span id="here"></span></p>
-  <p><strong>Windows (Explorer):</strong> <code>\\wsl.localhost\Ubuntu\home\marvin\Pantheon\docs\media\VIEW_PANTHEON_MEDIA.html</code></p>
+  <p>File names describe <strong>behavior</strong> (still vs loop vs clip). Open this HTML from disk; assets load from the same folder.</p>
 
   <div class="note">
-    <strong>Viral picks (why these):</strong>
+    <strong>Naming</strong>
     <ul style="margin: 8px 0 0 0;">
-      <li><strong>Boot → world (one GIF)</strong> — <code>pantheon-viral-boot-to-world-loop.gif</code>: Sony/PS2 splash → <code>WWW.94BILLY.COM</code> → green Path 1 world (one continuous share).</li>
-      <li><strong>PS2 particles / waves</strong> — instant nostalgia; stops the scroll before they read a caption.</li>
-      <li><strong>RGB triangle + hardware</strong> — <code>pantheon-viral-rgb-triangle-lg.png</code>: wide shot (Ocean Blue PS2 + LG + RGB primaries on white); stronger than a screen-only grab.</li>
-      <li><strong>9×16 hardware GIF</strong> — vertical crop for Shorts / Reels / TikTok (PS2 + live framebuffer).</li>
-      <li><strong>Power-moment GIF</strong> — 3–4s tension; pair with on-screen payoff in carousel or part 2.</li>
-      <li><strong>Wide world loops</strong> — GitHub / X / Discord; readable at small width.</li>
+      <li><code>still-*</code> — single frame</li>
+      <li><code>loop-*</code> — repeating motion</li>
+      <li><code>clip-*</code> — short one-off beat</li>
     </ul>
-    <p style="margin: 10px 0 0 0;"><strong>Suggested 3-up (carousel):</strong> (1) <code>pantheon-viral-boot-to-world-loop.gif</code> — (2) <code>pantheon-viral-rgb-triangle-lg.png</code> — (3) <code>pantheon-ps2-world-4587.gif</code>.</p>
-    Caption ideas (your voice): <em>“Path 1, retail PS2.”</em> / <em>“Boot → title → world. Same ELF.”</em>
+    <p style="margin: 10px 0 0 0;"><strong>Carousel:</strong> <code>loop-boot-to-world.gif</code> → <code>still-rgb-proof.png</code> (<strong>IMG_4587.MOV</strong> 1:11) → <code>loop-world-orbit.gif</code></p>
   </div>
 
-  <h2>Viral — stills (share / thumbnail)</h2>
+  <h2>Stills</h2>
   <figure>
-    <img src="pantheon-viral-ps2-particles.png" alt="PS2 system-style particles on blue" />
-    <figcaption><code>pantheon-viral-ps2-particles.png</code> — iconic PS2-era screen photo (from your captures).</figcaption>
+    <img src="still-ps2-particles.png" alt="PS2 particles" />
+    <figcaption><code>still-ps2-particles.png</code> — system UI reference frame.</figcaption>
   </figure>
   <figure>
-    <img src="pantheon-viral-ps2-waves.png" alt="PS2 system-style waves on blue" />
-    <figcaption><code>pantheon-viral-ps2-waves.png</code> — second BIOS/menu-adjacent frame; A/B test thumbnails.</figcaption>
+    <img src="still-ps2-waves.png" alt="PS2 waves" />
+    <figcaption><code>still-ps2-waves.png</code> — alternate system frame; A/B thumbnails.</figcaption>
   </figure>
   <figure>
-    <img src="pantheon-viral-rgb-triangle-lg.png" alt="RGB triangle on PS2 setup" />
-    <figcaption><code>pantheon-viral-rgb-triangle-lg.png</code> — <strong>IMG_4587.MOV</strong> ~72s, 1600px wide: vertex-color triangle + rare PS2 + desk (flagship still).</figcaption>
-  </figure>
-
-  <h2>Viral — motion (GIF)</h2>
-  <figure>
-    <img src="pantheon-viral-boot-to-world-loop.gif" alt="Boot sequence then Path 1 world" width="520" />
-    <figcaption><code>pantheon-viral-boot-to-world-loop.gif</code> — <strong>IMG_4586.MOV</strong> ~20–31s (PS2 + 94BILLY title) + ~43.5–52s (world). Loops as a full clip.</figcaption>
-  </figure>
-  <figure>
-    <img src="pantheon-viral-9x16-hardware.gif" alt="Vertical PS2 + game on screen" width="480" />
-    <figcaption><code>pantheon-viral-9x16-hardware.gif</code> — vertical (Shorts / Reels / TikTok).</figcaption>
-  </figure>
-  <figure>
-    <img src="pantheon-viral-power-moment.gif" alt="Hand on PS2 power" width="520" />
-    <figcaption><code>pantheon-viral-power-moment.gif</code> — short hook from <code>IMG_4587.MOV</code> ~104s.</figcaption>
-  </figure>
-  <figure>
-    <img src="pantheon-viral-world-wide-4586.gif" alt="Wide PS2 + Path1 world" width="580" />
-    <figcaption><code>pantheon-viral-world-wide-4586.gif</code> — landscape loop from <code>IMG_4586.MOV</code>.</figcaption>
+    <img src="still-rgb-proof.png" alt="RGB proof on hardware" />
+    <figcaption><code>still-rgb-proof.png</code> — vertex-color proof + hardware; <strong>IMG_4587.MOV</strong> at <strong>1:11</strong>, 1600px wide.</figcaption>
   </figure>
 
-  <h2>Baseline — hero + long loop</h2>
+  <h2>Loops</h2>
   <figure>
-    <img src="pantheon-ps2-world-4587.gif" alt="Path1 world loop" width="560" />
-    <figcaption><code>pantheon-ps2-world-4587.gif</code> — main repo loop (longer take).</figcaption>
+    <img src="loop-boot-to-world.gif" alt="Boot through world" width="520" />
+    <figcaption><code>loop-boot-to-world.gif</code> — boot → title → Path 1 world (<strong>IMG_4586.MOV</strong> segments).</figcaption>
   </figure>
   <figure>
-    <img src="pantheon-hero-world-4587.png" alt="Hero still" width="1280" />
-    <figcaption><code>pantheon-hero-world-4587.png</code> — landing / Open Graph still (PS2 in frame + green world).</figcaption>
+    <img src="loop-world-vertical.gif" alt="Vertical world" width="480" />
+    <figcaption><code>loop-world-vertical.gif</code> — vertical crop (Shorts / Reels / TikTok).</figcaption>
+  </figure>
+  <figure>
+    <img src="clip-power-on.gif" alt="Power on" width="520" />
+    <figcaption><code>clip-power-on.gif</code> — power interaction; <strong>IMG_4587.MOV</strong> ~1:44.</figcaption>
+  </figure>
+  <figure>
+    <img src="loop-world-wide.gif" alt="World wide" width="580" />
+    <figcaption><code>loop-world-wide.gif</code> — landscape loop; <strong>IMG_4586.MOV</strong>.</figcaption>
+  </figure>
+  <figure>
+    <img src="loop-world-orbit.gif" alt="World orbit" width="560" />
+    <figcaption><code>loop-world-orbit.gif</code> — primary world loop; <strong>IMG_4587.MOV</strong>.</figcaption>
   </figure>
 
-  <h2>Source video (local, gitignored)</h2>
+  <h2>Hero</h2>
+  <figure>
+    <img src="still-world-hero.png" alt="World hero" width="1280" />
+    <figcaption><code>still-world-hero.png</code> — landing / Open Graph (PS2 + world).</figcaption>
+  </figure>
+
+  <h2>Source (local)</h2>
   <ul>
     <li><a href="../../IMG_4586.MOV">IMG_4586.MOV</a></li>
     <li><a href="../../IMG_4587.MOV">IMG_4587.MOV</a></li>
   </ul>
 
-  <h2>Repo</h2>
-  <p><a href="https://github.com/94BILLY/Pantheon">github.com/94BILLY/Pantheon</a> · WordPress: <code>docs/pantheon-landing.html</code></p>
+  <p style="margin-top: 24px;"><a href="https://github.com/94BILLY/Pantheon">github.com/94BILLY/Pantheon</a></p>
 
   <script>
     document.getElementById('here').textContent = window.location.href;
