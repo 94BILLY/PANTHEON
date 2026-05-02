@@ -1,5 +1,7 @@
 # Pantheon
 
+**Versioning:** [Semantic Versioning 2.0.0](https://semver.org/). Current pre-release: **`v1.0.0-beta.1`** (git tag on commit `134e663`). First RTM will be **`v1.0.0`** (no prerelease suffix). [Tags on GitHub](https://github.com/94BILLY/PANTHEON/tags).
+
 **PANTHEON** is a deterministic data-orchestration and spatial rendering matrix engineered for highly asymmetric, heterogeneous silicon environments.
 
 Operating at the bare-metal layer, it enforces a rigorous manager–worker execution protocol: the Primary Logic Matrix sequences high-bandwidth 128-bit DMA/VIF command chains while an isolated VLIW vector co-processor executes cycle-accurate microcode. The result is mathematically deterministic performance with zero-overhead hardware authority.
