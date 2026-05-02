@@ -113,15 +113,21 @@ Developers who already ship with **PS2SDK** and want a concrete Path 1 reference
 
 ## Repository policy
 
-Public record. **No** `LICENSE` — all rights reserved. Issues, pull requests, and unsolicited contributions are **not** accepted. Redistribution requires **written permission**.
+> **Public record** — No `LICENSE` file; all rights reserved.
+>
+> **Contributions** — Issues, pull requests, and unsolicited contributions are **not** accepted.
+>
+> **Redistribution** — Requires **written permission**.
 
-<p align="center">
-  <br />
-  <strong><a href="https://github.com/94BILLY/PANTHEON">github.com/94BILLY/PANTHEON</a></strong><br />
-  <sub>94BILLY · <a href="https://www.94billy.com">94billy.com</a></sub>
-  <br /><br />
-  <sub>© 2026 94BILLY. All rights reserved. Viewing permitted. No reuse without written permission.</sub>
-</p>
+---
+
+| |
+| :---: |
+| **[github.com/94BILLY/PANTHEON](https://github.com/94BILLY/PANTHEON)** |
+| 94BILLY · **[94billy.com](https://www.94billy.com)** |
+| *© 2026 94BILLY · All rights reserved · Viewing permitted · No reuse without written permission* |
+
+<br />
 
 <details>
 <summary><strong>Maintainer — GitHub metadata</strong></summary>
