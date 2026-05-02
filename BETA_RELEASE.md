@@ -1,6 +1,8 @@
-# Pantheon — beta release (floor + boot + sky)
+# Pantheon — pinned baseline (floor + boot + sky)
 
-This document pins the **default** configuration that matches:
+**Internal record:** default `#define` / profile behavior for the **`v1.0.0-beta`** tree. For builders who already have **PS2SDK** and want to match the author’s hybrid vs strict configuration—not a tutorial.
+
+Reproduces with:
 
 `git pull && make -f Makefile.world clean && make -f Makefile.world`
 

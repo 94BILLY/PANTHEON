@@ -1,15 +1,12 @@
-# Getting Started with Pantheon
+# Pantheon — technical appendix (build & run)
 
-This guide covers everything you need to build, run, and extend the Pantheon
-Path 1 PS2 engine from scratch. No prior PS2 development experience required —
-but you need to be comfortable with C, a terminal, and the idea that the
-hardware will not tell you what went wrong.
+This file is for **people who are already compiling PS2 software** and want **the same reproducibility** as the author. It is **not** a gentle introduction. If you need a conceptual overview of Path 1, **stop here** and read the **EE / VIF / VU / GS** documentation and first-party-adjacent references first.
+
+**Pantheon** is bare-metal **Path 1**: the **EE** issues **DMA/VIF** work; **VU1** runs **`shader.vsm`** and **XGKICK**; the **GS** draws. No EE-side vertex soup.
 
 ---
 
-## What You Are Working With
-
-Pantheon is a bare-metal Path 1 PlayStation 2 engine. That means:
+## What you are working with
 
 - The Emotion Engine (EE) CPU writes DMA command chains and sends them over
   the VIF1 bus. It does not process geometry.
@@ -43,7 +40,7 @@ between your code and the silicon.
 | ee-gcc | 15.x typical | EE C compiler (mips64r5900el); run `ee-gcc --version` — varies with ps2toolchain |
 | dvp-as | current | VU1 assembler for `.vsm` microprograms |
 | mips64r5900el-ps2-elf-strip | current | ELF strip tool |
-| Python | 3.x | Asset pipeline (`hrc2ps2.py`) |
+| Python | 3.x | Asset pipeline (`hrc2ps2.py`, `obj2ps2.py`) |
 | PCSX2 | 2.7.x | PS2 emulator for development |
 
 ### Optional (Asset Creation)
@@ -291,6 +288,16 @@ The cruncher performs:
 - Axis mapping to PS2 world/floor conventions (see `hrc2ps2.py` and `BETA_RELEASE.md`)
 - `PantheonVertex` struct emission with `__attribute__((aligned(16)))`
 - `PantheonTriangle` index array emission
+
+### Wavefront OBJ (Blender, Maya, etc.)
+
+Export a triangulated (or n-gon) mesh as `.obj`, then from the repo root:
+
+```bash
+python3 obj2ps2.py your_model.obj your_model_data.c your_array_name
+```
+
+This emits a `.c` file with `PantheonVertex` arrays and a `PantheonVIFHeader` stub. Wire it into your EE DMA path to match `pantheon_path1_contract.h` and the kick layout used in `floor.c` (the shipping demo uses `hrc2ps2.py` headers; OBJ output is a parallel path you integrate explicitly).
 
 ### Step 4 — Include in your build
 
