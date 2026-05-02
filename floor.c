@@ -49,64 +49,6 @@
 #define PANTHEON_VISUAL_PRESET 1
 #endif
 
-/*
- * Preset 1 = RTM Gold (`origin/release/rtm-gold` @58cf3f8) floor recipe:
- *   hybrid (RENDER_PROFILE=0) + follow-player flat quad + Path1 mesh at origin + (a,b,c) winding.
- * Preset != 1 keeps world-anchored tiled Path1 + (a,c,b) swizzle defaults.
- */
-#if PANTHEON_VISUAL_PRESET == 1
-#ifndef PANTHEON_TRIAGE_FIRST_PERSON
-#define PANTHEON_TRIAGE_FIRST_PERSON 0
-#endif
-#ifndef PANTHEON_RENDER_PROFILE
-#define PANTHEON_RENDER_PROFILE 0
-#endif
-#ifndef PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-#define PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER 1
-#endif
-#ifndef PANTHEON_TRIAGE_FORCE_FLAT_QUAD
-#define PANTHEON_TRIAGE_FORCE_FLAT_QUAD 1
-#endif
-#ifndef PANTHEON_TRIAGE_ENABLE_SKYDOME
-#define PANTHEON_TRIAGE_ENABLE_SKYDOME 1
-#endif
-#ifndef PANTHEON_TRIAGE_DISABLE_SKY_PASS
-#define PANTHEON_TRIAGE_DISABLE_SKY_PASS 0
-#endif
-#ifndef PANTHEON_TRIAGE_PITCH_SIGN_FLIP
-#define PANTHEON_TRIAGE_PITCH_SIGN_FLIP 1
-#endif
-#ifndef PANTHEON_VIEW_FRUSTUM_LR
-#define PANTHEON_VIEW_FRUSTUM_LR 96.0f
-#endif
-#ifndef PANTHEON_VIEW_FRUSTUM_BT
-#define PANTHEON_VIEW_FRUSTUM_BT 72.0f
-#endif
-#ifndef PANTHEON_CAM_DIST
-#define PANTHEON_CAM_DIST 165.0f
-#endif
-#ifndef PANTHEON_CAMERA_HEIGHT_OFFSET
-#define PANTHEON_CAMERA_HEIGHT_OFFSET 22.0f
-#endif
-#ifndef PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-#define PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE 1
-#endif
-#ifndef PANTHEON_TILE_RADIUS
-#define PANTHEON_TILE_RADIUS 1
-#endif
-#ifndef PANTHEON_TILE_SUBMIT_BUDGET
-#define PANTHEON_TILE_SUBMIT_BUDGET 9
-#endif
-#ifndef PANTHEON_SKY_CLOUD_PUFF
-#define PANTHEON_SKY_CLOUD_PUFF 0
-#endif
-#ifndef PANTHEON_ATMO_SMOOTH_ALPHA
-#define PANTHEON_ATMO_SMOOTH_ALPHA 1.0f
-#endif
-#ifndef PANTHEON_SKYDOME_PLAYER_Y_LIFT
-#define PANTHEON_SKYDOME_PLAYER_Y_LIFT 0.0f
-#endif
-#else
 #ifndef PANTHEON_TRIAGE_DISABLE_SKY_PASS
 #define PANTHEON_TRIAGE_DISABLE_SKY_PASS 0
 #endif
@@ -136,7 +78,6 @@
 #ifndef PANTHEON_CAMERA_HEIGHT_OFFSET
 #define PANTHEON_CAMERA_HEIGHT_OFFSET 18.0f
 #endif
-#endif /* PANTHEON_VISUAL_PRESET != 1 */
 
 /* Authored Softimage skydome in VU1 when cruncher produced tris (else CPU placeholder). */
 #define USE_VU1_SKYDOME_MESH (SKYDOME_TRI_COUNT > 0)
@@ -179,9 +120,9 @@ static const float PI_F = 3.14159265f;
 
 static float cam_yaw = 0.0f;
 #if PANTHEON_VISUAL_PRESET == 1
-static float cam_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.55f;
+static float cam_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.60f;
 static float target_yaw = 0.0f;
-static float target_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.55f;
+static float target_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.60f;
 #else
 /* Default ~0.52 rad ≈ 30° down — GTA SA-style over-the-shoulder (tweak with right stick). */
 static float cam_pitch = PANTHEON_TRIAGE_FIRST_PERSON ? 0.0f : 0.52f;
@@ -656,8 +597,7 @@ PantheonVertex flat_floor[FLOOR_TRI_COUNT * 3] __attribute__((aligned(16)));
 /* Un-offset template: each mesh tri + same tri with swapped winding (proof branch technique). */
 static PantheonVertex floor_path1_ds_template[PANTHEON_FLOOR_PATH1_VERTS] __attribute__((aligned(16)));
 #endif
-static PantheonVertex floor_tile_tris[PANTHEON_FLOOR_PATH1_VERTS] __attribute__((aligned(16)))
-    __attribute__((unused)); /* RTM preset-1 uses flat quad only; tiled path keeps this for other presets. */
+static PantheonVertex floor_tile_tris[PANTHEON_FLOOR_PATH1_VERTS] __attribute__((aligned(16)));
 #if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
 static PantheonVertex floor_follow_quad[6] __attribute__((aligned(16)));
 #endif
@@ -695,36 +635,22 @@ static void init_floor_walk_bounds(void) {
     floor_tile_span_z = floor_bound_z1 - floor_bound_z0;
 }
 
-/* True when player is over the authored floor AABB (XZ), after init_floor_walk_bounds().
- * World-anchored tiles: reduce to local tile coords so neighbor patches still count as deck.
- * RTM preset-1 follow quad: deck is the single origin patch (matches 58cf3f8). */
+/* True when player is over the Path1 floor surface (XZ), including world-anchored tile repeats. */
 static int player_on_support_deck(void) {
     if (floor_tile_span_x <= 0.0f || floor_tile_span_z <= 0.0f) {
         return 1;
     }
     const float pad = 1.5f;
-#if PANTHEON_VISUAL_PRESET == 1 && PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-    return (player_x >= floor_bound_x0 - pad && player_x <= floor_bound_x1 + pad && player_z >= floor_bound_z0 - pad &&
-            player_z <= floor_bound_z1 + pad);
-#else
     float lx = player_x - floorf(player_x / floor_tile_span_x) * floor_tile_span_x;
     float lz = player_z - floorf(player_z / floor_tile_span_z) * floor_tile_span_z;
     return (lx >= floor_bound_x0 - pad && lx <= floor_bound_x1 + pad && lz >= floor_bound_z0 - pad &&
             lz <= floor_bound_z1 + pad);
-#endif
 }
 
 static void clamp_player_to_floor(void) {
 #if PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
-    /* RTM-style follow deck: snap only when over support AABB; else fall (treadmill off-patch). */
-    if (player_on_support_deck()) {
-        player_y = 0.0f;
-    } else {
-        player_y -= PANTHEON_PLAYER_ABYSS_FALL_STEP;
-        if (player_y < PANTHEON_PLAYER_ABYSS_Y_MIN) {
-            player_y = PANTHEON_PLAYER_ABYSS_Y_MIN;
-        }
-    }
+    /* Treadmill mode: infinite support surface under player. */
+    player_y = 0.0f;
     return;
 #endif
     if (player_on_support_deck()) {
@@ -1052,12 +978,7 @@ static void path1_vif_packet_submit(packet_t *pkt, qword_t *q_end, int frame_id,
 void init_flat_floor() {
     int out_idx = 0;
     for (int i = 0; i < FLOOR_TRI_COUNT; i++) {
-#if PANTHEON_VISUAL_PRESET == 1
-        /* RTM Gold preset: original SoftImage winding; flat quad + hybrid use same basis. */
-        flat_floor[out_idx++] = floor_vertices[floor_indices[i].a];
-        flat_floor[out_idx++] = floor_vertices[floor_indices[i].b];
-        flat_floor[out_idx++] = floor_vertices[floor_indices[i].c];
-#elif PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
+#if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
         /* Path1 tiled floor: XY→XZ map flips handedness — (a,c,b) faces +Y for single-sided tris. */
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].a];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].c];
@@ -1898,15 +1819,9 @@ int main(int argc, char *argv[]) {
                 {
                     packet_t *vif_pkt = path1_vif_packet_begin();
                     q = vif_pkt->data;
-#if PANTHEON_VISUAL_PRESET == 1
-                    /* RTM Gold: world-anchored deck at origin; flat quad spans walkable patch under player. */
-                    g_floor_center_x = 0.0f;
-                    g_floor_center_z = 0.0f;
-#else
                     /* Treadmill: snap follow patch to fixed gameplay tile boundaries. */
                     g_floor_center_x = snap_floor_axis(player_x, PANTHEON_FLOOR_FOLLOW_TILE_SIZE);
                     g_floor_center_z = snap_floor_axis(player_z, PANTHEON_FLOOR_FOLLOW_TILE_SIZE);
-#endif
 #if PANTHEON_TRIAGE_FORCE_FLAT_QUAD
                     build_floor_follow_quad(g_floor_center_x, g_floor_center_z);
                     path1_vert_count = 6;
