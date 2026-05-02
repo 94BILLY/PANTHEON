@@ -97,7 +97,7 @@ Next: steady the floor grid. Lock the pipeline details.
 Repo created. Made public.
 Custom boot sequence — WWW.94BILLY.COM (ramp + stagger + wave).
 Patched sky flicker regression after boot.
-v1.0.0-beta.1 shipped; documentation pack lands in v1.0.0-beta.2.
+Canonical pre-release tag consolidated as **v1.0.0-beta** (earlier `beta.1` / `beta.2` names retired).
 
 Next: start building the actual world.
 Era-accurate assets from Softimage 3D 1996.

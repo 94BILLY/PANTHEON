@@ -193,7 +193,7 @@ No coplanar Z-fighting. This is the stable baseline.
 ### Strict Path 1 Validation
 
 ```bash
-make -f Makefile.world EE_CFLAGS='-DPANTHEON_RENDER_PROFILE=1'
+make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_RENDER_PROFILE=1'
 ```
 
 VU1 renders both skydome and floor tiles. CPU GIF overlay disabled.
@@ -203,7 +203,7 @@ The CPU deck is off — only VU1 geometry appears.
 ### No Boot Sequence
 
 ```bash
-make -f Makefile.world EE_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0'
+make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0'
 ```
 
 Skips the luma ramp and URL title. World renders on frame 1.
@@ -224,7 +224,7 @@ This is an early Phase 2 preview — no texture sampling in `shader.vsm` yet.
 
 ```bash
 make -f Makefile.world \
-    EE_CFLAGS='-DPANTHEON_RENDER_PROFILE=1 -DPANTHEON_BOOT_REVEAL_ENABLE=0 -DPANTHEON_MIN_TELEMETRY=1'
+    EE_EXTRA_CFLAGS='-DPANTHEON_RENDER_PROFILE=1 -DPANTHEON_BOOT_REVEAL_ENABLE=0 -DPANTHEON_MIN_TELEMETRY=1'
 ```
 
 ---
@@ -234,7 +234,7 @@ make -f Makefile.world \
 Enable boot-time `printf` output:
 
 ```bash
-make -f Makefile.world EE_CFLAGS='-DPANTHEON_MIN_TELEMETRY=1'
+make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_MIN_TELEMETRY=1'
 ```
 
 PCSX2 will print VRAM layout, frame counter, camera position, VIF1 quadword
