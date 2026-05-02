@@ -1,6 +1,8 @@
 # Pantheon — build and run
 
-This guide helps you **install the toolchain**, **build** `floor.elf`, and **run** it in PCSX2 or on hardware. Path 1 and PS2 graphics take time to learn; for the big-picture EE / VIF / VU / GS story, pair this file with official manuals and the references in **HANDOFF.md**.
+**How to read this page:** Requirements → Steps 1–5 (toolchain through PCSX2) → **Build profiles** → **Asset pipeline** (only if you replace meshes) → **Common issues**. For *what the default binary does* in one screen, open **[`BETA_RELEASE.md`](BETA_RELEASE.md)** first.
+
+**Audience:** people who are **already building PS2 ELFs** and want the same **reproducible** commands as the author. This is not a conceptual introduction to Path 1—use the **EE / VIF / VU / GS** manuals and **ps2sdk** samples for that foundation. For the big-picture story, pair this file with **HANDOFF.md** and official manuals.
 
 **Pantheon** is **Path 1** at the metal: the **EE** issues **DMA/VIF** work; **VU1** runs **`shader.vsm`** and **XGKICK**; the **GS** draws—without a software renderer doing the geometry on the main CPU.
 
@@ -54,7 +56,7 @@ between your code and the silicon.
 
 You do not need Softimage to build and run Pantheon. The repository includes
 pre-crunched geometry headers (`floor_data.h`, `skydome_data.h`). Softimage
-is required only if you want to author your own geometry.
+is required only if you are **regenerating those headers** or replacing meshes **inside this reference tree**—not as encouragement to fork into a general “make a game” workflow.
 
 ---
 
@@ -239,10 +241,9 @@ counts, and near-Z cull hits to the console. Disable for release builds.
 
 ---
 
-## Asset Pipeline — Authoring Your Own Geometry
+## Asset pipeline — mesh regeneration (reference tree)
 
-This is the full Softimage → PS2 pipeline used by Pantheon.
-Skip this section if you are using the included geometry headers.
+This documents the **Softimage → header** and **OBJ → .c** paths the **author** uses to keep `floor_data.h` / `skydome_data.h` (and related) consistent with `floor.c`. Skip if you only build against the committed headers.
 
 ### Requirements
 
@@ -297,7 +298,7 @@ Export a triangulated (or n-gon) mesh as `.obj`, then from the repo root:
 python3 obj2ps2.py your_model.obj your_model_data.c your_array_name
 ```
 
-This emits a `.c` file with `PantheonVertex` arrays and a `PantheonVIFHeader` stub. Wire it into your EE DMA path to match `pantheon_path1_contract.h` and the kick layout used in `floor.c` (the shipping demo uses `hrc2ps2.py` headers; OBJ output is a parallel path you integrate explicitly).
+This emits a `.c` file with `PantheonVertex` arrays and a `PantheonVIFHeader` stub. Wiring it to the EE DMA path is **your** integration burden; the committed reference uses **`hrc2ps2.py`** headers for the shipped floor/skydome. OBJ is an alternate crunch path documented for completeness, not an invitation to treat the repo as a game template.
 
 ### Step 4 — Include in your build
 
