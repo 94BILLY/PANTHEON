@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pantheon — real PS2 media (local)</title>
+  <style>
+    body { font-family: Georgia, 'Times New Roman', serif; max-width: 900px; margin: 0 auto; padding: 24px; color: #111; line-height: 1.5; background: #fafafa; }
+    h1 { font-size: 1.6rem; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    h2 { font-size: 1.15rem; margin-top: 28px; text-transform: uppercase; letter-spacing: 0.06em; }
+    figure { margin: 16px 0; padding: 12px; background: #fff; border: 1px solid #000; }
+    figcaption { font-size: 0.9rem; margin-top: 8px; opacity: 0.85; }
+    img, video { max-width: 100%; height: auto; display: block; border: 1px solid #ccc; }
+    a { color: #000; font-weight: bold; }
+    .path { font-family: ui-monospace, monospace; font-size: 0.8rem; word-break: break-all; background: #eee; padding: 8px 10px; border-left: 3px solid #000; margin: 8px 0; }
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Pantheon — real PS2 captures</h1>
+  <p>Open this file in your browser (double-click from Desktop, or drag into a tab). Images load from the same folder as this HTML.</p>
+  <p class="path">This file: <span id="here"></span></p>
+  <p><strong>Windows (Explorer):</strong> paste in the address bar — <code>\\wsl.localhost\Ubuntu\home\marvin\Pantheon\docs\media\VIEW_PANTHEON_MEDIA.html</code></p>
+
+  <h2>Animated (GIF)</h2>
+  <figure>
+    <img src="pantheon-ps2-boot-4586.gif" alt="Pantheon on PS2 — shorter take" width="560" />
+    <figcaption><code>pantheon-ps2-boot-4586.gif</code> — from <code>IMG_4586.MOV</code></figcaption>
+  </figure>
+  <figure>
+    <img src="pantheon-ps2-world-4587.gif" alt="Pantheon on PS2 — world loop" width="560" />
+    <figcaption><code>pantheon-ps2-world-4587.gif</code> — from <code>IMG_4587.MOV</code></figcaption>
+  </figure>
+
+  <h2>Still (PNG)</h2>
+  <figure>
+    <img src="pantheon-hero-boot-4586.png" alt="Hero still boot take" width="1280" />
+    <figcaption><code>pantheon-hero-boot-4586.png</code></figcaption>
+  </figure>
+  <figure>
+    <img src="pantheon-hero-world-4587.png" alt="Hero still world take" width="1280" />
+    <figcaption><code>pantheon-hero-world-4587.png</code> — good default for landing hero</figcaption>
+  </figure>
+
+  <h2>Source video (local, large)</h2>
+  <p>These are gitignored; they live next to the repo root. Click to open in your default player (if the path exists on this machine).</p>
+  <ul>
+    <li><a href="../../IMG_4586.MOV">IMG_4586.MOV</a> (~79 s)</li>
+    <li><a href="../../IMG_4587.MOV">IMG_4587.MOV</a> (~176 s)</li>
+  </ul>
+
+  <h2>Repo</h2>
+  <p><a href="https://github.com/94BILLY/Pantheon">github.com/94BILLY/Pantheon</a> — WordPress landing: <code>docs/pantheon-landing.html</code></p>
+
+  <script>
+    document.getElementById('here').textContent = window.location.href;
+  </script>
+</body>
+</html>
