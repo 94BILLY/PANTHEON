@@ -20,6 +20,7 @@
 #include <graph.h>
 #include <graph_vram.h>
 #include <draw.h>
+#include <draw_tests.h>
 #include <draw2d.h>
 #include <draw3d.h>
 #include <sifrpc.h>
@@ -154,16 +155,22 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define SHOW_CPU_EXPORTED_FLOOR 0
 #define SHOW_SKY_PLACEHOLDER 1
 /* Render profiles:
- * 0 = stable hybrid baseline (CPU overlay + Path1)
- * 1 = strict Path1 validation (no CPU overlay) */
+ * 0 = hybrid baseline: CPU GIF exported floor + Path1 skydome (Path1 floor tiles off — avoids Z-fight).
+ * 1 = strict Path1 validation (VU1 floor tiles on, no CPU GIF floor/probe). */
 #ifndef PANTHEON_RENDER_PROFILE
-/* 0 = hybrid (CPU GIF floor + Path1): reliable floor during intro + matches buttery baseline. */
 #define PANTHEON_RENDER_PROFILE 0
 #endif
 #if PANTHEON_RENDER_PROFILE == 1
 #define PATH1_AB_CPU_OVERLAY 0
 #else
 #define PATH1_AB_CPU_OVERLAY 1
+#endif
+/* Hybrid (profile 0): CPU GIF draws the walkable deck; Path1 floor tiles off → no Z-fight vs XGKICK.
+ * Strict (profile 1): Path1 floor on, no CPU overlay — validate VU1 floor alone. */
+#if PANTHEON_RENDER_PROFILE == 1
+#define PANTHEON_PATH1_FLOOR_TILES 1
+#else
+#define PANTHEON_PATH1_FLOOR_TILES 0
 #endif
 
 #ifndef PANTHEON_MIN_TELEMETRY
@@ -271,6 +278,9 @@ static PantheonVertex flat_skydome[SKYDOME_TRI_COUNT * 3] __attribute__((aligned
 #endif
 
 packet_t *packets[2];
+/* VIF1 must not share packet_init buffers with the GIF DMA packet — both ping-ponged independently
+ * and could otherwise alias the same quadwords (missing Path1 floor + intro flicker). */
+packet_t *vif_packets[2];
 int context = 0;
 static int g_vif_context = 0;
 static int g_last_nearz_hits = 0;
@@ -324,8 +334,12 @@ static void clamp_player_to_floor(void);
 static void apply_sky_color(PantheonVertex *v);
 static u8 pantheon_boot_reveal_luma(int frame_id);
 static int pantheon_boot_reveal_active(int frame_id);
+static int pantheon_path1_world_enabled(int frame_id);
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 
+/* 0 = no ramp/title (immediate gameplay clear).
+ * 1 = luma ramp + 94BILLY STUDIOS title; Path1 hands off only after TOTAL_FRAMES (no mid-boot strobing).
+ * Override: EE_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0' */
 #ifndef PANTHEON_BOOT_REVEAL_ENABLE
 #define PANTHEON_BOOT_REVEAL_ENABLE 1
 #endif
@@ -335,7 +349,7 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #endif
 
 #ifndef PANTHEON_BOOT_REVEAL_HOLD_FRAMES
-#define PANTHEON_BOOT_REVEAL_HOLD_FRAMES 180
+#define PANTHEON_BOOT_REVEAL_HOLD_FRAMES 90
 #endif
 
 #define PANTHEON_BOOT_REVEAL_HALF_FRAMES (255 / PANTHEON_BOOT_REVEAL_STEP)
@@ -358,10 +372,11 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 #define PANTHEON_BOOT_TEXT_ANIMATE 1
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_AMP
-#define PANTHEON_BOOT_TEXT_WAVE_AMP 3.5f
+/* 0 = steady glyphs (fewer PCSX2 sparkle artifacts); raise for “buttery” motion. */
+#define PANTHEON_BOOT_TEXT_WAVE_AMP 0.0f
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_SPEED
-#define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.11f
+#define PANTHEON_BOOT_TEXT_WAVE_SPEED 0.095f
 #endif
 #ifndef PANTHEON_BOOT_TEXT_WAVE_SPACING
 #define PANTHEON_BOOT_TEXT_WAVE_SPACING 0.085f
@@ -951,7 +966,7 @@ static qword_t *path1_emit_memory_image_batch(qword_t *q, const Path1MemoryImage
 }
 
 static packet_t *path1_vif_packet_begin(void) {
-    packet_t *pkt = packets[g_vif_context];
+    packet_t *pkt = vif_packets[g_vif_context];
     packet_reset(pkt);
     return pkt;
 }
@@ -966,7 +981,7 @@ static void path1_vif_packet_submit(packet_t *pkt, qword_t *q_end, int frame_id,
     g_vif_context ^= 1;
 }
 
-// Unroll the indices into a flat triangle array at boot
+/* Unroll cruncher output (floor_data.h from Softimage .hrc) into Path1 triangle stream — same verts the VU1 shader kicks. */
 void init_flat_floor() {
     int out_idx = 0;
     for (int i = 0; i < FLOOR_TRI_COUNT; i++) {
@@ -984,7 +999,8 @@ void init_flat_floor() {
 
     // Keep geometry in a sane range while validating VU1 transforms.
     // Safe type-punning using a union to satisfy strict-aliasing rules
-    PantheonColorPun color_pun;
+    /* One vivid Path1 green (packed RGBA in .r, Q in .g) — avoids muddy checker read as "not green". */
+    const float floor_rgbaq_pack = pantheon_rgbaq_from_u8(72, 200, 92, 255);
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         flat_floor[i].x *= FLOOR_MESH_SCALE;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
@@ -998,44 +1014,12 @@ void init_flat_floor() {
         flat_floor[i].z *= FLOOR_MESH_SCALE;
         flat_floor[i].y *= FLOOR_MESH_SCALE;
 #endif
+        flat_floor[i].w = 1.0f;
 
-        /* Sandbox grid: major lines on integer world units (after scale), darker cell fill. */
-        {
-            float gx = flat_floor[i].x;
-            float gz = flat_floor[i].z;
-            float ax = fabsf(gx);
-            float az = fabsf(gz);
-            float fx = ax - floorf(ax);
-            float fz = az - floorf(az);
-            int on_major = (fx < 0.04f || fx > 0.96f || fz < 0.04f || fz > 0.96f) ? 1 : 0;
-            int cx = (int)floorf(ax + 0.5f);
-            int cz = (int)floorf(az + 0.5f);
-            int checker = ((cx + cz) & 1);
-            u8 r, g, b, a;
-            if (on_major) {
-                r = 72;
-                g = 200;
-                b = 92;
-                a = 255;
-            } else if (checker) {
-                r = 28;
-                g = 92;
-                b = 38;
-                a = 230;
-            } else {
-                r = 22;
-                g = 72;
-                b = 30;
-                a = 220;
-            }
-            color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
-        }
-
-        // Build the exact 128-bit payload the GS RGBAQ register expects!
-        flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
-        flat_floor[i].g = 1.0f;        // Slot Y: The critical FLOAT Q-value!
-        flat_floor[i].b = 0.0f;        // Slot Z: Padding
-        flat_floor[i].a = 0.0f;        // Slot W: Padding
+        flat_floor[i].r = floor_rgbaq_pack;
+        flat_floor[i].g = 1.0f;
+        flat_floor[i].b = 0.0f;
+        flat_floor[i].a = 0.0f;
         flat_floor[i].s = 0.0f;
         flat_floor[i].t = 0.0f;
         flat_floor[i].tex_q = 1.0f;
@@ -1190,6 +1174,16 @@ static int pantheon_boot_reveal_active(int frame_id) {
 #endif
 }
 
+/* Path1 only after boot ends — avoids luma ramp / clear fighting XGKICK mid-sequence (flicker). */
+static int pantheon_path1_world_enabled(int frame_id) {
+#if PANTHEON_BOOT_REVEAL_ENABLE
+    return frame_id > PANTHEON_BOOT_REVEAL_TOTAL_FRAMES;
+#else
+    (void)frame_id;
+    return 1;
+#endif
+}
+
 static u8 pantheon_boot_reveal_luma(int frame_id) {
 #if PANTHEON_BOOT_REVEAL_ENABLE
     int half = PANTHEON_BOOT_REVEAL_HALF_FRAMES;
@@ -1233,6 +1227,7 @@ static void pantheon_boot_glyph_rows(char c, u8 rows[7]) {
         case 'B': rows[0]=0x1E; rows[1]=0x11; rows[2]=0x1E; rows[3]=0x11; rows[4]=0x11; rows[5]=0x1E; break;
         case 'C': rows[0]=0x0E; rows[1]=0x11; rows[2]=0x10; rows[3]=0x10; rows[4]=0x11; rows[5]=0x0E; break;
         case 'D': rows[0]=0x1E; rows[1]=0x11; rows[2]=0x11; rows[3]=0x11; rows[4]=0x11; rows[5]=0x1E; break;
+        case 'E': rows[0]=0x1F; rows[1]=0x10; rows[2]=0x1E; rows[3]=0x10; rows[4]=0x10; rows[5]=0x1F; break;
         case 'I': rows[0]=0x1F; rows[1]=0x04; rows[2]=0x04; rows[3]=0x04; rows[4]=0x04; rows[5]=0x1F; break;
         case 'L': rows[0]=0x10; rows[1]=0x10; rows[2]=0x10; rows[3]=0x10; rows[4]=0x10; rows[5]=0x1F; break;
         case 'M': rows[0]=0x11; rows[1]=0x1B; rows[2]=0x15; rows[3]=0x15; rows[4]=0x11; rows[5]=0x11; break;
@@ -1257,7 +1252,7 @@ static int pantheon_boot_glyph_advance(char c, int advance, int space_advance, i
 }
 
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
-    static const char *title = "WWW.94BILLY.COM";
+    static const char *title = "94BILLY STUDIOS";
     int scale = PANTHEON_BOOT_TITLE_SCALE;
     const int advance = 6;
     const int space_advance = 3;
@@ -1407,14 +1402,28 @@ qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuff
     u8 clear_g = g_atmosphere.sky_horizon.g;
     u8 clear_b = g_atmosphere.sky_horizon.b;
     if (pantheon_boot_reveal_active(frame_id)) {
-        u8 luma = pantheon_boot_reveal_luma(frame_id);
-        clear_r = luma;
-        clear_g = luma;
-        clear_b = luma;
+#if PANTHEON_BOOT_REVEAL_ENABLE
+        /* Path1 stays off until boot ends, so full luma cycle on clear is safe (no green-floor strobe). */
+        {
+            u8 luma = pantheon_boot_reveal_luma(frame_id);
+            clear_r = luma;
+            clear_g = luma;
+            clear_b = luma;
+        }
+#else
+        {
+            u8 luma = pantheon_boot_reveal_luma(frame_id);
+            clear_r = luma;
+            clear_g = luma;
+            clear_b = luma;
+        }
+#endif
     }
     q = draw_setup_environment(q, 0, &frame[ctx], z);
     q = draw_primitive_xyoffset(q, 0, 2048 - 320, 2048 - 224);
     /* Optional boot reveal phase: monochrome luma ramp (black->white->black), then normal sky clear color. */
+    /* Same as samples/draw/cube: clear color without Z test so Z buffer state stays consistent. */
+    q = draw_disable_tests(q, 0, z);
     q = draw_clear(
         q,
         0,
@@ -1425,6 +1434,7 @@ qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuff
         clear_r,
         clear_g,
         clear_b);
+    q = draw_enable_tests(q, 0, z);
     return q;
 }
 
@@ -1586,7 +1596,8 @@ int main(int argc, char *argv[]) {
     framebuffer_t frame[2];
     zbuffer_t z;
     unsigned int ext_fb_words = pantheon_vram_surface_extent_words(640, 448, GS_PSM_32, GRAPH_ALIGN_PAGE);
-    unsigned int ext_z_words = pantheon_vram_surface_extent_words(640, 448, GS_PSMZ_32, GRAPH_ALIGN_PAGE);
+    /* Match ps2sdk samples/draw/cube: zbuffer_t.zsm is GS_ZBUF_32 (not GS_PSMZ_32) for libdraw + graph_vram_size. */
+    unsigned int ext_z_words = pantheon_vram_surface_extent_words(640, 448, GS_ZBUF_32, GRAPH_ALIGN_PAGE);
 
     frame[0].width = 640; frame[0].height = 448; frame[0].psm = GS_PSM_32;
     frame[1].width = 640; frame[1].height = 448; frame[1].psm = GS_PSM_32;
@@ -1595,7 +1606,7 @@ int main(int argc, char *argv[]) {
     frame[0].address = pantheon_vram_linear_alloc_words(ext_fb_words, PANTHEON_VRAM_PAGE_WORDS);
     frame[1].address = pantheon_vram_linear_alloc_words(ext_fb_words, PANTHEON_VRAM_PAGE_WORDS);
 
-    z.enable = DRAW_ENABLE; z.mask = 0; z.method = ZTEST_METHOD_ALLPASS; z.zsm = GS_PSMZ_32;
+    z.enable = DRAW_ENABLE; z.mask = 0; z.method = ZTEST_METHOD_GREATER_EQUAL; z.zsm = GS_ZBUF_32;
     z.address = pantheon_vram_linear_alloc_words(ext_z_words, PANTHEON_VRAM_PAGE_WORDS);
 
     if (frame[0].address == 0u || frame[1].address == 0u || z.address == 0u) {
@@ -1613,6 +1624,8 @@ int main(int argc, char *argv[]) {
 
     packets[0] = packet_init(4000, PACKET_NORMAL);
     packets[1] = packet_init(4000, PACKET_NORMAL);
+    vif_packets[0] = packet_init(4000, PACKET_NORMAL);
+    vif_packets[1] = packet_init(4000, PACKET_NORMAL);
 
     {
         texbuffer_t pantheon_host_tex;
@@ -1667,9 +1680,14 @@ int main(int argc, char *argv[]) {
         PANTHEON_VIEW_FRUSTUM_BT,
         PANTHEON_VIEW_NEAR,
         g_atmosphere.far_clip);
-    printf("pantheon visual_preset=%d strict_profile=%d overlay=%d tile_radius=%d tile_budget=%d\n",
+    printf("pantheon visual_preset=%d strict_profile=%d overlay=%d boot_enable=%d boot_total_f=%d tile_radius=%d tile_budget=%d\n",
            PANTHEON_VISUAL_PRESET,
-           PANTHEON_RENDER_PROFILE, PATH1_AB_CPU_OVERLAY, PANTHEON_TILE_RADIUS, PANTHEON_TILE_SUBMIT_BUDGET);
+           PANTHEON_RENDER_PROFILE,
+           PATH1_AB_CPU_OVERLAY,
+           PANTHEON_BOOT_REVEAL_ENABLE,
+           PANTHEON_BOOT_REVEAL_TOTAL_FRAMES,
+           PANTHEON_TILE_RADIUS,
+           PANTHEON_TILE_SUBMIT_BUDGET);
     printf("pantheon triage static_cam=%d fpv=%d eye_h=%.1f sky=%d view_near=%.2f vu_nearz=%.2f envelope=%d\n",
            PANTHEON_TRIAGE_STATIC_CAMERA,
            PANTHEON_TRIAGE_FIRST_PERSON,
@@ -1686,12 +1704,14 @@ int main(int argc, char *argv[]) {
         packet_reset(packets[context]);
         qword_t *q = packets[context]->data;
         int boot_reveal = pantheon_boot_reveal_active(dbg_frame);
+        int path1_world = pantheon_path1_world_enabled(dbg_frame);
         const PantheonRenderJob render_jobs[] = {
             {PANTHEON_RENDER_JOB_CLEAR, 1},
             {PANTHEON_RENDER_JOB_CPU_DEBUG, PATH1_AB_CPU_OVERLAY && !boot_reveal},
             {PANTHEON_RENDER_JOB_PATH1_SKY,
-             (RENDER_STAGE >= 2) && !boot_reveal && PANTHEON_TRIAGE_ENABLE_SKYDOME && !PANTHEON_TRIAGE_DISABLE_SKY_PASS},
-            {PANTHEON_RENDER_JOB_PATH1_FLOOR, (RENDER_STAGE >= 2) && !boot_reveal}
+             (RENDER_STAGE >= 2) && path1_world && PANTHEON_TRIAGE_ENABLE_SKYDOME && !PANTHEON_TRIAGE_DISABLE_SKY_PASS},
+            {PANTHEON_RENDER_JOB_PATH1_FLOOR,
+             (RENDER_STAGE >= 2) && path1_world && PANTHEON_PATH1_FLOOR_TILES}
         };
 
 #if PANTHEON_MIN_TELEMETRY
@@ -1771,9 +1791,14 @@ int main(int argc, char *argv[]) {
 
         if (render_jobs[1].enabled) {
             q = render_cpu_probe(q, world_view, view_screen);
-            q = render_cpu_exported_floor(q, world_view, view_screen);
+            /* Skip CPU GIF floor when Path1 floor tiles run (coplanar deck → Z-fight flicker).
+             * Hybrid (profile 0): Path1 floor job is off — CPU deck is the only floor. */
+            if (!render_jobs[3].enabled) {
+                q = render_cpu_exported_floor(q, world_view, view_screen);
+            }
         }
 
+        q = draw_finish(q);
         FlushCache(0);
         {
             int gif_qw = (int)(q - packets[context]->data);
@@ -1782,8 +1807,8 @@ int main(int argc, char *argv[]) {
         dma_wait_fast();
 
         if (render_jobs[2].enabled || render_jobs[3].enabled) {
-        #if USE_VU1_SKYDOME_MESH
-            /* Path1 skydome first, then floor. */
+#if USE_VU1_SKYDOME_MESH
+            /* Skydome first, floor second (stable baseline with libdraw Z + Path1 XGKICK). */
             if (render_jobs[2].enabled) {
                 packet_t *vif_pkt = path1_vif_packet_begin();
                 q = vif_pkt->data;
@@ -1793,7 +1818,7 @@ int main(int argc, char *argv[]) {
                 FlushCache(0);
                 path1_vif_packet_submit(vif_pkt, q, dbg_frame, "skydome");
             }
-        #endif
+#endif
             if (render_jobs[3].enabled) {
                 int path1_vert_count = PANTHEON_FLOOR_PATH1_VERTS;
                 int tile_submits = 0;
@@ -1881,6 +1906,9 @@ int main(int argc, char *argv[]) {
                 #endif
             }
         }
+
+        /* Let GS drain libdraw GIF + Path1 XGKICK before vsync/present (see ps2sdk samples/draw/cube). */
+        draw_wait_finish();
 
         graph_wait_vsync();
         graph_set_framebuffer(0, frame[context].address, frame[context].width, frame[context].psm, 0, 0);
