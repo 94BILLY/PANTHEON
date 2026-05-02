@@ -12,7 +12,7 @@ Path 1 on PlayStation 2 has a learning curve. **GETTING_STARTED.md** covers tool
 
 ## Media (real hardware)
 
-Whitebox demo captured **on a retail PS2** (not emulation). In-repo previews (after clone): [`docs/media/`](docs/media/).
+Whitebox demo captured **on a retail PS2** (not emulation). In-repo previews (after clone): [`docs/media/`](docs/media/). To view GIFs/PNGs in a browser, open [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) (double-click or drag into a tab).
 
 | Asset | Role |
 | --- | --- |
