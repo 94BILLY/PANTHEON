@@ -264,11 +264,6 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 /* Must match the scale applied in init_flat_floor() to floor mesh (Softimage export). */
 #define FLOOR_MESH_SCALE 14.0f
 
-/* 1 = sandbox grid (major lines + checker — cells are not all the same green). 0 = one vivid slab green (always). */
-#ifndef PANTHEON_PATH1_FLOOR_BETA_GRID
-#define PANTHEON_PATH1_FLOOR_BETA_GRID 0
-#endif
-
 #if USE_VU1_SKYDOME_MESH
 /* Scale Softimage mesh units (~radius 5 sphere) into world space. */
 #define SKYDOME_MESH_SCALE 320.0f
@@ -329,6 +324,7 @@ static void clamp_player_to_floor(void);
 static void apply_sky_color(PantheonVertex *v);
 static u8 pantheon_boot_reveal_luma(int frame_id);
 static int pantheon_boot_reveal_active(int frame_id);
+static int pantheon_path1_world_enabled(int frame_id);
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 
 #ifndef PANTHEON_BOOT_REVEAL_ENABLE
@@ -992,7 +988,8 @@ void init_flat_floor() {
 
     // Keep geometry in a sane range while validating VU1 transforms.
     // Safe type-punning using a union to satisfy strict-aliasing rules
-    PantheonColorPun color_pun;
+    /* One vivid Path1 green (packed RGBA in .r, Q in .g) — matches user “perfect green floor” upload. */
+    const float floor_rgbaq_pack = pantheon_rgbaq_from_u8(72, 200, 92, 255);
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         flat_floor[i].x *= FLOOR_MESH_SCALE;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
@@ -1006,50 +1003,12 @@ void init_flat_floor() {
         flat_floor[i].z *= FLOOR_MESH_SCALE;
         flat_floor[i].y *= FLOOR_MESH_SCALE;
 #endif
+        flat_floor[i].w = 1.0f;
 
-#if PANTHEON_PATH1_FLOOR_BETA_GRID
-        /* v0.9.x beta: sandbox grid on world XZ (major lines + checker) — same as pinned tag floor look. */
-        {
-            float gx = flat_floor[i].x;
-            float gz = flat_floor[i].z;
-            float ax = fabsf(gx);
-            float az = fabsf(gz);
-            float fx = ax - floorf(ax);
-            float fz = az - floorf(az);
-            int on_major = (fx < 0.04f || fx > 0.96f || fz < 0.04f || fz > 0.96f) ? 1 : 0;
-            int cx = (int)floorf(ax + 0.5f);
-            int cz = (int)floorf(az + 0.5f);
-            int checker = ((cx + cz) & 1);
-            u8 r, g, b, a;
-            if (on_major) {
-                r = 72;
-                g = 200;
-                b = 92;
-                a = 255;
-            } else if (checker) {
-                /* Brighter than v0.9.3-beta cells: dark greens read as “no floor” in orbit + video encode. */
-                r = 52;
-                g = 148;
-                b = 62;
-                a = 240;
-            } else {
-                r = 44;
-                g = 125;
-                b = 54;
-                a = 235;
-            }
-            color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
-        }
-#else
-        /* Uniform slab: same vivid green as major grid lines; calmer vs sky at distance. */
-        color_pun.i = (255u << 24) | (92u << 16) | (200u << 8) | 72u;
-#endif
-
-        // Build the exact 128-bit payload the GS RGBAQ register expects!
-        flat_floor[i].r = color_pun.f; // Slot X: Pre-packed RGBA bytes
-        flat_floor[i].g = 1.0f;        // Slot Y: The critical FLOAT Q-value!
-        flat_floor[i].b = 0.0f;        // Slot Z: Padding
-        flat_floor[i].a = 0.0f;        // Slot W: Padding
+        flat_floor[i].r = floor_rgbaq_pack;
+        flat_floor[i].g = 1.0f;
+        flat_floor[i].b = 0.0f;
+        flat_floor[i].a = 0.0f;
         flat_floor[i].s = 0.0f;
         flat_floor[i].t = 0.0f;
         flat_floor[i].tex_q = 1.0f;
@@ -1201,6 +1160,16 @@ static int pantheon_boot_reveal_active(int frame_id) {
 #else
     (void)frame_id;
     return 0;
+#endif
+}
+
+/* Path1 skydome/floor after first ramp-up: deck visible during white hold (upload “perfect floor” recipe). */
+static int pantheon_path1_world_enabled(int frame_id) {
+#if PANTHEON_BOOT_REVEAL_ENABLE
+    return frame_id > PANTHEON_BOOT_REVEAL_HALF_FRAMES;
+#else
+    (void)frame_id;
+    return 1;
 #endif
 }
 
@@ -1422,10 +1391,19 @@ qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuff
     u8 clear_g = g_atmosphere.sky_horizon.g;
     u8 clear_b = g_atmosphere.sky_horizon.b;
     if (pantheon_boot_reveal_active(frame_id)) {
-        u8 luma = pantheon_boot_reveal_luma(frame_id);
-        clear_r = luma;
-        clear_g = luma;
-        clear_b = luma;
+#if PANTHEON_BOOT_REVEAL_ENABLE
+        /* After white hold, luma ramps to black while Path1 is drawing — strobes vs sky/floor; keep atmosphere clear. */
+        if (pantheon_path1_world_enabled(frame_id) &&
+            frame_id > (PANTHEON_BOOT_REVEAL_HALF_FRAMES + PANTHEON_BOOT_REVEAL_HOLD_FRAMES)) {
+            /* clear_* already from g_atmosphere */
+        } else
+#endif
+        {
+            u8 luma = pantheon_boot_reveal_luma(frame_id);
+            clear_r = luma;
+            clear_g = luma;
+            clear_b = luma;
+        }
     }
     q = draw_setup_environment(q, 0, &frame[ctx], z);
     q = draw_primitive_xyoffset(q, 0, 2048 - 320, 2048 - 224);
@@ -1701,12 +1679,13 @@ int main(int argc, char *argv[]) {
         packet_reset(packets[context]);
         qword_t *q = packets[context]->data;
         int boot_reveal = pantheon_boot_reveal_active(dbg_frame);
+        int path1_world = pantheon_path1_world_enabled(dbg_frame);
         const PantheonRenderJob render_jobs[] = {
             {PANTHEON_RENDER_JOB_CLEAR, 1},
             {PANTHEON_RENDER_JOB_CPU_DEBUG, PATH1_AB_CPU_OVERLAY && !boot_reveal},
             {PANTHEON_RENDER_JOB_PATH1_SKY,
-             (RENDER_STAGE >= 2) && !boot_reveal && PANTHEON_TRIAGE_ENABLE_SKYDOME && !PANTHEON_TRIAGE_DISABLE_SKY_PASS},
-            {PANTHEON_RENDER_JOB_PATH1_FLOOR, (RENDER_STAGE >= 2) && !boot_reveal}
+             (RENDER_STAGE >= 2) && path1_world && PANTHEON_TRIAGE_ENABLE_SKYDOME && !PANTHEON_TRIAGE_DISABLE_SKY_PASS},
+            {PANTHEON_RENDER_JOB_PATH1_FLOOR, (RENDER_STAGE >= 2) && path1_world}
         };
 
 #if PANTHEON_MIN_TELEMETRY
