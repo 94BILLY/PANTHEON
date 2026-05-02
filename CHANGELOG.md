@@ -17,7 +17,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 - **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
 - **README:** Shields badges, hero screenshot under badges, Phase 1 baseline + doc CTAs, **Key files** table (clean `pantheon_vram.h` / `.c` listing), **Roadmap** as `###` subsections, GitHub **Description** + **Topics** copy-paste for maintainers.
 - **GETTING_STARTED.md:** **TL;DR** at top; **Common issues** moved to end (after **References**).
-- **`docs/pantheon-landing.html`:** Restyled to match **94billy.com/nova/** editorial pattern (hero pull-quote, release bar, numbered sections, Nova-style shadow frames, EXEC block).
+- **`docs/pantheon-landing.html`:** WordPress block from shipped **pantheon-page** template; media filled with `raw.githubusercontent.com` URLs; **`docs/still-boot-title-4586.png`** (boot title frame from capture). Release tag text aligned to **v1.0.0-beta**.
 - **BASELINE_ACCEPTANCE.md:** Removed stale `floor_hybrid_baseline.elf` / `floor_path1_strict.elf` names; single artifact **`floor.elf`** + pointer to `BETA_RELEASE.md`.
 - **Positioning:** Crunchers and asset sections are described as **reference-tree / reproducibility**, not a general game-making invitation (`README.md`, `GETTING_STARTED.md`, `docs/pantheon-landing.html`).
 
