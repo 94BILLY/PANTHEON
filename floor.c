@@ -163,7 +163,11 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #if PANTHEON_RENDER_PROFILE == 1
 #define PATH1_AB_CPU_OVERLAY 0
 #else
-#define PATH1_AB_CPU_OVERLAY 1
+/* Default OFF: the RGB probe reads as a “random triangle” and hides that Path1 is working.
+ * Enable for A/B only: `EE_CFLAGS='-DPATH1_AB_CPU_OVERLAY=1'`. */
+#ifndef PATH1_AB_CPU_OVERLAY
+#define PATH1_AB_CPU_OVERLAY 0
+#endif
 #endif
 
 #ifndef PANTHEON_MIN_TELEMETRY
@@ -975,7 +979,7 @@ void init_flat_floor() {
     int out_idx = 0;
     for (int i = 0; i < FLOOR_TRI_COUNT; i++) {
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
-        /* Path1 tiled floor: XY→XZ map flips handedness — (a,c,b) faces +Y for single-sided tris. */
+        /* XY→XZ swizzle flips handedness vs Softimage indices; (a,c,b) faces +Y (ground up). */
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].a];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].c];
         flat_floor[out_idx++] = floor_vertices[floor_indices[i].b];
@@ -987,9 +991,7 @@ void init_flat_floor() {
     }
 
     // Keep geometry in a sane range while validating VU1 transforms.
-    // Safe type-punning using a union to satisfy strict-aliasing rules
-    /* One vivid Path1 green (packed RGBA in .r, Q in .g) — matches user “perfect green floor” upload. */
-    const float floor_rgbaq_pack = pantheon_rgbaq_from_u8(72, 200, 92, 255);
+    PantheonColorPun color_pun;
     for (int i = 0; i < FLOOR_TRI_COUNT * 3; i++) {
         flat_floor[i].x *= FLOOR_MESH_SCALE;
 #if PANTHEON_TRIAGE_FLOOR_YZ_SWIZZLE
@@ -1005,7 +1007,36 @@ void init_flat_floor() {
 #endif
         flat_floor[i].w = 1.0f;
 
-        flat_floor[i].r = floor_rgbaq_pack;
+        /* Sandbox checker (Softimage 6×6 grid) — major lines vivid green, cells darker. */
+        float gx = flat_floor[i].x;
+        float gz = flat_floor[i].z;
+        float ax = fabsf(gx);
+        float az = fabsf(gz);
+        float fx = ax - floorf(ax);
+        float fz = az - floorf(az);
+        int on_major = (fx < 0.04f || fx > 0.96f || fz < 0.04f || fz > 0.96f) ? 1 : 0;
+        int cx = (int)floorf(ax + 0.5f);
+        int cz = (int)floorf(az + 0.5f);
+        int checker = ((cx + cz) & 1);
+        u8 r, g, b, a;
+        if (on_major) {
+            r = 72;
+            g = 200;
+            b = 92;
+            a = 255;
+        } else if (checker) {
+            r = 28;
+            g = 92;
+            b = 38;
+            a = 230;
+        } else {
+            r = 22;
+            g = 72;
+            b = 30;
+            a = 220;
+        }
+        color_pun.i = ((u32)a << 24) | ((u32)b << 16) | ((u32)g << 8) | (u32)r;
+        flat_floor[i].r = color_pun.f;
         flat_floor[i].g = 1.0f;
         flat_floor[i].b = 0.0f;
         flat_floor[i].a = 0.0f;

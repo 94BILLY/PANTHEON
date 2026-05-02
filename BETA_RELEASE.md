@@ -20,9 +20,9 @@ git rev-parse HEAD
 
 | Area | Behavior |
 |------|----------|
-| **Floor** | **World-anchored Path1 tiles**, **XY→XZ** + **`(a,c,b)`**, **hybrid**, **CPU GIF floor skipped when Path1 floor runs**. **`player_on_support_deck`** tile-local XZ. Path1 verts use **one packed green** `pantheon_rgbaq_from_u8(72,200,92,255)` + **`w=1.0f`** (upload “perfect floor” recipe). |
+| **Floor** | **World-anchored Path1 tiles**, **XY→XZ** + **`(a,c,b)` winding** (faces **+Y** after swizzle — **`(a,b,c)` is culled**). **Checkerboard** major lines / cells (packed RGBA in `.r`, **Q=1** in `.g`). **`player_on_support_deck`** tile-local XZ. |
 | **Boot** | **Smooth ramp + title** (`PANTHEON_BOOT_TEXT_ANIMATE=1`, gentle wave). **`pantheon_path1_world_enabled`**: Path1 sky/floor start **after first ramp half** (floor visible on white hold). **`render_clear_and_setup`**: after hold, **no luma tail** over Path1 (avoids strobing vs green floor). |
-| **Render** | **Hybrid** (`PANTHEON_RENDER_PROFILE=0`): Path1 **skydome then floor**. |
+| **Render** | **`PANTHEON_RENDER_PROFILE=0`**: Path1 **skydome then floor**. **CPU RGB probe off by default** (was mistaken for an “upside-down triangle”). Re-enable A/B: `EE_CFLAGS='-DPATH1_AB_CPU_OVERLAY=1'`. **CPU GIF floor** draws when Path1 floor job is off (e.g. strict profile) or for fallback; hybrid skips coplanar double floor when Path1 floor runs. |
 | **RTM Gold floor** | If you need the alternate **`58cf3f8`** follow-quad recipe, build from branch **`origin/release/rtm-gold`** — it is **not** the default on `main` anymore (it hid the walkable grid for many setups). |
 | **Intro** | Boot luma ramp + `WWW.94BILLY.COM`; libdraw GS coords fixed. **Staggered letter reveal** + **gentle vertical sine wave** on by default (`PANTHEON_BOOT_TEXT_WAVE_AMP` ~2.25f, slightly slower phase). For zero wave on strict PCSX2: `EE_CFLAGS='-DPANTHEON_BOOT_TEXT_WAVE_AMP=0.0f'`. |
 | **Sky** | `g_day01` advances over `PANTHEON_DAY_CYCLE_SECONDS` (default 24 min); `PANTHEON_ATMO_SMOOTH_ALPHA` lerps atmosphere to avoid stair-stepping. |
