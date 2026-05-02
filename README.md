@@ -1,98 +1,137 @@
-# Pantheon
+<h1 align="center">Pantheon</h1>
 
-![version](https://img.shields.io/badge/version-v1.0.0--beta-blue)
-![platform](https://img.shields.io/badge/platform-PlayStation%202-black)
-![license](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
-![fps](https://img.shields.io/badge/target-60%20FPS%20locked-brightgreen)
+<p align="center"><strong>A Path 1 PlayStation 2 engine built around the Emotion Engine and VU1.</strong></p>
 
-![Pantheon v1.0.0-beta — retail PS2, Path 1 whitebox](docs/screenshot_beta1.png)
+<p align="center">
+  <a href="https://github.com/94BILLY/PANTHEON/tags"><img src="https://img.shields.io/badge/version-v1.0.0--Beta-2563eb?style=flat-square" alt="Version" /></a>
+  <img src="https://img.shields.io/badge/platform-PlayStation%202-1f2937?style=flat-square" alt="Platform" />
+  <img src="https://img.shields.io/badge/target-60%20FPS-047857?style=flat-square" alt="Target frame rate" />
+  <img src="https://img.shields.io/badge/license-All%20Rights%20Reserved-b91c1c?style=flat-square" alt="License" />
+</p>
 
-Bare-metal **Path 1** PlayStation 2 engine: the **EE** issues **DMA/VIF1** work; **VU1** runs **`shader.vsm`** (transform, GIF pack, **XGKICK** to **GS**). The tree ships **`hrc2ps2.py`** and **`obj2ps2.py`** so mesh data matches the layout the reference **`floor.elf`** expects. This is an engineering record and reproducibility baseline—not a generic game template.
+<p align="center">
+  <img src="docs/screenshot_beta1.png" alt="Pantheon — Path 1 whitebox on retail PS2 hardware" width="780" />
+</p>
 
-Build the reference ELF:
+<p align="center"><sub>Phase 1 whitebox · retail PS2 capture</sub></p>
 
-```text
+<br />
+
+## Overview
+
+The **EE** issues **DMA / VIF1** work; **VU1** runs **`shader.vsm`** — transform, GIF packing, **XGKICK** to the **GS**. Offline tools **`hrc2ps2.py`** and **`obj2ps2.py`** emit mesh data in the layout the reference **`floor.elf`** expects.
+
+> Engineering record and reproducibility baseline — not a generic game template.
+
+---
+
+## Build
+
+```bash
 git clone https://github.com/94BILLY/PANTHEON.git
 cd PANTHEON
 make -f Makefile.world
 ```
 
-Output: **`floor.elf`** (stripped). Run in **PCSX2** or on hardware; full setup: **[`GETTING_STARTED.md`](GETTING_STARTED.md)**.
-
-## Phase 1 baseline (v1.0.0-beta)
-
-Whitebox: **WWW.94BILLY.COM** boot, timecycle skydome, walkable floor, third-person orbit camera, **60 Hz** target. Default build uses a **hybrid** profile (CPU GIF floor + Path 1 skydome) to avoid coplanar Z-fight; strict all-Path1 floor is documented in **[`BETA_RELEASE.md`](BETA_RELEASE.md)**.
-
-**→ [`GETTING_STARTED.md`](GETTING_STARTED.md)** — build it.  
-**→ [`FLIGHT_LOG.md`](FLIGHT_LOG.md)** — how it was built.
-
-## Key files
-
-| File | Role |
-|------|------|
-| [`pantheon_path1_contract.h`](pantheon_path1_contract.h) | EE ↔ VU1 memory layout and batch contract |
-| [`pantheon_vram.h`](pantheon_vram.h) | GS VRAM allocator declarations |
-| [`pantheon_vram.c`](pantheon_vram.c) | Linear bump allocator, alignment, layout telemetry |
-| [`shader.vsm`](shader.vsm) | VU1 microprogram: transform, near–Z, GIF packets, XGKICK |
-| [`floor.c`](floor.c) | EE conductor: DMA chains, boot, world |
-
-## Media (real hardware)
-
-Captures from a **retail PS2**. Gallery (local + GitHub links): [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html).
-
-**Loops:** [`loop-boot-to-world.gif`](docs/media/loop-boot-to-world.gif), [`loop-world-orbit.gif`](docs/media/loop-world-orbit.gif). **Stills:** [`still-rgb-proof.png`](docs/media/still-rgb-proof.png) (1:11 in `IMG_4587.MOV`), [`still-world-hero.png`](docs/media/still-world-hero.png) (same frame as screenshot above). Phone masters stay **local** (gitignored).
-
-**Website:** visual landing for **94billy.com/pantheon** — [`docs/pantheon-94billy.html`](docs/pantheon-94billy.html) (dark, self-contained). WordPress / Classic block source: [`docs/pantheon-landing.html`](docs/pantheon-landing.html).
-
-## Scope
-
-The reference **`floor.elf`** is a fixed-timeline whitebox: boot title, outdoor sky, ground plane, orbit camera, DualShock input. Pinned defaults and flags: **[`BETA_RELEASE.md`](BETA_RELEASE.md)**. Acceptance: **[`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md)**.
-
-## Audience
-
-Developers who already build PS2 software with **PS2SDK** and want a concrete Path 1 reference. Start from **`pantheon_path1_contract.h`** and **`shader.vsm`**. EE / VIF / VU / GS familiarity is assumed.
-
-## Repository policy
-
-Public record of the work. **No** `LICENSE`; all rights reserved. Issues, pull requests, and unsolicited contributions are **not** accepted. Redistribution or reuse requires **written permission**.
-
-## Documentation
-
-- **[`GETTING_STARTED.md`](GETTING_STARTED.md)** — toolchain, build, PCSX2, profiles, assets, troubleshooting  
-- **[`BETA_RELEASE.md`](BETA_RELEASE.md)** — hybrid vs strict defaults for **v1.0.0-beta**  
-- **[`HANDOFF.md`](HANDOFF.md)** — doc index, optional SCE reference paths  
-- **[`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md)** — acceptance criteria  
-- **[`CHANGELOG.md`](CHANGELOG.md)** — version history  
-- **[`FLIGHT_LOG.md`](FLIGHT_LOG.md)** — development log  
-
-**Tags:** [github.com/94BILLY/PANTHEON/tags](https://github.com/94BILLY/PANTHEON/tags)
-
-## Roadmap
-
-### Phase 2 — Texture / STQ
-
-- Texture coordinates, **STQ**, and sampling in the VU1 program.
-
-### Phase 3 — Terrain / scale
-
-- Terrain chunking within **16 KB** VU1 data limits.
-
-### Phase 4 — Atmosphere
-
-- Further timecycle and sky work.
+**Artifact:** `floor.elf` (stripped). Run in **PCSX2** or on hardware. Toolchain and profiles: **[`GETTING_STARTED.md`](GETTING_STARTED.md)**.
 
 ---
 
-**Repository:** [github.com/94BILLY/PANTHEON](https://github.com/94BILLY/PANTHEON) · **94BILLY** — [94billy.com](https://www.94billy.com)
+## Phase 1 baseline · v1.0.0-Beta
 
-### GitHub repository settings (maintainer)
+| | |
+| :--- | :--- |
+| **Shipped** | **WWW.94BILLY.COM** boot, timecycle skydome, walkable floor, third-person orbit camera |
+| **Default profile** | Hybrid — CPU GIF floor and Path 1 skydome (avoids coplanar Z-fighting) |
+| **Strict Path 1** | Documented in **[`BETA_RELEASE.md`](BETA_RELEASE.md)** |
 
-Set **Description** (one line):
+**[`GETTING_STARTED.md`](GETTING_STARTED.md)** — build and run · **[`FLIGHT_LOG.md`](FLIGHT_LOG.md)** — how it was built
+
+---
+
+## Core files
+
+| File | Role |
+| :--- | :--- |
+| [`pantheon_path1_contract.h`](pantheon_path1_contract.h) | EE ↔ VU1 memory layout and batch contract |
+| [`pantheon_vram.h`](pantheon_vram.h) | GS VRAM allocator declarations |
+| [`pantheon_vram.c`](pantheon_vram.c) | Linear bump allocator, alignment, layout telemetry |
+| [`shader.vsm`](shader.vsm) | VU1 microprogram: transform, near-Z, GIF packets, XGKICK |
+| [`floor.c`](floor.c) | EE conductor: DMA chains, boot, world |
+
+---
+
+## Media & site
+
+Captures from **retail PS2**. Gallery: [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html).
+
+| | |
+| :--- | :--- |
+| **Loops** | [`loop-boot-to-world.gif`](docs/media/loop-boot-to-world.gif) · [`loop-world-orbit.gif`](docs/media/loop-world-orbit.gif) |
+| **Stills** | [`still-rgb-proof.png`](docs/media/still-rgb-proof.png) · [`still-world-hero.png`](docs/media/still-world-hero.png) |
+
+Phone masters stay local (gitignored). **94billy.com:** [`docs/pantheon-94billy.html`](docs/pantheon-94billy.html) · WordPress source: [`docs/pantheon-landing.html`](docs/pantheon-landing.html).
+
+---
+
+## Scope
+
+**`floor.elf`** is a fixed whitebox: boot title, outdoor sky, ground plane, orbit camera, DualShock input. Defaults and flags: **[`BETA_RELEASE.md`](BETA_RELEASE.md)** · Acceptance: **[`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md)**.
+
+---
+
+## Audience
+
+Developers who already ship with **PS2SDK** and want a concrete Path 1 reference. Entry points: **`pantheon_path1_contract.h`** and **`shader.vsm`**. EE / VIF / VU / GS familiarity is assumed.
+
+---
+
+## Documentation
+
+| Document | Contents |
+| :--- | :--- |
+| [`GETTING_STARTED.md`](GETTING_STARTED.md) | Toolchain, build, PCSX2, profiles, assets, troubleshooting |
+| [`BETA_RELEASE.md`](BETA_RELEASE.md) | Hybrid vs strict defaults for v1.0.0-Beta |
+| [`HANDOFF.md`](HANDOFF.md) | Doc index, SCE reference paths |
+| [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) | Acceptance criteria |
+| [`CHANGELOG.md`](CHANGELOG.md) | Version history |
+| [`FLIGHT_LOG.md`](FLIGHT_LOG.md) | Development log |
+
+**Tags:** [github.com/94BILLY/PANTHEON/tags](https://github.com/94BILLY/PANTHEON/tags)
+
+---
+
+## Roadmap
+
+| Phase | Focus |
+| :--- | :--- |
+| **2** — Texture / STQ | Texture coordinates, **STQ**, sampling in VU1 |
+| **3** — Terrain / scale | Chunking within **16 KB** VU1 data memory |
+| **4** — Atmosphere | Timecycle and sky |
+
+---
+
+## Repository policy
+
+Public record. **No** `LICENSE` — all rights reserved. Issues, pull requests, and unsolicited contributions are **not** accepted. Redistribution requires **written permission**.
+
+<p align="center">
+  <br />
+  <strong><a href="https://github.com/94BILLY/PANTHEON">github.com/94BILLY/PANTHEON</a></strong><br />
+  <sub>94BILLY · <a href="https://www.94billy.com">94billy.com</a></sub>
+  <br /><br />
+  <sub>© 2026 94BILLY. All rights reserved. Viewing permitted. No reuse without written permission.</sub>
+</p>
+
+<details>
+<summary><strong>Maintainer — GitHub metadata</strong></summary>
+
+**Repository description (one line):**
 
 ```text
-Bare-metal Path 1 PlayStation 2 engine. VU1 microcode. Softimage 3D pipeline. 60 FPS locked.
+Bare-metal Path 1 PlayStation 2 engine. VU1 microcode. Softimage 3D pipeline. 60 FPS target.
 ```
 
 **Topics:** `ps2`, `playstation2`, `homebrew`, `vu1`, `path1`, `gamedev`, `openworld`, `softimage`, `bare-metal`, `demoscene`
 
-© 2026 94BILLY. All rights reserved. Viewing permitted. No reuse without written permission.
+</details>
