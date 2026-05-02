@@ -2,43 +2,35 @@
 
 **Versioning:** [Semantic Versioning 2.0.0](https://semver.org/). Current pre-release: **`v1.0.0-beta.2`** (see git tag; peel commit with `git rev-parse v1.0.0-beta.2^{}`). First RTM will be **`v1.0.0`** (no prerelease suffix). [Tags on GitHub](https://github.com/94BILLY/PANTHEON/tags).
 
-**PANTHEON** is a deterministic data-orchestration and spatial rendering matrix engineered for highly asymmetric, heterogeneous silicon environments.
+**PANTHEON** is a high-performance **Path 1** stack for the **PlayStation 2**, built to hold a **locked 60 FPS** baseline. It enforces a strict **manager–worker** split: the **Emotion Engine** acts as a **DMA/VIF1 conductor**—it sequences **128-bit** command chains and feeds the bus—while **Vector Unit 1** runs dedicated **VLIW microcode** (`shader.vsm`) that transforms vertices, packs GIF primitives, and drives the **Graphics Synthesizer** with **XGKICK**. The EE is not a software rasterizer; it **orchestrates** work the hardware was meant to do.
 
-Operating at the bare-metal layer, it enforces a rigorous manager–worker execution protocol: the Primary Logic Matrix sequences high-bandwidth 128-bit DMA/VIF command chains while an isolated VLIW vector co-processor executes cycle-accurate microcode. The result is mathematically deterministic performance with zero-overhead hardware authority.
+At the silicon boundary the pipeline is **deterministic**: **quadword-aligned** structures, **burst-friendly** unpack layouts, a fixed **VRAM word map**, and guardrails (e.g. **near–Z** rejects) so what you enqueue is what the GS consumes. Authoring stays honest through an offline **Softimage `.hrc` → C headers** bridge (`hrc2ps2.py`)—geometry lands in the ROM image already padded and aligned for **VIF1** and **VU1**.
 
-## Core Capabilities
+No middleware pretense, no engine-within-the-engine—**EE schedules, VU1 computes, GS draws.**
 
-- **Asymmetric Data Plane Orchestration** — Strict conductor-node protocol that decouples stream orchestration from spatial compute.
-- **Double-Buffered Asynchronous Pipeline** — Zero-latency handoff between command preparation and vector-unit execution.
-- **Strategic VRAM Word-Map** — Explicit 4 MB linear allocator enforcing 8 KB page alignment and 256-byte block boundaries.
-- **Production-Grade Asset Bridge** — Automated offline pipeline that ingests native Softimage `.hrc` hierarchies and flattens them into hardware-safe sequential arrays.
-- **Hardware-Level Safeguards** — Active Near-Z culling, quadword alignment enforcement, and chromatic stability across dynamic atmospheric transitions.
+## What you get
 
-## Phase 1 — Golden Build (Locked)
+- **Path 1 end-to-end** — EE builds chains; VU1 owns transform and kick; contract lives in `pantheon_path1_contract.h`.
+- **VRAM discipline** — Linear allocator, page/block alignment, boot-time layout audit when telemetry is on.
+- **Hybrid & strict profiles** — Default avoids coplanar floor Z-fight; strict mode validates full Path 1 floor + skydome (see [`BETA_RELEASE.md`](BETA_RELEASE.md)).
+- **Softimage-native asset path** — `.hrc` through `hrc2ps2.py` into headers the DMA path consumes as-is.
+- **Atmosphere & boot** — Timecycle-smoothed sky; luma ramp + **94BILLY STUDIOS** title path (bitmap glyphs, no texture tax for the logo).
 
-The engine has reached its Phase 1 baseline (`pantheon-base-60fps`):
+## Phase 1 — Golden build (locked)
 
-- Stable, locked 60 FPS asynchronous rendering in a pure Path 1 environment.
-- Pure Path 1 rendering of complex environment geometry and atmospheric skydomes.
-- Precision-sampled GTA-style orbital camera telemetry with deadzone-aware analog input.
-- Verified zero-overlap memory layout audited via boot-time telemetry.
+Baseline **`pantheon-base-60fps`**:
 
-## Key Architectural Invariants
+- Locked **60 FPS** Path 1 rendering for floor grid, skydome, and boot overlay.
+- **GTA-style** orbital camera with deadzone-aware analog input.
+- **Zero-overlap** VRAM layout verified under telemetry.
 
-- **Manager–Worker Separation**: The host processor acts solely as a stream orchestrator; all geometric transformation, perspective division, and raster output is delegated to the vector co-processor.
-- **Deterministic Memory Discipline**: Linear word-bump allocator with strict 16-byte quadword alignment for all DMA-facing structures.
-- **VLIW Execution Parallelism**: Bespoke microprogram (`shader.vsm`) utilizing dual-issue floating-point and integer math with direct XGKICK to the rasterizer.
-- **Automated Telemetry Bridge**: Offline asset-compression pipeline (`hrc2ps2.py`) that enforces hardware-safe alignment and padding.
+## Roadmap
 
-## Current Roadmap
+- **Phase 2** — VRAM texture foundation: host **IMAGE** uploads, **STQ**, `shader.vsm` sampling path.
+- **Terrain / chunking** — EE-side batching to respect the **16 KB** VU1 data ceiling at scale.
+- **Atmosphere** — Continued **San Andreas–style** lerp between discrete timecycle palettes.
 
-- **Phase 2**: VRAM Texture Foundation — IMAGE-mode host uploads and STQ homogeneous coordinate parsing.
-- **Terrain / Scene Chunking**: EE-side spatial partitioning to manage large world data within the 16 KB co-processor limit.
-- **Atmospheric Pacing**: San Andreas-style temporal lerping between discrete timecycle palettes.
-
-## Platform Implementation Context
-
-While designed as a study in modern asymmetric computational topologies, Pantheon is currently implemented as a **Path 1 PlayStation 2 engine**. It rejects modern abstraction layers in favor of treating legacy silicon with the same discipline applied to contemporary high-performance systems.
+**Target platform:** PS2 (PCSX2 for iteration; real hardware supported).
 
 **Build:** `make -f Makefile.world` → `floor.elf`. Pinned defaults and strict Path 1 flags: [`BETA_RELEASE.md`](BETA_RELEASE.md).
 
