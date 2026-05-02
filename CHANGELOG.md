@@ -12,7 +12,11 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 
 ### Changed
 
-- **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` aligned to a **clear, respectful** (Nova/Apple-style) voice—welcoming pointers to setup docs, factual licensing, no gatekeeping language; landing uses **What’s included**, **Build and verify**, and **From mesh to build**.
+- **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
+- **README:** Scope, audience, and policy sections aligned with GitHub `main`; **Media** section documents behavior-led asset names (`still-*`, `loop-*`, `clip-*`) and `still-rgb-proof.png` from `IMG_4587.MOV` at **1:11**.
+- **GETTING_STARTED.md:** Opening **navigation paragraph** (“how to read this page”) before audience disclaimer.
+- **BASELINE_ACCEPTANCE.md:** Removed stale `floor_hybrid_baseline.elf` / `floor_path1_strict.elf` names; single artifact **`floor.elf`** + pointer to `BETA_RELEASE.md`.
+- **Positioning:** Crunchers and asset sections are described as **reference-tree / reproducibility**, not a general game-making invitation (`README.md`, `GETTING_STARTED.md`, `docs/pantheon-landing.html`).
 
 ## [1.0.0-beta] - 2026-05-02
 

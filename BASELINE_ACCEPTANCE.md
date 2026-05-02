@@ -11,10 +11,9 @@ Baseline milestone: `pantheon-baseline-60fps-path1-controls`
 - Player movement controls working: PASS
 - Stable 60 FPS: PASS
 
-## Build Profiles Verified
+## Build artifact
 
-- Hybrid baseline build: `floor_hybrid_baseline.elf`
-- Strict Path 1 build: `floor_path1_strict.elf`
+- Single output name: **`floor.elf`** (profile selected at compile time via `EE_EXTRA_CFLAGS`; see [`BETA_RELEASE.md`](BETA_RELEASE.md)).
 
 ## Regression Gate
 

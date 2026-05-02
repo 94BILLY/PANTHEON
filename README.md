@@ -1,53 +1,71 @@
 # Pantheon
 
-**PANTHEON** is a **Path 1** PlayStation 2 stack: the **EE** runs as **DMA/VIF1 conductor**, **VU1** runs **`shader.vsm`** (transform, GIF pack, **XGKICK** to **GS**). Not Path 3. Not “engine” abstraction—**silicon-shaped** work: quadword alignment, unpack layout, VRAM map, **near–Z** rejects, contract in `pantheon_path1_contract.h`.
+Pantheon is a Path 1 PlayStation 2 engine. The Emotion Engine submits DMA/VIF1 work; VU1 runs `shader.vsm` for transforms, GIF packing, and XGKICK to the Graphics Synthesizer. The repository includes `obj2ps2.py` and `hrc2ps2.py` so mesh data can be emitted in the same layout the reference binary expects. The tree is maintained as an engineering record and reproducibility baseline, not as a general-purpose template for unrelated products.
 
-Offline mesh paths: **Softimage `.hrc` → `hrc2ps2.py`**, **Wavefront `.obj` → `obj2ps2.py`**—data lands in the shape the bus expects.
+Build the reference ELF with:
 
-Path 1 on PlayStation 2 has a learning curve. **GETTING_STARTED.md** covers toolchain, build, and run; **HANDOFF.md** points to SCE documentation and reference paths if you want to dig into the hardware story.
+```text
+make -f Makefile.world
+```
 
-**This repository is a public showcase** of the work. There is **no** `LICENSE`; rights are **not** granted to copy, redistribute, or reuse the code without **written permission**. **Issues, pull requests, and contributions are not accepted.**
-
----
+Output: `floor.elf` (stripped).
 
 ## Media (real hardware)
 
-Whitebox demo captured **on a retail PS2** (not emulation). Browse everything locally: [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) (double-click or drag into a browser tab).
+Captures from a **retail PS2** (not emulation). Local gallery: [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html). Asset names describe **behavior**: `still-*` (frame), `loop-*` (repeat), `clip-*` (short beat).
 
-**Social:** [**`loop-boot-to-world.gif`**](docs/media/loop-boot-to-world.gif) (boot → `WWW.94BILLY.COM` → world). Also: [`loop-world-vertical.gif`](docs/media/loop-world-vertical.gif), [`clip-power-on.gif`](docs/media/clip-power-on.gif), [`loop-world-wide.gif`](docs/media/loop-world-wide.gif). **Stills:** [`still-ps2-particles.png`](docs/media/still-ps2-particles.png), [`still-rgb-proof.png`](docs/media/still-rgb-proof.png) (`IMG_4587.MOV` **1:11**).
+**Social:** [`loop-boot-to-world.gif`](docs/media/loop-boot-to-world.gif) (boot → `WWW.94BILLY.COM` → world), [`loop-world-vertical.gif`](docs/media/loop-world-vertical.gif), [`clip-power-on.gif`](docs/media/clip-power-on.gif), [`loop-world-wide.gif`](docs/media/loop-world-wide.gif). **Stills:** [`still-ps2-particles.png`](docs/media/still-ps2-particles.png), [`still-rgb-proof.png`](docs/media/still-rgb-proof.png) (`IMG_4587.MOV` **1:11**).
 
-**Landing:** [`loop-world-orbit.gif`](docs/media/loop-world-orbit.gif), [`still-world-hero.png`](docs/media/still-world-hero.png).
+**Landing / OG:** [`still-world-hero.png`](docs/media/still-world-hero.png); primary loop: [`loop-world-orbit.gif`](docs/media/loop-world-orbit.gif).
 
-Source phone masters (`IMG_4586.MOV`, `IMG_4587.MOV`) stay **local**—gitignored (~4K, large).
+Phone masters (`IMG_4586.MOV`, `IMG_4587.MOV`) are **local** and gitignored.
 
 ![Pantheon Path 1 — real PS2 capture](docs/media/loop-world-orbit.gif)
 
-## What’s in the tree
+## Scope
 
-- **Path 1 end-to-end** — EE chains, VU1 kick, contract headers.
-- **VRAM discipline** — linear allocator, alignment, optional boot layout audit.
-- **Hybrid & strict profiles** — default avoids CPU vs VU1 floor Z-fight; strict validates full Path1 floor + skydome ([`BETA_RELEASE.md`](BETA_RELEASE.md)).
-- **Skydome + timecycle** — smoothed palettes; defaults documented (long day cycle, overcast bias).
-- **Boot** — luma ramp + **WWW.94BILLY.COM** bitmap title; Path1 world gated until reveal completes.
+The reference `floor.elf` is a fixed-timeline whitebox: boot title, outdoor sky, ground plane, orbit camera, and controller input.
 
-## Baseline
+Included in this baseline:
 
-Locked **60 FPS** target for this whitebox: floor grid, skydome, boot overlay, orbit camera. **Pantheon the game** is intended to **grow from this same codebase**; what you see today is the **foundation**, not the shipping title.
+- Boot sequence (WWW.94BILLY.COM)
+- Timecycle skydome
+- Walkable floor grid
+- Third-person orbit camera
+- DualShock movement and look
 
-## Roadmap (directional)
+By default the build uses a hybrid path: CPU GIF draws the floor; Path 1 draws the skydome. That split avoids two floor layers fighting at the same depth. For a single-Path1 floor pass, use the strict profile described in BETA_RELEASE.md.
 
-- Phase 2 — texture / **STQ** / sampling in microcode.
-- Terrain / chunking — respect **16 KB** VU1 data ceiling at scale.
-- Atmosphere — continued timecycle work.
+Pinned defaults and flags for the current beta tag are in BETA_RELEASE.md. Acceptance checks are in BASELINE_ACCEPTANCE.md. Target frame rate for this whitebox is 60 Hz.
+
+## Audience
+
+The project is intended for developers who already build PS2 software with PS2SDK and want a concrete Path 1 reference. Readers treating the repo as documentation should start with `pantheon_path1_contract.h` and `shader.vsm`. Familiarity with EE, VIF, VU, and GS documentation is assumed; GETTING_STARTED.md covers toolchain, build, PCSX2, and mesh regeneration for this tree only.
+
+## Repository policy
+
+This repository is a public record of the work. There is no LICENSE file. All rights are reserved. Issues, pull requests, and unsolicited contributions are not accepted. Redistribution or reuse requires written permission. Access to the source does not grant a license.
+
+## Documentation
+
+- GETTING_STARTED.md — Toolchain, build, PCSX2, build profiles, asset pipeline notes, troubleshooting
+- BETA_RELEASE.md — Pinned defaults for the v1.0.0-beta tag (hybrid vs strict)
+- HANDOFF.md — Documentation index and optional local SCE reference paths
+- BASELINE_ACCEPTANCE.md — Acceptance criteria
+- CHANGELOG.md — Version history
+- FLIGHT_LOG.md — Development log
+
+Versioning follows Semantic Versioning. The current pre-release tag is v1.0.0-beta. Tags: https://github.com/94BILLY/PANTHEON/tags
+
+## Roadmap
+
+- Texture coordinates, STQ, and sampling in the VU1 program
+- Terrain and chunking within VU1 data limits
+- Further atmosphere and timecycle work
 
 ---
 
-**Versioning:** [SemVer 2.0](https://semver.org/). Pre-release tag **`v1.0.0-beta`**; next **`v1.0.1-beta`**, …; first RTM **`v1.0.0`**. [Tags](https://github.com/94BILLY/PANTHEON/tags).
-
-**Build:** `make -f Makefile.world` → `floor.elf`. Pinned defaults: [`BETA_RELEASE.md`](BETA_RELEASE.md). Full setup and troubleshooting: [`GETTING_STARTED.md`](GETTING_STARTED.md).
-
-**Docs:** [`GETTING_STARTED.md`](GETTING_STARTED.md) · [`BETA_RELEASE.md`](BETA_RELEASE.md) · [`FLIGHT_LOG.md`](FLIGHT_LOG.md) · [`HANDOFF.md`](HANDOFF.md) · [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) · [`CHANGELOG.md`](CHANGELOG.md)
-
-**Repository:** [github.com/94BILLY/Pantheon](https://github.com/94BILLY/Pantheon) · **94BILLY**
+Repository: https://github.com/94BILLY/Pantheon  
+94BILLY — https://www.94billy.com
 
 © 2026 94BILLY. All rights reserved. Viewing permitted. No reuse without written permission.
