@@ -1,59 +1,47 @@
 # Pantheon
 
-**Pantheon** is a **Path 1** PlayStation 2 engine: the **Emotion Engine** issues **DMA/VIF1** work; **VU1** runs **`shader.vsm`** (transform, GIF pack, **XGKICK** to the **Graphics Synthesizer**). In-tree crunchers (**`obj2ps2.py`**, **`hrc2ps2.py`**) exist to align mesh data to the same bus format the **reference `floor.elf`** uses—**not** positioned as a kit for shipping unrelated titles.
+Pantheon is a Path 1 PlayStation 2 engine. The Emotion Engine submits DMA/VIF1 work; VU1 runs `shader.vsm` for transforms, GIF packing, and XGKICK to the Graphics Synthesizer. The repository includes `obj2ps2.py` and `hrc2ps2.py` so mesh data can be emitted in the same layout the reference binary expects. The tree is maintained as an engineering record and reproducibility baseline, not as a general-purpose template for unrelated products.
 
-**Build:** `make -f Makefile.world` → **`floor.elf`** (stripped EE ELF).
+Build the reference ELF with:
 
----
+```text
+make -f Makefile.world
+```
 
-## At a glance
+Output: `floor.elf` (stripped).
 
-| | |
-|---|---|
-| **What you get** | Boot sequence (**WWW.94BILLY.COM**), timecycle skydome, walkable floor grid, third-person orbit camera, DualShock movement |
-| **Default render** | **Hybrid** — CPU GIF draws the floor deck; **Path 1** draws the skydome (avoids coplanar Z-fight). **Strict Path 1** turns on VU1 floor tiles and turns off the CPU overlay — see [`BETA_RELEASE.md`](BETA_RELEASE.md) |
-| **Target** | **60 FPS** reference whitebox; acceptance criteria in [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) |
+## Scope
 
----
+The current baseline includes a boot sequence (WWW.94BILLY.COM), timecycle skydome, walkable floor grid, third-person orbit camera, and DualShock input. Default build uses a hybrid render path: the floor deck is drawn via the CPU GIF path and the skydome via Path 1, which avoids coplanar Z-fighting between two floor submissions. A strict Path 1 profile enables VU1 floor tiles and disables the CPU overlay; behavior for the tagged beta is summarized in BETA_RELEASE.md. Acceptance and regression expectations are listed in BASELINE_ACCEPTANCE.md. The implementation targets a stable 60 Hz for this whitebox.
 
-## Who this is for
+## Audience
 
-- Builders who already have **PS2SDK** / **ee-gcc** and want a **reproducible Path 1** reference.
-- Anyone reading the repo as **engineering documentation** (memory contract in **`pantheon_path1_contract.h`**, VU program in **`shader.vsm`**).
-
-Path 1 is not abstracted away. If EE / VIF / VU / GS manuals are new to you, start with Sony and **ps2sdk** samples, then return—**[`GETTING_STARTED.md`](GETTING_STARTED.md)** assumes you are compiling PS2 software.
-
----
+The project is intended for developers who already build PS2 software with PS2SDK and want a concrete Path 1 reference. Readers treating the repo as documentation should start with `pantheon_path1_contract.h` and `shader.vsm`. Familiarity with EE, VIF, VU, and GS documentation is assumed; GETTING_STARTED.md covers toolchain, build, PCSX2, and mesh regeneration for this tree only.
 
 ## Repository policy
 
-**Public record of the work** — not a product warranty, not permission to fork for redistribution. **No `LICENSE` file.** **All rights reserved.** No **issues**, no **pull requests**, no **contributions** without **written permission**. Viewing the source does not grant a license to copy or reuse.
-
----
+This repository is a public record of the work. There is no LICENSE file. All rights are reserved. Issues, pull requests, and unsolicited contributions are not accepted. Redistribution or reuse requires written permission. Access to the source does not grant a license.
 
 ## Documentation
 
-| Document | Use |
-|----------|-----|
-| [**GETTING_STARTED.md**](GETTING_STARTED.md) | Toolchain, build, PCSX2, profiles, asset pipeline, troubleshooting |
-| [**BETA_RELEASE.md**](BETA_RELEASE.md) | Pinned defaults for **`v1.0.0-beta`**; hybrid vs strict one-liners |
-| [**HANDOFF.md**](HANDOFF.md) | Doc index + local SCE reference paths |
-| [**BASELINE_ACCEPTANCE.md**](BASELINE_ACCEPTANCE.md) | Regression / acceptance gates |
-| [**CHANGELOG.md**](CHANGELOG.md) | Release notes |
-| [**FLIGHT_LOG.md**](FLIGHT_LOG.md) | Development journal |
+- GETTING_STARTED.md — Toolchain, build, PCSX2, build profiles, asset pipeline notes, troubleshooting  
+- BETA_RELEASE.md — Pinned defaults for the v1.0.0-beta tag (hybrid vs strict)  
+- HANDOFF.md — Documentation index and optional local SCE reference paths  
+- BASELINE_ACCEPTANCE.md — Acceptance criteria  
+- CHANGELOG.md — Version history  
+- FLIGHT_LOG.md — Development log  
 
-**Versioning:** [SemVer 2.0](https://semver.org/). Pre-release tag **`v1.0.0-beta`**. [Tags →](https://github.com/94BILLY/PANTHEON/tags)
+Versioning follows Semantic Versioning. The current pre-release tag is v1.0.0-beta. Tags: https://github.com/94BILLY/PANTHEON/tags
 
----
+## Roadmap
 
-## Roadmap (directional)
-
-- Texture / **STQ** / sampling in microcode  
-- Terrain / chunking within **VU1** data limits  
-- Atmosphere / timecycle  
+- Texture coordinates, STQ, and sampling in the VU1 program  
+- Terrain and chunking within VU1 data limits  
+- Further atmosphere and timecycle work  
 
 ---
 
-**Repository:** [github.com/94BILLY/Pantheon](https://github.com/94BILLY/Pantheon) · **94BILLY** · [94billy.com](https://www.94billy.com)
+Repository: https://github.com/94BILLY/Pantheon  
+94BILLY — https://www.94billy.com
 
 © 2026 94BILLY. All rights reserved. Viewing permitted. No reuse without written permission.
