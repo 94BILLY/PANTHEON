@@ -20,8 +20,10 @@ git rev-parse HEAD
 
 | Area | Behavior |
 |------|----------|
-| **Render** | **Hybrid** (`PANTHEON_RENDER_PROFILE=0`): Path1 draws **skydome then floor** (floor last so walkable plane wins Z inside the dome). **CPU GIF floor is skipped when Path1 floor runs** — avoids Z-fight. |
-| **Floor** | World-anchored tiles (`PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER=0`), SoftImage XY→XZ swizzle on. Path1 floor matches **v0.9.x beta sandbox grid** by default (`PANTHEON_PATH1_FLOOR_BETA_GRID=1`): bright green **major lines** + **brighter checker cells** (cells were darkened in old tags and read as “no floor” in orbit + low-bitrate video). Player snap uses **tiled support** so the deck stays under you on every patch. Uniform slab: `EE_CFLAGS='-DPANTHEON_PATH1_FLOOR_BETA_GRID=0'`. |
+| **Preset** | Default **`PANTHEON_VISUAL_PRESET=1`**: merges **`origin/release/rtm-gold` @ `58cf3f8`** floor pipeline with current boot. **Preset 0**: world-anchored tiled Path1 + `(a,c,b)` winding (older “open field” mode). |
+| **Render** | **Hybrid** (`PANTHEON_RENDER_PROFILE=0`): Path1 **skydome then floor**. **CPU GIF floor skipped when Path1 floor runs** — avoids Z-fight. |
+| **Floor (preset 1)** | **RTM Gold**: `PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER=1`, **`PANTHEON_TRIAGE_FORCE_FLAT_QUAD=1`**, Path1 **flat quad at world origin** + original mesh winding `(a,b,c)`; **player Y snaps on authored deck AABB** (same as RTM). Green = grid in `init_flat_floor` + `PANTHEON_PATH1_FLOOR_BETA_GRID` (slab: `EE_CFLAGS='-DPANTHEON_PATH1_FLOOR_BETA_GRID=0'`). |
+| **Floor (preset 0)** | World tiles + `(a,c,b)` + tiled `player_on_support_deck` (walk off-patch still supported). |
 | **Intro** | Boot luma ramp + `WWW.94BILLY.COM`; libdraw GS coords fixed. **Staggered letter reveal** + **gentle vertical sine wave** on by default (`PANTHEON_BOOT_TEXT_WAVE_AMP` ~2.25f, slightly slower phase). For zero wave on strict PCSX2: `EE_CFLAGS='-DPANTHEON_BOOT_TEXT_WAVE_AMP=0.0f'`. |
 | **Sky** | `g_day01` advances over `PANTHEON_DAY_CYCLE_SECONDS` (default 24 min); `PANTHEON_ATMO_SMOOTH_ALPHA` lerps atmosphere to avoid stair-stepping. |
 | **Start palette** | **`PANTHEON_WEATHER_OVERCAST`** at **`g_day01=0.2`** → baby-blue biased overcast daylight. |
