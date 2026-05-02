@@ -9,12 +9,14 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 ### Added
 
 - **`obj2ps2.py`** — Wavefront `.obj` → C for Path 1–style vertex emission (Blender / DCC route); documented in README, `GETTING_STARTED.md`, and `docs/pantheon-landing.html`.
+- **`docs/screenshot_beta1.png`** — README hero still (retail PS2 capture; same frame as `still-world-hero.png`).
+- **`docs/pantheon-94billy.html`** — dark, self-contained landing for **94billy.com/pantheon** (Criterion-style: hero, stats, CTAs, `shader.vsm` excerpt).
 
 ### Changed
 
 - **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
-- **README:** Scope, audience, and policy sections aligned with GitHub `main`; **Media** section documents behavior-led asset names (`still-*`, `loop-*`, `clip-*`) and `still-rgb-proof.png` from `IMG_4587.MOV` at **1:11**.
-- **GETTING_STARTED.md:** Opening **navigation paragraph** (“how to read this page”) before audience disclaimer.
+- **README:** Shields badges, hero screenshot under badges, Phase 1 baseline + doc CTAs, **Key files** table (clean `pantheon_vram.h` / `.c` listing), **Roadmap** as `###` subsections, GitHub **Description** + **Topics** copy-paste for maintainers.
+- **GETTING_STARTED.md:** **TL;DR** at top; **Common issues** moved to end (after **References**).
 - **BASELINE_ACCEPTANCE.md:** Removed stale `floor_hybrid_baseline.elf` / `floor_path1_strict.elf` names; single artifact **`floor.elf`** + pointer to `BETA_RELEASE.md`.
 - **Positioning:** Crunchers and asset sections are described as **reference-tree / reproducibility**, not a general game-making invitation (`README.md`, `GETTING_STARTED.md`, `docs/pantheon-landing.html`).
 
