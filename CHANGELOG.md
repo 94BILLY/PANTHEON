@@ -12,7 +12,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 
 ### Changed
 
-- **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
+- **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` aligned to a **clear, respectful** (Nova/Apple-style) voice—welcoming pointers to setup docs, factual licensing, no gatekeeping language; landing uses **What’s included**, **Build and verify**, and **From mesh to build**.
 
 ## [1.0.0-beta] - 2026-05-02
 

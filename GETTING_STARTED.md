@@ -1,8 +1,8 @@
-# Pantheon — technical appendix (build & run)
+# Pantheon — build and run
 
-This file is for **people who are already compiling PS2 software** and want **the same reproducibility** as the author. It is **not** a gentle introduction. If you need a conceptual overview of Path 1, **stop here** and read the **EE / VIF / VU / GS** documentation and first-party-adjacent references first.
+This guide helps you **install the toolchain**, **build** `floor.elf`, and **run** it in PCSX2 or on hardware. Path 1 and PS2 graphics take time to learn; for the big-picture EE / VIF / VU / GS story, pair this file with official manuals and the references in **HANDOFF.md**.
 
-**Pantheon** is bare-metal **Path 1**: the **EE** issues **DMA/VIF** work; **VU1** runs **`shader.vsm`** and **XGKICK**; the **GS** draws. No EE-side vertex soup.
+**Pantheon** is **Path 1** at the metal: the **EE** issues **DMA/VIF** work; **VU1** runs **`shader.vsm`** and **XGKICK**; the **GS** draws—without a software renderer doing the geometry on the main CPU.
 
 ---
 
