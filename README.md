@@ -12,16 +12,13 @@ Path 1 on PlayStation 2 has a learning curve. **GETTING_STARTED.md** covers tool
 
 ## Media (real hardware)
 
-Whitebox demo captured **on a retail PS2** (not emulation). In-repo previews (after clone): [`docs/media/`](docs/media/). To view GIFs/PNGs in a browser, open [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) (double-click or drag into a tab).
+Whitebox demo captured **on a retail PS2** (not emulation). Browse everything locally: [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) (double-click or drag into a browser tab).
 
-| Asset | Role |
-| --- | --- |
-| [`pantheon-ps2-boot-4586.gif`](docs/media/pantheon-ps2-boot-4586.gif) | Short boot / title legibility |
-| [`pantheon-ps2-world-4587.gif`](docs/media/pantheon-ps2-world-4587.gif) | Floor, skydome, camera motion |
-| [`pantheon-hero-world-4587.png`](docs/media/pantheon-hero-world-4587.png) | Still hero — PS2 + Path 1 world (1280 px) |
-| [`pantheon-hero-boot-4586.png`](docs/media/pantheon-hero-boot-4586.png) | Still — shorter clip / alternate crop |
+**Viral / social (short hooks):** [`pantheon-viral-9x16-hardware.gif`](docs/media/pantheon-viral-9x16-hardware.gif) (vertical), [`pantheon-viral-power-moment.gif`](docs/media/pantheon-viral-power-moment.gif), [`pantheon-viral-world-wide-4586.gif`](docs/media/pantheon-viral-world-wide-4586.gif). **Thumbnail stills:** [`pantheon-viral-ps2-particles.png`](docs/media/pantheon-viral-ps2-particles.png), [`pantheon-viral-rgb-triangle-lg.png`](docs/media/pantheon-viral-rgb-triangle-lg.png).
 
-Source phone videos (`IMG_4586.MOV`, `IMG_4587.MOV`) stay **local**—they are gitignored (~4K, ~0.8 GB combined).
+**Baseline / landing:** [`pantheon-ps2-world-4587.gif`](docs/media/pantheon-ps2-world-4587.gif), [`pantheon-hero-world-4587.png`](docs/media/pantheon-hero-world-4587.png).
+
+Source phone masters (`IMG_4586.MOV`, `IMG_4587.MOV`) stay **local**—gitignored (~4K, large).
 
 ![Pantheon Path 1 — real PS2 capture](docs/media/pantheon-ps2-world-4587.gif)
 
