@@ -1,46 +1,41 @@
 # Pantheon
 
-**Versioning:** [Semantic Versioning 2.0.0](https://semver.org/). **Pre-releases** use **`vMAJOR.MINOR.PATCH-beta`** — current tag **`v1.0.0-beta`**; next iterations bump patch (**`v1.0.1-beta`**, **`v1.0.2-beta`**, …). Peel commit: `git rev-parse v1.0.0-beta^{}`. **First RTM** will be **`v1.0.0`** (no prerelease suffix). [Tags on GitHub](https://github.com/94BILLY/PANTHEON/tags).
+**PANTHEON** is a **Path 1** PlayStation 2 stack: the **EE** runs as **DMA/VIF1 conductor**, **VU1** runs **`shader.vsm`** (transform, GIF pack, **XGKICK** to **GS**). Not Path 3. Not “engine” abstraction—**silicon-shaped** work: quadword alignment, unpack layout, VRAM map, **near–Z** rejects, contract in `pantheon_path1_contract.h`.
 
-**PANTHEON** is a high-performance **Path 1** stack for the **PlayStation 2**, built to hold a **locked 60 FPS** baseline. It enforces a strict **manager–worker** split: the **Emotion Engine** acts as a **DMA/VIF1 conductor**—it sequences **128-bit** command chains and feeds the bus—while **Vector Unit 1** runs dedicated **VLIW microcode** (`shader.vsm`) that transforms vertices, packs GIF primitives, and drives the **Graphics Synthesizer** with **XGKICK**. The EE is not a software rasterizer; it **orchestrates** work the hardware was meant to do.
+Offline mesh paths: **Softimage `.hrc` → `hrc2ps2.py`**, **Wavefront `.obj` → `obj2ps2.py`**—data lands in the shape the bus expects.
 
-At the silicon boundary the pipeline is **deterministic**: **quadword-aligned** structures, **burst-friendly** unpack layouts, a fixed **VRAM word map**, and guardrails (e.g. **near–Z** rejects) so what you enqueue is what the GS consumes. Authoring stays honest through an offline **Softimage `.hrc` → C headers** bridge (`hrc2ps2.py`)—geometry lands in the ROM image already padded and aligned for **VIF1** and **VU1**.
+If that paragraph reads like noise, **you’re not the audience yet**. The PS2 doesn’t negotiate. Go read **EE Users Manual / VU / GS**, SCE samples, and **late-era shipping titles**—then come back. The gap between “homebrew demo” and **this** will make sense.
 
-No middleware pretense, no engine-within-the-engine—**EE schedules, VU1 computes, GS draws.**
+**This repository is a public record of the work**—not a product, not a starter kit, not an invitation to fork for your ROM. **No `LICENSE`.** No rights to copy, redistribute, or reuse without **written permission**. **Issues, pull requests, and contributions are not accepted.**
 
-## What you get
+---
 
-- **Path 1 end-to-end** — EE builds chains; VU1 owns transform and kick; contract lives in `pantheon_path1_contract.h`.
-- **VRAM discipline** — Linear allocator, page/block alignment, boot-time layout audit when telemetry is on.
-- **Hybrid & strict profiles** — Default avoids coplanar floor Z-fight; strict mode validates full Path 1 floor + skydome (see `[BETA_RELEASE.md](BETA_RELEASE.md)`).
-- **Softimage-native asset path** — `.hrc` through `hrc2ps2.py` into headers the DMA path consumes as-is.
-- **Atmosphere & boot** — Timecycle-smoothed sky (**default ~24 min** full day, **overcast**-biased daylight — short runs look blue-heavy; see `[BETA_RELEASE.md](BETA_RELEASE.md)`); luma ramp + **[WWW.94BILLY.COM](WWW.94BILLY.COM)** title (bitmap glyphs, stagger + optional wave; no texture upload for the logo).
+## What’s in the tree
 
-## Phase 1 — Golden build (locked)
+- **Path 1 end-to-end** — EE chains, VU1 kick, contract headers.
+- **VRAM discipline** — linear allocator, alignment, optional boot layout audit.
+- **Hybrid & strict profiles** — default avoids CPU vs VU1 floor Z-fight; strict validates full Path1 floor + skydome ([`BETA_RELEASE.md`](BETA_RELEASE.md)).
+- **Skydome + timecycle** — smoothed palettes; defaults documented (long day cycle, overcast bias).
+- **Boot** — luma ramp + **WWW.94BILLY.COM** bitmap title; Path1 world gated until reveal completes.
 
-Baseline `**pantheon-base-60fps`**:
+## Baseline
 
-- Locked **60 FPS** Path 1 rendering for floor grid, skydome, and boot overlay.
-- **GTA-style** orbital camera with deadzone-aware analog input.
-- **Zero-overlap** VRAM layout verified under telemetry.
+Locked **60 FPS** target for this whitebox: floor grid, skydome, boot overlay, orbit camera. **Pantheon the game** is intended to **grow from this same codebase**; what you see today is the **foundation**, not the shipping title.
 
-## Roadmap
+## Roadmap (directional)
 
-- **Phase 2** — VRAM texture foundation: host **IMAGE** uploads, **STQ**, `shader.vsm` sampling path.
-- **Terrain / chunking** — EE-side batching to respect the **16 KB** VU1 data ceiling at scale.
-- **Atmosphere** — Continued **San Andreas–style** lerp between discrete timecycle palettes.
+- Phase 2 — texture / **STQ** / sampling in microcode.
+- Terrain / chunking — respect **16 KB** VU1 data ceiling at scale.
+- Atmosphere — continued timecycle work.
 
-**Target platform:** PS2 (PCSX2 for iteration; real hardware supported).
+---
 
-**Build:** `make -f Makefile.world` → `floor.elf`. Pinned defaults and strict Path 1 flags: `[BETA_RELEASE.md](BETA_RELEASE.md)`.
+**Versioning:** [SemVer 2.0](https://semver.org/). Pre-release tag **`v1.0.0-beta`**; next **`v1.0.1-beta`**, …; first RTM **`v1.0.0`**. [Tags](https://github.com/94BILLY/PANTHEON/tags).
 
-**Docs:** `[GETTING_STARTED.md](GETTING_STARTED.md)` · `[FLIGHT_LOG.md](FLIGHT_LOG.md)` · `[HANDOFF.md](HANDOFF.md)` · `[BASELINE_ACCEPTANCE.md](BASELINE_ACCEPTANCE.md)` · `[CHANGELOG.md](CHANGELOG.md)`
+**Reproducibility (for people who compile):** `make -f Makefile.world` → `floor.elf`. Pinned defaults and flags: [`BETA_RELEASE.md`](BETA_RELEASE.md). Deeper toolchain notes: [`GETTING_STARTED.md`](GETTING_STARTED.md) (technical appendix, not a hand-hold).
 
-**Repository policy:** Public as a **showcase / devlog-style** view of the work. There is **no** `LICENSE` file; rights are **not** granted to copy, redistribute, or reuse the code without written permission (see notice below). **Issues, pull requests, and contributions are not accepted.**
+**Docs:** [`GETTING_STARTED.md`](GETTING_STARTED.md) · [`BETA_RELEASE.md`](BETA_RELEASE.md) · [`FLIGHT_LOG.md`](FLIGHT_LOG.md) · [`HANDOFF.md`](HANDOFF.md) · [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) · [`CHANGELOG.md`](CHANGELOG.md)
 
-**Official Repository:** [https://github.com/94BILLY/Pantheon](https://github.com/94BILLY/Pantheon)  
-**Author:** [94BILLY](https://github.com/94BILLY)
-
-**Beta baseline (pinned defaults + strict Path1 note):** see `[BETA_RELEASE.md](BETA_RELEASE.md)`.
+**Repository:** [github.com/94BILLY/Pantheon](https://github.com/94BILLY/Pantheon) · **94BILLY**
 
 © 2026 94BILLY. All rights reserved. Viewing permitted. No reuse without written permission.

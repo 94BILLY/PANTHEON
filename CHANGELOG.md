@@ -4,6 +4,16 @@ All notable changes to this project are documented here. Versioning follows [Sem
 
 Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then **`v1.0.1-beta`** as the beta line advances). First stable release will be **`v1.0.0`** (no prerelease suffix).
 
+## Unreleased
+
+### Added
+
+- **`obj2ps2.py`** — Wavefront `.obj` → C for Path 1–style vertex emission (Blender / DCC route); documented in README, `GETTING_STARTED.md`, and `docs/pantheon-landing.html`.
+
+### Changed
+
+- **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
+
 ## [1.0.0-beta] - 2026-05-02
 
 ### Added

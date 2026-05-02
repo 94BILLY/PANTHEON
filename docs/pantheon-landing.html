@@ -1,0 +1,72 @@
+<!--
+  Pantheon — landing (Nova layout, OG-respect copy for 94billy.com)
+  WordPress: Custom HTML block. Replace LOGO_SRC, VIDEO_ID, HERO_IMG_SRC.
+-->
+<div class="pantheon-landing-final" style="font-family: 'Times New Roman', Times, serif; max-width: 850px; margin: 0 auto; color: #000; line-height: 1.5; padding: 5px 20px 20px 20px;">
+
+  <div style="border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align: center;">
+    <div style="margin-bottom: 10px;">
+      <img src="LOGO_SRC" alt="Pantheon" width="114" height="114" style="object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+      <div style="display: none; font-size: 4rem; line-height: 1; font-weight: bold; letter-spacing: -2px;">Π</div>
+    </div>
+    <h1 style="font-size: 3.8rem; margin: 0; font-weight: bold; line-height: 1; letter-spacing: -1px;">PANTHEON</h1>
+    <h2 style="font-size: 1.5rem; margin: 5px 0; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">PlayStation 2 · Path 1 · VU1</h2>
+    <p style="font-size: 1.15rem; margin-top: 5px; font-style: italic; opacity: 0.8;">&ldquo;The Emotion Engine as conductor. VU1 as geometry worker. DMA/VIF as law.&rdquo;</p>
+  </div>
+
+  <div style="color: #000; padding: 12px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 1.2rem;">
+    v1.0.0-beta &mdash; Path 1 baseline
+  </div>
+
+  <section style="margin-bottom: 35px; text-align: justify;">
+    <p style="font-size: 1.1rem; margin-bottom: 15px;"><strong>Pantheon</strong> is <strong>Path 1</strong> on real silicon vocabulary: <strong>EE</strong> schedules <strong>DMA/VIF1</strong>; <strong>VU1</strong> microcode transforms, packs GIF, <strong>XGKICK</strong> to <strong>GS</strong>. Not a tutorial repo. If that sentence is opaque, the manuals come first—then this tree reads as what it is.</p>
+    <p style="font-size: 1.1rem; margin-bottom: 15px;"><strong>Public showcase</strong> of the work—<strong>not</strong> a starter kit, <strong>not</strong> permission to ship derivatives. No <code style="font-size: 0.95em;">LICENSE</code>; rights reserved. <strong>In-repo tools:</strong> <code style="font-size: 0.95em;">hrc2ps2.py</code> (Softimage <code style="font-size: 0.95em;">.hrc</code>), <code style="font-size: 0.95em;">obj2ps2.py</code> (Wavefront <code style="font-size: 0.95em;">.obj</code>)—integration with the Path 1 contract is on you.</p>
+    <p style="font-size: 1.1rem; margin: 0;"><strong>Pantheon</strong> the <strong>game</strong> is meant to grow from this same codebase; today’s drop is the <strong>foundation</strong>, not the shipping title.</p>
+  </section>
+
+  <section style="margin-bottom: 35px;">
+    <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">1. What’s in this baseline</h3>
+    <ul style="list-style-type: disc; padding-left: 25px; font-size: 1.1rem; margin: 0;">
+      <li style="margin-bottom: 10px;"><strong>Path 1 pipeline:</strong> EE &rarr; VIF1 &rarr; VU1 &rarr; GIF &rarr; GS.</li>
+      <li style="margin-bottom: 10px;"><strong>Mesh crunchers in-tree:</strong> <code style="font-size: 0.95em;">hrc2ps2.py</code>, <code style="font-size: 0.95em;">obj2ps2.py</code>.</li>
+      <li style="margin-bottom: 10px;"><strong>Skydome + timecycle</strong>; hybrid floor vs strict Path1 floor (see GitHub <code style="font-size: 0.95em;">BETA_RELEASE.md</code>).</li>
+      <li style="margin-bottom: 10px;"><strong>Boot overlay</strong> + <strong>60 FPS</strong>-class whitebox target; contract in headers.</li>
+    </ul>
+  </section>
+
+  <section style="margin-bottom: 35px;">
+    <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">2. Field recording</h3>
+    <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0px #ccc;">
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+        <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" title="Pantheon demo" src="https://www.youtube.com/embed/VIDEO_ID?rel=0&amp;modestbranding=1" allowfullscreen="allowfullscreen"></iframe>
+      </div>
+    </div>
+    <p style="font-size: 0.9rem; margin-top: 10px; font-style: italic; text-align: center;">Fig 1.1: Boot, Path 1 sky, hybrid floor, orbit camera (set VIDEO_ID).</p>
+  </section>
+
+  <section style="margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 25px 0;">
+    <h3 style="margin-top: 0; font-size: 1.25rem; font-weight: bold; text-transform: uppercase;">3. Reproducibility (reviewers)</h3>
+    <p style="font-size: 1.1rem; margin-bottom: 20px;">Evidence the tree builds—requires PS2SDK / <code style="font-size: 0.95em;">ee-gcc</code> on PATH. Not an invitation.</p>
+    <div style="margin-bottom: 10px;">
+      <p style="font-size: 1rem; margin-bottom: 5px; font-weight: bold; color: #555;">Build record</p>
+      <div style="padding: 10px 0 10px 15px; border-left: 2px solid #000; font-family: monospace; font-size: 0.85rem; word-break: break-all; background: #f9f9f9;">
+        git clone https://github.com/94BILLY/Pantheon.git &amp;&amp; cd Pantheon &amp;&amp; make -f Makefile.world clean &amp;&amp; make -f Makefile.world
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-bottom: 35px;">
+    <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">4. Boundary</h3>
+    <p style="font-size: 1.1rem; margin: 0;">Read the README on GitHub for versioning, policy, and doc index. No issues, no PRs, no implied license. If you know what Path 1 costs on PS2, you know what you’re looking at.</p>
+  </section>
+
+  <div style="border-top: 1px solid #000; padding-top: 5px; margin-bottom: 5px; text-align: center;">
+    <img style="width: 100%; max-width: 800px; height: auto; border: 1px solid #000; display: block; margin: 0 auto;" src="HERO_IMG_SRC" alt="Pantheon &mdash; Path 1 floor and sky" onerror="this.outerHTML='<p style=\'font-size:0.95rem;opacity:0.7;margin:20px 0;\'>Hero: set HERO_IMG_SRC.</p>';" />
+  </div>
+  <div style="text-align: center; border-top: 2px solid #000; padding-top: 15px; margin-top: 0;">
+    <a style="color: #000; font-weight: bold; font-size: 1.8rem; text-decoration: underline;" href="https://github.com/94BILLY/Pantheon" target="_blank" rel="noopener">View on GitHub</a>
+    <p style="margin-top: 12px; font-size: 0.95rem; opacity: 0.75;">Public showcase &mdash; not a distribution grant.</p>
+    <p style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px;">&ldquo;Anything is possible.&rdquo;</p>
+    <p style="margin-top: 5px; font-size: 0.85rem; opacity: 0.6;">Engineered by 94BILLY</p>
+  </div>
+</div>
