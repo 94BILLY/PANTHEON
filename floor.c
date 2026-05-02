@@ -31,6 +31,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/* NDJSON sky/timecycle samples (throttled). Default off for release; use -DPANTHEON_AGENT_SKY_LOG=1 when debugging. */
+#ifndef PANTHEON_AGENT_SKY_LOG
+#define PANTHEON_AGENT_SKY_LOG 0
+#endif
+
 #include "floor_data.h"
 #include "skydome_data.h"
 #include "pantheon_path1_contract.h"
@@ -293,8 +298,12 @@ static float g_floor_center_z = 0.0f;
 static PantheonAtmosphere g_atmosphere;
 static PantheonAtmosphere g_atmosphere_target;
 static int g_atmosphere_inited = 0;
-/* Default: soft baby-blue overcast daylight (see pantheon_timecycle.h OVERCAST row). */
-static PantheonWeather g_weather = PANTHEON_WEATHER_OVERCAST;
+/* Default: soft baby-blue overcast daylight (see pantheon_timecycle.h OVERCAST row).
+ * Tuners: make EE_EXTRA_CFLAGS='-DPANTHEON_INITIAL_WEATHER=PANTHEON_WEATHER_CLEAR' */
+#ifndef PANTHEON_INITIAL_WEATHER
+#define PANTHEON_INITIAL_WEATHER PANTHEON_WEATHER_OVERCAST
+#endif
+static PantheonWeather g_weather = PANTHEON_INITIAL_WEATHER;
 static float g_day01 = 0.20f;
 /* Cross-fade between weather segment presets (avoids instant hue jumps every ~18 min). */
 static int g_weather_blend_remaining = 0;
@@ -339,7 +348,7 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
 
 /* 0 = no ramp/title (immediate gameplay clear).
  * 1 = luma ramp + bitmap URL/title; Path1 hands off only after TOTAL_FRAMES (no mid-boot strobing).
- * Override: EE_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0' */
+ * Override: EE_EXTRA_CFLAGS='-DPANTHEON_BOOT_REVEAL_ENABLE=0' */
 #ifndef PANTHEON_BOOT_REVEAL_ENABLE
 #define PANTHEON_BOOT_REVEAL_ENABLE 1
 #endif
@@ -552,6 +561,67 @@ static void update_camera_orbit(void) {
 }
 #endif
 
+#if PANTHEON_AGENT_SKY_LOG
+/* #region agent log */
+static void pantheon_agent_sky_ndjson(int frame_id) {
+    static float prev_day01 = -1.0f;
+    float dpf = 1.0f / (60.0f * PANTHEON_DAY_CYCLE_SECONDS);
+    float delta = (prev_day01 < 0.0f) ? dpf : (g_day01 - prev_day01);
+    if (prev_day01 >= 0.0f && g_day01 < prev_day01) {
+        delta += 1.0f;
+    }
+    prev_day01 = g_day01;
+    unsigned tr = g_atmosphere_target.sky_horizon.r;
+    unsigned tg = g_atmosphere_target.sky_horizon.g;
+    unsigned tb = g_atmosphere_target.sky_horizon.b;
+    unsigned hr = g_atmosphere.sky_horizon.r;
+    unsigned hg = g_atmosphere.sky_horizon.g;
+    unsigned hb = g_atmosphere.sky_horizon.b;
+    char buf[420];
+    int n = snprintf(
+        buf,
+        sizeof(buf),
+        "{\"sessionId\":\"22f5dd\",\"timestamp\":%d,\"location\":\"floor.c:update_atmosphere\","
+        "\"message\":\"sky_timecycle\",\"hypothesisId\":\"H1-H5\","
+        "\"data\":{\"frame\":%d,\"g_day01\":%.8f,\"day_delta\":%.10f,\"day_per_frame\":%.12f,"
+        "\"PANTHEON_DAY_CYCLE_SECONDS\":%.1f,\"weather\":%d,\"smooth_alpha\":%.4f,"
+        "\"horizon_rgb\":[%u,%u,%u],\"target_horizon_rgb\":[%u,%u,%u],"
+        "\"WEATHER_AUTO\":%d}}\n",
+        frame_id,
+        frame_id,
+        g_day01,
+        delta,
+        dpf,
+        PANTHEON_DAY_CYCLE_SECONDS,
+        (int)g_weather,
+        PANTHEON_ATMO_SMOOTH_ALPHA,
+        hr,
+        hg,
+        hb,
+        tr,
+        tg,
+        tb,
+        PANTHEON_WEATHER_AUTO_CYCLE);
+    if (n <= 0 || (size_t)n >= sizeof(buf)) {
+        return;
+    }
+    const char *paths[] = {
+        "/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
+        "host:/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
+    };
+    for (unsigned pi = 0; pi < (unsigned)(sizeof(paths) / sizeof(paths[0])); pi++) {
+        FILE *f = fopen(paths[pi], "a");
+        if (f) {
+            fwrite(buf, 1, (size_t)n, f);
+            fclose(f);
+            return;
+        }
+    }
+    printf("%s", buf);
+}
+/* #endregion */
+#endif
+
 static void update_atmosphere(int frame_id) {
     /* Advance simulated day at a slower cadence to avoid visible clear-color stepping. */
     g_day01 += 1.0f / (60.0f * PANTHEON_DAY_CYCLE_SECONDS);
@@ -599,6 +669,11 @@ static void update_atmosphere(int frame_id) {
         g_atmosphere = pantheon_lerp_atmosphere(g_atmosphere, g_atmosphere_target, a);
     }
     update_skydome_colors();
+#if PANTHEON_AGENT_SKY_LOG
+    if (frame_id > 0 && (frame_id % 600) == 0) {
+        pantheon_agent_sky_ndjson(frame_id);
+    }
+#endif
 }
 
 /* Flattened triangle stream for VU1 (CPU expand at boot; see flight log Day 4). */

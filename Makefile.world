@@ -6,7 +6,8 @@
 #   Skydome: prefer an upper hemisphere (y>=0) in Softimage to save tris; full sphere works.
 #
 #   make -f Makefile.world
-# Optional: add -DPANTHEON_DEBUG_LOG=1 to EE_CC line for host: pad trace logs.
+# Optional tuners: append flags without clobbering the EE toolchain, e.g.
+#   make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_AGENT_SKY_LOG=1'
 EE_BIN = floor.elf
 EE_OBJS = floor.o shader.o pantheon_vram.o pantheon_texture_host.o
 
@@ -21,6 +22,8 @@ EE_AS = dvp-as
 EE_LD = ee-gcc
 EE_STRIP = mips64r5900el-ps2-elf-strip
 EE_CFLAGS = -D_EE -G0 -O2 -Wall -fno-lto
+# Appended to EE_CFLAGS on every compile — use this for -DPANTHEON_* overrides (do not replace EE_CFLAGS).
+EE_EXTRA_CFLAGS ?=
 EE_LDFLAGS = -fno-lto
 
 all: $(EE_BIN)
@@ -31,13 +34,13 @@ shader.o: shader.vsm
 	$(EE_AS) -o shader.o shader.vsm
 
 pantheon_vram.o: pantheon_vram.c pantheon_vram.h
-	$(EE_CC) $(EE_CFLAGS) \
+	$(EE_CC) $(EE_CFLAGS) $(EE_EXTRA_CFLAGS) \
 		-I$(PS2SDK)/ee/include \
 		-I$(PS2SDK)/common/include \
 		-c pantheon_vram.c -o pantheon_vram.o
 
 pantheon_texture_host.o: pantheon_texture_host.c pantheon_texture_host.h
-	$(EE_CC) $(EE_CFLAGS) \
+	$(EE_CC) $(EE_CFLAGS) $(EE_EXTRA_CFLAGS) \
 		-DPANTHEON_TEXTURE_PHASE=$(PANTHEON_TEXTURE_PHASE) \
 		-I$(PS2SDK)/ee/include \
 		-I$(PS2SDK)/common/include \
@@ -45,7 +48,7 @@ pantheon_texture_host.o: pantheon_texture_host.c pantheon_texture_host.h
 
 # Compile C source
 floor.o: floor.c
-	$(EE_CC) $(EE_CFLAGS) \
+	$(EE_CC) $(EE_CFLAGS) $(EE_EXTRA_CFLAGS) \
 		-DPANTHEON_TEXTURE_PHASE=$(PANTHEON_TEXTURE_PHASE) \
 		-I$(PS2SDK)/ee/include \
 		-I$(PS2SDK)/common/include \
