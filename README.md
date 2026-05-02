@@ -14,13 +14,13 @@ Path 1 on PlayStation 2 has a learning curve. **GETTING_STARTED.md** covers tool
 
 Whitebox demo captured **on a retail PS2** (not emulation). Browse everything locally: [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) (double-click or drag into a browser tab).
 
-**Viral / social:** [**`pantheon-viral-boot-to-world-loop.gif`**](docs/media/pantheon-viral-boot-to-world-loop.gif) (boot → `WWW.94BILLY.COM` → Path 1 world, one file). Also: [`pantheon-viral-9x16-hardware.gif`](docs/media/pantheon-viral-9x16-hardware.gif) (vertical), [`pantheon-viral-power-moment.gif`](docs/media/pantheon-viral-power-moment.gif), [`pantheon-viral-world-wide-4586.gif`](docs/media/pantheon-viral-world-wide-4586.gif). **Stills:** [`pantheon-viral-ps2-particles.png`](docs/media/pantheon-viral-ps2-particles.png), [`pantheon-viral-rgb-triangle-lg.png`](docs/media/pantheon-viral-rgb-triangle-lg.png) (RGB primaries + Ocean Blue PS2 in frame, ~72s into `IMG_4587.MOV`).
+**Social:** [**`loop-boot-to-world.gif`**](docs/media/loop-boot-to-world.gif) (boot → `WWW.94BILLY.COM` → world). Also: [`loop-world-vertical.gif`](docs/media/loop-world-vertical.gif), [`clip-power-on.gif`](docs/media/clip-power-on.gif), [`loop-world-wide.gif`](docs/media/loop-world-wide.gif). **Stills:** [`still-ps2-particles.png`](docs/media/still-ps2-particles.png), [`still-rgb-proof.png`](docs/media/still-rgb-proof.png) (`IMG_4587.MOV` **1:11**).
 
-**Baseline / landing:** [`pantheon-ps2-world-4587.gif`](docs/media/pantheon-ps2-world-4587.gif), [`pantheon-hero-world-4587.png`](docs/media/pantheon-hero-world-4587.png).
+**Landing:** [`loop-world-orbit.gif`](docs/media/loop-world-orbit.gif), [`still-world-hero.png`](docs/media/still-world-hero.png).
 
 Source phone masters (`IMG_4586.MOV`, `IMG_4587.MOV`) stay **local**—gitignored (~4K, large).
 
-![Pantheon Path 1 — real PS2 capture](docs/media/pantheon-ps2-world-4587.gif)
+![Pantheon Path 1 — real PS2 capture](docs/media/loop-world-orbit.gif)
 
 ## What’s in the tree
 
