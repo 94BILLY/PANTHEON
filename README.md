@@ -2,13 +2,10 @@
   <img src="docs/pantheon-logo-zenith-no-text-hero.png" alt="Pantheon — oculus mark" width="280" /><br />
   <span style="display:inline-block;margin-top:2px;">PANTHEON</span>
 </h1>
-
-<p align="center"> A Path 1 game engine for the Sony® PlayStation 2 — Emotion Engine, VU1, DMA/VIF.</p>
-
+<p align="center">A Path 1 game engine for the Sony® PlayStation 2 — Emotion Engine, VU1, DMA/VIF.</p>
 <p align="center">
   <img src="docs/media/loop-boot-to-world.gif" alt="Boot sequence through Path 1 world — retail PS2 capture" width="720" />
 </p>
-
 <p align="center"><sub>Boot → world · loop from retail capture (<code>docs/media/loop-boot-to-world.gif</code>)</sub></p>
 
 ## Overview
@@ -27,8 +24,8 @@ Output: `floor.elf`. Run in PCSX2 or on real PS2 hardware. Toolchain and profile
 
 ## Phase 1 baseline
 
-- Boot title, timecycle skydome, walkable floor, third-person orbit camera  
-- Default: hybrid profile (CPU GIF floor + Path 1 skydome; avoids coplanar Z-fight)  
+- Boot title, timecycle skydome, walkable floor, third-person orbit camera
+- Default: hybrid profile (CPU GIF floor + Path 1 skydome; avoids coplanar Z-fight)
 - Strict Path 1: [`BETA_RELEASE.md`](BETA_RELEASE.md)
 
 Narrative: [`FLIGHT_LOG.md`](FLIGHT_LOG.md)
@@ -62,16 +59,16 @@ Readers comfortable with PS2SDK, EE/VIF/VU1, and the GS. Start with `pantheon_pa
 | :--- | :--- |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Build, PCSX2, profiles, assets |
 | [`BETA_RELEASE.md`](BETA_RELEASE.md) | Hybrid vs strict (v1.0.0-Beta) |
-| [`HANDOFF.md`](HANDOFF.md) | Doc index |
+| [`DOCS_INDEX.md`](DOCS_INDEX.md) | Doc index |
 | [`BASELINE_ACCEPTANCE.md`](BASELINE_ACCEPTANCE.md) | Acceptance |
 | [`CHANGELOG.md`](CHANGELOG.md) | History |
 | [`FLIGHT_LOG.md`](FLIGHT_LOG.md) | Development log |
 
 ## Roadmap
 
-- Phase 2 — Texturing (STQ, sampling in VU1)  
-- Phase 3 — Scale (chunking within VU1 data limits)  
-- Phase 4 — Atmosphere (timecycle, sky)
+- Phase 2 — Texturing (STQ coordinates, texture sampling in VU1, GS upload)
+- Phase 3 — Scale (world chunking within VU1 data limits)
+- Phase 4 — Atmosphere (full dynamic timecycle, day/night sky transition)
 
 ## Repository policy
 
@@ -83,7 +80,6 @@ Public technical record. No `LICENSE` file; all rights reserved. Issues, pull re
   <a href="https://github.com/94BILLY/PANTHEON">github.com/94BILLY/PANTHEON</a><br />
   94BILLY · <a href="https://www.94BILLY.com/PANTHEON">94billy.com/PANTHEON</a>
 </p>
-
 <p align="center"><sub>© 2026 94BILLY · All rights reserved</sub></p>
 
 <details>
