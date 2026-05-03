@@ -3,7 +3,7 @@
   <span style="display:inline-block;margin-top:2px;">PANTHEON</span>
 </h1>
 
-<p align="center">Path 1 engine for PlayStation 2 — Emotion Engine, VU1, DMA/VIF.</p>
+<p align="center"> A Path 1 game engine for the Sony® PlayStation 2 — Emotion Engine, VU1, DMA/VIF.</p>
 
 <p align="center">
   <img src="docs/media/loop-boot-to-world.gif" alt="Boot sequence through Path 1 world — retail PS2 capture" width="720" />
