@@ -6,8 +6,8 @@ Upload from your Pantheon repo (same bytes, these names on disk in `docs/` or `d
 
 | Save as (Media Library filename) | Source in repo |
 | :--- | :--- |
-| `pantheon-logo-zenith.webm` | `docs/media/pantheon-logo-zenith.webm` (VP9 + alpha, 512×512, ~2 s loop — site header) |
-| `pantheon-logo-zenith-no-text-hero.png` | `docs/pantheon-logo-zenith-no-text-hero.png` (optional fallback elsewhere) |
+| `pantheon-logo-zenith.webm` | `docs/media/pantheon-logo-zenith.webm` (optional — VP9 + alpha; use if you add a `<video>` mark back to the header) |
+| `pantheon-logo-zenith-no-text-hero.png` | `docs/pantheon-logo-zenith-no-text-hero.png` (README / other) |
 | `pantheon-still-world-hero.png` | `docs/media/still-world-hero.png` |
 | `pantheon-still-boot-title-4586.png` | `docs/still-boot-title-4586.png` |
 | `pantheon-loop-world-orbit.gif` | `docs/media/loop-world-orbit.gif` |
