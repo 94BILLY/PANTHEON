@@ -3,13 +3,14 @@
   <span style="display:inline-block;margin-top:2px;">PANTHEON</span>
 </h1>
 
-<p align="center">A bare-metal Path 1 game engine for the Sony® PlayStation 2</p>
+<p align="center">A deterministic Path 1 rendering framework for PlayStation 2. Locked 60 FPS. VU1-native geometry with maximum silicon throughput.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-All%20Rights%20Reserved-red.svg" alt="License: All Rights Reserved" />
   <a href="https://github.com/94BILLY/PANTHEON/releases/tag/v1.0.0-beta"><img src="https://img.shields.io/badge/Status-v1.0.0--Beta-blue.svg" alt="Status: v1.0.0-Beta" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Platform-PlayStation%202-000000.svg" alt="Platform: PlayStation 2" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Architecture-Path%201-2ea44f.svg" alt="Architecture: Path 1" /></a>
+  <a href="https://github.com/ps2dev/ps2sdk"><img src="https://img.shields.io/badge/SDK-ps2sdk-orange.svg" alt="SDK: ps2sdk" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Compiler-dvp--as-purple.svg" alt="Compiler: dvp-as" /></a>
 </p>
 
@@ -146,7 +147,7 @@ Bare-metal Path 1 PlayStation 2 engine. VU1 microcode. Softimage 3D pipeline. 60
 
 **Topics:**
 ```
-ps2 playstation2 homebrew vu1 path1 gamedev openworld softimage bare-metal demoscene
+ps2 playstation2 ps2sdk homebrew vu1 path1 gamedev openworld softimage bare-metal demoscene
 ```
 
 **Language:**
