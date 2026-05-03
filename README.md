@@ -3,7 +3,7 @@
   <span style="display:inline-block;margin-top:2px;">PANTHEON</span>
 </h1>
 
-<p align="center">Unified Path 1 game engine for PlayStation 2. VU1-native. Locked 60 FPS.</p>
+<p align="center">Unified Path 1 game engine for the Sony® PlayStation 2. VU1-native. Locked 60 FPS.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-All%20Rights%20Reserved-red.svg" alt="License: All Rights Reserved" />
