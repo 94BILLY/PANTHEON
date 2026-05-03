@@ -42,7 +42,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 
 ### Removed
 
-- **Repo hygiene:** NotebookLM snapshot (`_notebooklm/`), Cursor editor rules (`.cursor/rules/`), PS2SDK-template `cube/` sample, legacy root `Makefile`, `fix_shader.py`, `obj2ps2.py`, and `scripts/export_notebooklm_snapshot.py`. Public tree is **Path 1 + docs + asset cruncher** only; use `Makefile.world` and `GETTING_STARTED.md`.
+- **Repo hygiene:** NotebookLM snapshot (`_notebooklm/`), editor-only rules (`.cursor/rules/` when present locally), PS2SDK-template `cube/` sample, legacy root `Makefile`, `fix_shader.py`, `obj2ps2.py`, and `scripts/export_notebooklm_snapshot.py`. Public tree is **Path 1 + docs + asset cruncher** only; use `Makefile.world` and `GETTING_STARTED.md`.
 
 *Earlier work used tags `v1.0.0-beta.1` and `v1.0.0-beta.2`; those names are retired in favor of **`v1.0.0-beta`** as the single canonical pre-1.0 tag for this baseline.*
 

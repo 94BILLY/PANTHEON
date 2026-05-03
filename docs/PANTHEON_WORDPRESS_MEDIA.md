@@ -18,7 +18,9 @@ GitHub often does not serve `raw` for **private** repos without auth. Use either
 - **Git archive:**  
   `git archive origin main docs/media/pantheon-logo-zenith.webm | tar -x`
 
-Then upload that `.webm` to **WordPress → Media** (or attach to a **GitHub Release** as a binary asset).
+Then upload that `.webm` to **WordPress → Media** as **`pantheon-logo-zenith.webm`** (or attach to a **GitHub Release** as a binary asset).
+
+**Landing page:** In `docs/pantheon-landing.html`, uncomment the **`<video>...</video>`** block under the title (or paste the same snippet from the comment into your Custom HTML block).
 
 ---
 
