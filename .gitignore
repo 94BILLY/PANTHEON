@@ -6,9 +6,7 @@
 *.mov
 *.zip
 *.iso
-*.Zone.Identifier
-*:Zone.Identifier
-*:Zone.Identifier:Zone.Identifier
+*Zone.Identifier*
 .cursor/
 agent-tools/
 _notebooklm/
@@ -22,5 +20,3 @@ _backup_archive/
 backups/
 TempFolder/
 Notes.txt
-world.c
-README claude.md
