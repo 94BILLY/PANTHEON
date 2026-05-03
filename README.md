@@ -1,8 +1,7 @@
-<p align="center">
-  <img src="docs/pantheon-logo-zenith-no-text-hero.png" alt="Pantheon — oculus mark (zenith source, circular crop)" width="400" />
-</p>
-
-<h1 align="center">Pantheon</h1>
+<h1 align="center" style="margin-top:0;margin-bottom:0;">
+  <img src="docs/pantheon-logo-zenith-no-text-hero.png" alt="Pantheon — oculus mark" width="280" /><br />
+  <span style="display:inline-block;margin-top:2px;">PANTHEON</span>
+</h1>
 
 <p align="center"><strong>A Path 1 PlayStation 2 engine built around the Emotion Engine and VU1.</strong></p>
 
