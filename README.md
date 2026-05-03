@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot_beta1.png" alt="Path 1 whitebox on retail PS2 hardware" width="720" />
+  <img src="docs/media/loop-boot-to-world.gif" alt="Boot sequence through Path 1 world — retail PS2 capture" width="720" />
 </p>
 
-<p align="center"><sub>Phase 1 whitebox · retail PS2 capture</sub></p>
+<p align="center"><sub>Boot → world · loop from retail capture (<code>docs/media/loop-boot-to-world.gif</code>)</sub></p>
 
 ## Overview
 
