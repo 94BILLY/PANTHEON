@@ -24,13 +24,14 @@ Then upload that `.webm` to **WordPress → Media** as **`pantheon-logo-zenith.w
 
 The landing HTML uses **`https://94billy.com/wp-content/uploads/2026/05/`** plus these filenames. WordPress may change the month folder when you upload — if images 404, open **Media →** each file **→ Copy URL** and replace URLs in `docs/pantheon-landing.html` (and the hero `url()` in `docs/pantheon-94billy.html`).
 
-**`docs/pantheon-landing.html` (94billy.com block)** uses **only one** image asset: **`pantheon-loop-boot-to-world.gif`** — same bytes as **`docs/media/loop-boot-to-world.gif`** (README hero). No other landing images.
+**`docs/pantheon-landing.html` (94billy.com block)** uses **one** GIF in the Field demo: **`PS2DEMO.gif`** at  
+`https://94billy.com/wp-content/uploads/2026/05/PS2DEMO.gif`  
+(README on GitHub still references **`docs/media/loop-boot-to-world.gif`** — keep that file in the repo; upload your chosen GIF to WP under whatever name you use in the HTML `src`.)
 
-Upload from your Pantheon repo:
-
-| Save as (Media Library filename) | Source in repo |
+| Media file (example) | Source |
 | :--- | :--- |
-| `pantheon-loop-boot-to-world.gif` | **`docs/media/loop-boot-to-world.gif`** |
+| `PS2DEMO.gif` | Your uploaded demo (or replace `src` in HTML with **Media → Copy URL**) |
+| `loop-boot-to-world.gif` | **`docs/media/loop-boot-to-world.gif`** (matches README if you prefer one asset everywhere) |
 
 Optional (not used by current landing HTML):
 
