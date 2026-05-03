@@ -81,7 +81,7 @@ Public technical record. No `LICENSE` file; all rights reserved. Issues, pull re
 
 <p align="center">
   <a href="https://github.com/94BILLY/PANTHEON">github.com/94BILLY/PANTHEON</a><br />
-  94BILLY · <a href="https://www.94billy.com">94billy.com</a>
+  94BILLY · <a href="https://www.94BILLY.com/PANTHEON">94billy.com/PANTHEON</a>
 </p>
 
 <p align="center"><sub>© 2026 94BILLY · All rights reserved</sub></p>
