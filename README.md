@@ -13,9 +13,7 @@
 
 ## Overview
 
-The EE issues DMA/VIF work; VU1 runs `shader.vsm` (transform, GIF packing, XGKICK to the GS). Offline tools `hrc2ps2.py` and `obj2ps2.py` emit mesh data for the reference `floor.elf`.
-
-Engineering record and reproducibility baseline — not a general-purpose game template.
+The Emotion Engine issues DMA/VIF work; VU1 runs `shader.vsm` (transform, GIF packing, XGKICK to the GS). Offline tools `hrc2ps2.py` and `obj2ps2.py` emit mesh data for the reference `floor.elf`.
 
 ## Build
 
@@ -25,7 +23,7 @@ cd PANTHEON
 make -f Makefile.world
 ```
 
-Output: `floor.elf`. Run in PCSX2 or on hardware. Toolchain and profiles: [`GETTING_STARTED.md`](GETTING_STARTED.md).
+Output: `floor.elf`. Run in PCSX2 or on real PS2 hardware. Toolchain and profiles: [`GETTING_STARTED.md`](GETTING_STARTED.md).
 
 ## Phase 1 baseline
 
