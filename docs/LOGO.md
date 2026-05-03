@@ -16,7 +16,7 @@ Centered square crop → resize → circular alpha only (no color edits, no lip 
 | `pantheon-logo-zenith-lockup.png` | Mark + **PANTHEON** wordmark (4096 canvas). |
 | `pantheon-logo-zenith-same-size-no-text.png` | Same canvas height as lockup; transparent below the circle. |
 | `pantheon-logo-zenith-*-hero.png` / `.webp` | **720px-wide** derivatives for README and web (smaller git size). |
-| `media/pantheon-logo-zenith.webm` | **VP9 + alpha** WebM (512×512, 2 s loop) — optional for a future `<video>` header; **`pantheon-landing.html` header is text-only** (no mark). |
+| `media/pantheon-logo-zenith.webm` | **VP9 + alpha** WebM (512×512, 2 s loop). **Release path:** clone/pull repo → this file; if `raw.githubusercontent.com` 404s (private repo), download from GitHub UI or `git archive` (see `docs/PANTHEON_WORDPRESS_MEDIA.md`). |
 
 Encode (from circle asset):
 
