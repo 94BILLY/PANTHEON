@@ -16,6 +16,16 @@ Centered square crop → resize → circular alpha only (no color edits, no lip 
 | `pantheon-logo-zenith-lockup.png` | Mark + **PANTHEON** wordmark (4096 canvas). |
 | `pantheon-logo-zenith-same-size-no-text.png` | Same canvas height as lockup; transparent below the circle. |
 | `pantheon-logo-zenith-*-hero.png` / `.webp` | **720px-wide** derivatives for README and web (smaller git size). |
+| `media/pantheon-logo-zenith.webm` | **VP9 + alpha** WebM for WordPress (`<video>`); 512×512, 2 s still loop from circle PNG. |
+
+Encode (from circle asset):
+
+```bash
+ffmpeg -y -framerate 1 -loop 1 -i docs/pantheon-logo-zenith-circle-only.png \
+  -vf "scale=512:512:flags=lanczos,format=rgba" -t 2 \
+  -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 -b:v 0 -crf 32 -an \
+  docs/media/pantheon-logo-zenith.webm
+```
 
 ## Regenerate
 
