@@ -6,10 +6,6 @@
 <p align="center">Path 1 engine for PlayStation 2 — Emotion Engine, VU1, DMA/VIF.</p>
 
 <p align="center">
-  <a href="https://github.com/94BILLY/PANTHEON/tags">v1.0.0-Beta</a> · PlayStation 2 · 60 FPS target · All rights reserved
-</p>
-
-<p align="center">
   <img src="docs/media/loop-boot-to-world.gif" alt="Boot sequence through Path 1 world — retail PS2 capture" width="720" />
 </p>
 
@@ -52,9 +48,7 @@ Narrative: [`FLIGHT_LOG.md`](FLIGHT_LOG.md)
 
 Logo source and generator: [`docs/pantheon-oculus-straight-on-zenith.png`](docs/pantheon-oculus-straight-on-zenith.png) · [`tools/generate_pantheon_zenith_logos.py`](tools/generate_pantheon_zenith_logos.py) · [`docs/LOGO.md`](docs/LOGO.md)
 
-Gallery (retail PS2): [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) — loops and stills under `docs/media/`.
-
-Site drafts: [`docs/pantheon-94billy.html`](docs/pantheon-94billy.html) · [`docs/pantheon-landing.html`](docs/pantheon-landing.html) · WordPress image URLs: [`docs/PANTHEON_WORDPRESS_MEDIA.md`](docs/PANTHEON_WORDPRESS_MEDIA.md)
+Gallery (Retail PS2): [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) — loops and stills under `docs/media/`.
 
 ## Scope
 
