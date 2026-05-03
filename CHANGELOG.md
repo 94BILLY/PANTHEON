@@ -20,6 +20,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 - **`docs/pantheon-landing.html`:** WordPress block from shipped **pantheon-page** template; media filled with `raw.githubusercontent.com` URLs; **`docs/still-boot-title-4586.png`** (boot title frame from capture). Release tag text aligned to **v1.0.0-beta**.
 - **BASELINE_ACCEPTANCE.md:** Removed stale `floor_hybrid_baseline.elf` / `floor_path1_strict.elf` names; single artifact **`floor.elf`** + pointer to `BETA_RELEASE.md`.
 - **Positioning:** Crunchers and asset sections are described as **reference-tree / reproducibility**, not a general game-making invitation (`README.md`, `GETTING_STARTED.md`, `docs/pantheon-landing.html`).
+- **Public hygiene:** Removed optional dev-only atmosphere NDJSON hook from `floor.c` (no machine-local paths). `GETTING_STARTED.md` audience wording neutralized; `VIEW_PANTHEON_MEDIA.html` no longer links to gitignored capture masters. **`HANDOFF.md`:** optional `git filter-repo` / BFG note for maintainers who must scrub old history blobs.
 
 ## [1.0.0-beta] - 2026-05-02
 
@@ -36,13 +37,13 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 - **Hybrid profile:** CPU GIF exported floor + Path1 **skydome**; Path1 **floor tiles disabled** by default to prevent coplanar Z-fighting with the CPU deck.
 - **Strict profile** (`PANTHEON_RENDER_PROFILE=1`): Path1 floor tiles on, CPU overlay off (VU1 validation).
 - **README:** documentation index; versioning line; sky/session expectations (see `BETA_RELEASE.md`).
-- **Release defaults:** `PANTHEON_AGENT_SKY_LOG` defaults to **0**. **`EE_EXTRA_CFLAGS`** appends tuners without clobbering `-D_EE`.
+- **Release defaults:** **`EE_EXTRA_CFLAGS`** appends `-DPANTHEON_*` tuners without clobbering `-D_EE`.
 - **Tuners:** `PANTHEON_INITIAL_WEATHER` (default overcast); docs for day-cycle and CLEAR weather via `EE_EXTRA_CFLAGS`.
 - **Docs:** `BETA_RELEASE.md` aligned with `floor.c` defaults; boot font note; `EE_EXTRA_CFLAGS` examples throughout.
 
 ### Removed
 
-- **Repo hygiene:** NotebookLM snapshot (`_notebooklm/`), editor-only rules (`.cursor/rules/` when present locally), PS2SDK-template `cube/` sample, legacy root `Makefile`, `fix_shader.py`, `obj2ps2.py`, and `scripts/export_notebooklm_snapshot.py`. Public tree is **Path 1 + docs + asset cruncher** only; use `Makefile.world` and `GETTING_STARTED.md`.
+- **Repo hygiene:** NotebookLM snapshot (`_notebooklm/`), IDE-only rules (not shipped), PS2SDK-template `cube/` sample, legacy root `Makefile`, `fix_shader.py`, `obj2ps2.py`, and `scripts/export_notebooklm_snapshot.py`. Public tree is **Path 1 + docs + asset cruncher** only; use `Makefile.world` and `GETTING_STARTED.md`.
 
 *Earlier work used tags `v1.0.0-beta.1` and `v1.0.0-beta.2`; those names are retired in favor of **`v1.0.0-beta`** as the single canonical pre-1.0 tag for this baseline.*
 

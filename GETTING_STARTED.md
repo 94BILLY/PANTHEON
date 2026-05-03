@@ -11,7 +11,7 @@ Experienced PS2 devs often stop here. Everyone else: read the full guide.
 
 **How to read this page:** Requirements → Steps 1–5 → **Build profiles** → **Asset pipeline** (only if you replace meshes) → **Understanding `shader.vsm`** → **Running on Real PS2 Hardware** → **References** → **Common issues** (last). For *what the default binary does* in one screen, open **[`BETA_RELEASE.md`](BETA_RELEASE.md)** first.
 
-**Audience:** people who are **already building PS2 ELFs** and want the same **reproducible** commands as the author. This is not a conceptual introduction to Path 1—use the **EE / VIF / VU / GS** manuals and **ps2sdk** samples for that foundation. For the big-picture story, pair this file with **HANDOFF.md** and official manuals.
+**Audience:** people who are **already building PS2 ELFs** and want the same **reproducible** commands as this repository documents. This is not a conceptual introduction to Path 1—use the **EE / VIF / VU / GS** manuals and **ps2sdk** samples for that foundation. For the big-picture story, pair this file with **HANDOFF.md** and official manuals.
 
 **Pantheon** is **Path 1** at the metal: the **EE** issues **DMA/VIF** work; **VU1** runs **`shader.vsm`** and **XGKICK**; the **GS** draws—without a software renderer doing the geometry on the main CPU.
 
@@ -252,7 +252,7 @@ counts, and near-Z cull hits to the console. Disable for release builds.
 
 ## Asset pipeline — mesh regeneration (reference tree)
 
-This documents the **Softimage → header** and **OBJ → .c** paths the **author** uses to keep `floor_data.h` / `skydome_data.h` (and related) consistent with `floor.c`. Skip if you only build against the committed headers.
+This documents the **Softimage → header** and **OBJ → .c** paths used to keep `floor_data.h` / `skydome_data.h` (and related) consistent with `floor.c`. Skip if you only build against the committed headers.
 
 ### Requirements
 
