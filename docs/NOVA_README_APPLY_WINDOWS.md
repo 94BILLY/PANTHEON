@@ -1,68 +1,74 @@
-# Apply NOVA README header patch on Windows (PowerShell)
+# Apply NOVA README header on Windows (PowerShell)
 
-PowerShell’s `curl` is **`Invoke-WebRequest`**, not real curl — it does **not** support `-sL`.
+## Why **`git am` says “Patch is empty”**
 
-## Option A — Real curl (Windows 10+)
+Usually **`curl.exe` did not download the patch**. For a **private** GitHub repo,  
+`https://raw.githubusercontent.com/94BILLY/PANTHEON/...` returns **404** without auth.  
+`curl` then saves a tiny **error page** (~**14 bytes**). `git am` on that file looks “empty”.
+
+**Check the file size (must be ~1–2 KB, not 14 bytes):**
 
 ```powershell
-cd C:\Users\marvi\NOVA
-curl.exe -sL "https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/nova-readme-header.patch" -o nova-readme-header.patch
+(Get-Item nova-readme-header.patch).Length
+```
+
+If it’s **under 100 bytes**, the download failed — do **not** run `git am` on it.
+
+---
+
+## Fastest fix: **paste the header** (no patch file)
+
+Open **`docs/NOVA_README_HEADER_SNIPPET.md`** in the Pantheon repo (or on GitHub when logged in) and follow it: replace the **first 3 lines** of NOVA’s `README.md`, then `git add` / `commit` / `push`.
+
+---
+
+## If you still want **`git am`** (good patch file)
+
+### A — Copy from a **local Pantheon clone** (best if both repos are on disk)
+
+```powershell
+copy C:\path\to\Pantheon\docs\nova-readme-header.patch C:\Users\marvi\NOVA\NOVA-repo\
+cd C:\Users\marvi\NOVA\NOVA-repo
+git am --abort
 git am nova-readme-header.patch
 git push origin main
 ```
 
-## Option B — PowerShell only
+### B — Download with **GitHub CLI** (logged in)
 
 ```powershell
-cd C:\Users\marvi\NOVA
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/nova-readme-header.patch" -OutFile "nova-readme-header.patch"
+cd C:\Users\marvi\NOVA\NOVA-repo
+gh api repos/94BILLY/PANTHEON/contents/docs/nova-readme-header.patch -H "Accept: application/vnd.github.raw" -o nova-readme-header.patch
+git am --abort
 git am nova-readme-header.patch
 git push origin main
 ```
 
-## If `git am` says **“Patch is empty”**
+### C — Browser (logged into GitHub)
 
-Git thinks there is nothing to change — often because **`git am` is stuck halfway** or **`README.md` was already edited** to match the patch.
+1. Open Pantheon on GitHub → `docs/nova-readme-header.patch`  
+2. **Raw** → Save As → `nova-readme-header.patch` into `NOVA-repo`  
+3. `git am --abort` then `git am nova-readme-header.patch`
 
-1. **Clean up any half-finished apply:**
-   ```powershell
-   cd C:\Users\marvi\NOVA\NOVA-repo
-   git am --abort
-   ```
-2. **Confirm the patch file is not zero bytes** (should be a few KB):
-   ```powershell
-   dir nova-readme-header.patch
-   ```
-3. **Re-download the patch** (overwrites the file):
-   ```powershell
-   curl.exe -sL "https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/nova-readme-header.patch" -o nova-readme-header.patch
-   ```
-4. **Check your README still has the *old* first lines** (if it already shows `<h1` and NOVA, the patch is empty on purpose — skip `git am` and just `git push` if you already committed):
-   ```powershell
-   type README.md | more
-   ```
-   Expected **before** patch: first line is `# NOVA v1.5 🌎`
+---
 
-5. **Try `git am` again:**
-   ```powershell
-   git am nova-readme-header.patch
-   ```
-
-**Still stuck?** Paste the new header into `README.md` by hand (from the patch `+` lines in [nova-readme-header.patch](https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/nova-readme-header.patch)), then:
+## Git identity (once)
 
 ```powershell
-git add README.md
-git commit -m "docs(README): minimalist header with Nova logo"
-git push origin main
+git config --global user.name "94BILLY"
+git config --global user.email "contact@94billy.com"
 ```
 
-## If `git am` fails (“patch does not apply”)
+---
 
-Your `README.md` may have diverged from the patch base. Either:
+## If `git am` is stuck
 
-1. **Apply by hand** — open the patch in a browser or editor and copy the new header into `README.md` from the `diff` section, or  
-2. **Three-way** (if you use a recent Git): `git am --3way nova-readme-header.patch`
+```powershell
+git am --abort
+```
 
-## Push rejected?
+---
 
-Use HTTPS with a **Personal Access Token** or **GitHub CLI** (`gh auth login`); Windows Credential Manager may need updating for `github.com`.
+## PowerShell note
+
+`curl` alone is **`Invoke-WebRequest`**. Use **`curl.exe`** for curl flags, or **`Invoke-WebRequest -OutFile`**.
