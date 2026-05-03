@@ -7,7 +7,7 @@
 #
 #   make -f Makefile.world
 # Optional tuners: append flags without clobbering the EE toolchain, e.g.
-#   make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_AGENT_SKY_LOG=1'
+#   make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_INITIAL_WEATHER=PANTHEON_WEATHER_CLEAR'
 EE_BIN = floor.elf
 EE_OBJS = floor.o shader.o pantheon_vram.o pantheon_texture_host.o
 
