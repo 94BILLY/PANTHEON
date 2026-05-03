@@ -8,6 +8,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 
 ### Added
 
+- **`docs/PANTHEON_MARKETING.md`** — v2 X/Reddit copy: accurate hybrid vs strict, **`v1.0.0-beta`**, tracked media paths, policy reminder; GitHub Social preview called out as manual step.
 - **`obj2ps2.py`** — Wavefront `.obj` → C for Path 1–style vertex emission (Blender / DCC route); documented in README, `GETTING_STARTED.md`, and `docs/pantheon-landing.html`.
 - **`docs/screenshot_beta1.png`** — README hero still (retail PS2 capture; same frame as `still-world-hero.png`).
 - **`docs/pantheon-94billy.html`** — dark, self-contained landing for **94billy.com/pantheon** (Criterion-style: hero, stats, CTAs, `shader.vsm` excerpt).
