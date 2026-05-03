@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/pantheon-logo-zenith-no-text-hero.png" alt="Pantheon — oculus mark (zenith source, circular crop)" width="400" />
+</p>
+
 <h1 align="center">Pantheon</h1>
 
 <p align="center"><strong>A Path 1 PlayStation 2 engine built around the Emotion Engine and VU1.</strong></p>
@@ -62,6 +66,8 @@ make -f Makefile.world
 ---
 
 ## Media & site
+
+**Logo (zenith oculus):** Web hero assets and a reproducible generator — [`tools/generate_pantheon_zenith_logos.py`](tools/generate_pantheon_zenith_logos.py) (source: [`docs/pantheon-oculus-straight-on-zenith.png`](docs/pantheon-oculus-straight-on-zenith.png)). Run with `--width 6144` (or `8192`) for a larger export.
 
 Captures from **retail PS2**. Gallery: [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html).
 
