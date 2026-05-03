@@ -54,7 +54,7 @@ Logo source and generator: [`docs/pantheon-oculus-straight-on-zenith.png`](docs/
 
 Gallery (retail PS2): [`docs/media/VIEW_PANTHEON_MEDIA.html`](docs/media/VIEW_PANTHEON_MEDIA.html) — loops and stills under `docs/media/`.
 
-Site drafts: [`docs/pantheon-94billy.html`](docs/pantheon-94billy.html) · [`docs/pantheon-landing.html`](docs/pantheon-landing.html)
+Site drafts: [`docs/pantheon-94billy.html`](docs/pantheon-94billy.html) · [`docs/pantheon-landing.html`](docs/pantheon-landing.html) · WordPress image URLs: [`docs/PANTHEON_WORDPRESS_MEDIA.md`](docs/PANTHEON_WORDPRESS_MEDIA.md)
 
 ## Scope
 
