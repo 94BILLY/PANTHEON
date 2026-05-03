@@ -129,6 +129,10 @@ This codebase is targeted at developers comfortable with:
 ---
 
 <p align="center">
+  <img src="docs/media/Pantheon%20Oculus%20Official%20Wallpaper.png" alt="Pantheon Oculus Official Wallpaper" width="100%" />
+</p>
+
+<p align="center">
   <a href="https://github.com/94BILLY/PANTHEON">github.com/94BILLY/PANTHEON</a><br />
   <strong>94BILLY</strong> · <a href="https://www.94billy.com/PANTHEON">94billy.com/PANTHEON</a>
 </p>
