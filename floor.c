@@ -606,8 +606,8 @@ static void pantheon_agent_sky_ndjson(int frame_id) {
         return;
     }
     const char *paths[] = {
-        "/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
-        "host:/home/marvin/Pantheon/.cursor/debug-22f5dd.log",
+        "/tmp/pantheon-debug.ndjson",
+        "host:/tmp/pantheon-debug.ndjson",
     };
     for (unsigned pi = 0; pi < (unsigned)(sizeof(paths) / sizeof(paths[0])); pi++) {
         FILE *f = fopen(paths[pi], "a");
