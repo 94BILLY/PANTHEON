@@ -20,21 +20,19 @@ GitHub often does not serve `raw` for **private** repos without auth. Use either
 
 Then upload that `.webm` to **WordPress → Media** as **`pantheon-logo-zenith.webm`** (or attach to a **GitHub Release** as a binary asset).
 
-**Landing page:** In `docs/pantheon-landing.html`, uncomment the **`<video>...</video>`** block under the title (or paste the same snippet from the comment into your Custom HTML block).
-
 ---
 
-The landing HTML uses **`https://94billy.com/wp-content/uploads/2026/05/`** plus these filenames. WordPress may change the month folder when you upload — if images 404, open **Media →** each file **→ Copy URL** and replace the five URLs in `docs/pantheon-landing.html` (and the hero `url()` in `docs/pantheon-94billy.html`).
+The landing HTML uses **`https://94billy.com/wp-content/uploads/2026/05/`** plus these filenames. WordPress may change the month folder when you upload — if images 404, open **Media →** each file **→ Copy URL** and replace URLs in `docs/pantheon-landing.html` (and the hero `url()` in `docs/pantheon-94billy.html`).
+
+**Section 2 (Field demonstration)** uses only **`pantheon-loop-boot-to-world.gif`** — same file as **`docs/media/loop-boot-to-world.gif`** in the repo / README hero.
 
 Upload from your Pantheon repo (same bytes, these names on disk in `docs/` or `docs/media/`):
 
 | Save as (Media Library filename) | Source in repo |
 | :--- | :--- |
-| `pantheon-logo-zenith.webm` | `docs/media/pantheon-logo-zenith.webm` (optional — VP9 + alpha; use if you add a `<video>` mark back to the header) |
-| `pantheon-logo-zenith-no-text-hero.png` | `docs/pantheon-logo-zenith-no-text-hero.png` (README / other) |
-| `pantheon-still-world-hero.png` | `docs/media/still-world-hero.png` |
-| `pantheon-still-boot-title-4586.png` | `docs/still-boot-title-4586.png` |
-| `pantheon-loop-world-orbit.gif` | `docs/media/loop-world-orbit.gif` |
+| `pantheon-loop-boot-to-world.gif` | **`docs/media/loop-boot-to-world.gif`** (Field demo + README) |
+| `pantheon-logo-zenith.webm` | `docs/media/pantheon-logo-zenith.webm` (optional) |
+| `pantheon-logo-zenith-no-text-hero.png` | `docs/pantheon-logo-zenith-no-text-hero.png` (optional) |
 | `pantheon-screenshot-beta1.png` | `docs/screenshot_beta1.png` |
 
 After upload, URLs should look like:
