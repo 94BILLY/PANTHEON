@@ -1,3 +1,16 @@
+/*
+ * pantheon_texture_host.h
+ * -----------------------
+ * Phase 2 stub — NOT compiled into floor.elf (Phase 1 baseline).
+ * Not referenced in Makefile.world.
+ *
+ * Planned: host-side GS texture upload helpers (TBP allocation,
+ * TRXPOS/TRXREG/TRXDIR packet construction, swizzled PSMCT32 upload
+ * via PATH3 DMA). Will be wired in when Phase 2 STQ work begins.
+ *
+ * Do not link against this file until Phase 2 is active.
+ */
+
 #ifndef PANTHEON_TEXTURE_HOST_H
 #define PANTHEON_TEXTURE_HOST_H
 
