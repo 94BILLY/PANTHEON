@@ -24,7 +24,9 @@ Open **`docs/NOVA_README_HEADER_SNIPPET.md`** in the Pantheon repo (or on GitHub
 
 ## If you still want **`git am`** (good patch file)
 
-### A — Copy from a **local Pantheon clone** (best if both repos are on disk)
+### A — Copy **`nova-readme-header.patch`** from your Pantheon clone (always works; no `raw` URL)
+
+The patch is committed in Pantheon at **`docs/nova-readme-header.patch`** (regenerated from the same README change).
 
 ```powershell
 copy C:\path\to\Pantheon\docs\nova-readme-header.patch C:\Users\marvi\NOVA\NOVA-repo\
@@ -33,6 +35,8 @@ git am --abort
 git am nova-readme-header.patch
 git push origin main
 ```
+
+Confirm file size after copy: **`(Get-Item nova-readme-header.patch).Length`** should be **~1.3 KB**, not 14 bytes.
 
 ### B — Download with **GitHub CLI** (logged in)
 
