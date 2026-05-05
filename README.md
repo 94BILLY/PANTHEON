@@ -24,7 +24,7 @@
 
 ## Overview
 
-Pantheon enforces a strict **Path 1 pipeline**: the Emotion Engine sequences 128-bit DMA/VIF command chains; VU1 executes `shader.vsm` (a bespoke VLIW microprogram compiled with `dvp-as`) that transforms vertices, packs GIF tags, and fires XGKICK directly to the Graphics Synthesizer. Geometry is authored in Softimage 3D, crunched offline via `hrc2ps2.py` and `obj2ps2.py`, and delivered as C arrays.
+Pantheon enforces a strict **Path 1 pipeline**: the Emotion Engine sequences 128-bit DMA/VIF command chains; VU1 executes `shader.vsm` (a bespoke VLIW microprogram compiled with `dvp-as`) that transforms vertices, packs GIF tags, and fires XGKICK directly to the Graphics Synthesizer. Geometry is authored in Softimage 3D (or optionally Blender), crunched offline via `hrc2ps2.py` and `obj2ps2.py`, and delivered as C arrays.
 
 **The EE never touches a vertex.**
 
