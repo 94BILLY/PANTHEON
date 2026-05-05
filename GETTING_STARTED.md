@@ -430,3 +430,6 @@ the two floor layers on separate render passes, or disable one.
 
 **`cannot find -ldraw`**  
 ps2sdk not installed or `PS2SDK` env var not set. See Step 2.
+
+**`cannot find -laudsrv`**  
+Same fix as `-ldraw`: a current **ps2sdk** build must include the **audsrv** library. The default `Makefile.world` links it for IOP theme playback (`LIBSD` / `AUDSRV` loaded from `floor.c`). If audio is silent on hardware or emulator, confirm IOP modules are present in your SDK tree and that PCSX2 IOP timing is not blocking `audsrv` init (see README audio note — polish ongoing).

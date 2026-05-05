@@ -26,6 +26,7 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <libpad.h>
+#include <audsrv.h>
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
@@ -37,6 +38,7 @@
 #include "pantheon_timecycle.h"
 #include "pantheon_vram.h"
 #include "pantheon_texture_host.h"
+#include "theme_wav_data.h"
 
 #ifndef PANTHEON_TEXTURE_PHASE
 #define PANTHEON_TEXTURE_PHASE 0
@@ -91,6 +93,7 @@
 static char padBuf[256] __attribute__((aligned(64)));
 
 static float player_x = 0.0f, player_y = 0.0f, player_z = 0.0f;
+static float player_vy = 0.0f; /* +Y up; negative while falling */
 static float player_yaw = 0.0f;
 static float g_cam_dist = PANTHEON_CAM_DIST; /* L1 = zoom out, R1 = zoom in */
 
@@ -210,11 +213,16 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #define PANTHEON_CAMERA_ENVELOPE_HARDEN 1
 #endif
 
-#ifndef PANTHEON_PLAYER_ABYSS_FALL_STEP
-#define PANTHEON_PLAYER_ABYSS_FALL_STEP 0.55f
-#endif
 #ifndef PANTHEON_PLAYER_ABYSS_Y_MIN
 #define PANTHEON_PLAYER_ABYSS_Y_MIN -4000.0f
+#endif
+
+/* Gravity when off the support deck (per-frame euler: vy -= accel, y += vy). Tunable. */
+#ifndef PANTHEON_GRAVITY_ACCEL
+#define PANTHEON_GRAVITY_ACCEL 0.08f
+#endif
+#ifndef PANTHEON_GRAVITY_TERMINAL
+#define PANTHEON_GRAVITY_TERMINAL 3.5f /* max downward speed magnitude (units/frame) */
 #endif
 
 #ifndef PANTHEON_VIEW_NEAR
@@ -258,8 +266,12 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TILE_SUBMIT_BUDGET
-#define PANTHEON_TILE_SUBMIT_BUDGET 25
+#define PANTHEON_TILE_SUBMIT_BUDGET 256
 #endif
+#ifndef PANTHEON_PHASE2_WEEK1_FIXED_GRID_16X16
+#define PANTHEON_PHASE2_WEEK1_FIXED_GRID_16X16 1
+#endif
+
 #ifndef PANTHEON_FLOOR_FOLLOW_TILE_SIZE
 #define PANTHEON_FLOOR_FOLLOW_TILE_SIZE 60.0f
 #endif
@@ -290,6 +302,10 @@ static int g_last_tile_submits = 0;
 static const char *g_path1_mesh_stage = "unknown";
 static float g_floor_center_x = 0.0f;
 static float g_floor_center_z = 0.0f;
+static int g_audio_ready = 0;
+static int g_audio_theme_loaded = 0;
+static int g_audio_theme_play_started = 0;
+static unsigned int g_audio_theme_data_off = 0;
 static PantheonAtmosphere g_atmosphere;
 static PantheonAtmosphere g_atmosphere_target;
 static int g_atmosphere_inited = 0;
@@ -340,6 +356,8 @@ static u8 pantheon_boot_reveal_luma(int frame_id);
 static int pantheon_boot_reveal_active(int frame_id);
 static int pantheon_path1_world_enabled(int frame_id);
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
+static void pantheon_audio_bootstrap(void);
+static void pantheon_audio_runtime_probe(void);
 
 /* 0 = no ramp/title (immediate gameplay clear).
  * 1 = luma ramp + bitmap URL/title; Path1 hands off only after TOTAL_FRAMES (no mid-boot strobing).
@@ -663,14 +681,21 @@ static void clamp_player_to_floor(void) {
 #if PANTHEON_TRIAGE_FLOOR_FOLLOW_PLAYER
     /* Treadmill mode: infinite support surface under player. */
     player_y = 0.0f;
+    player_vy = 0.0f;
     return;
 #endif
     if (player_on_support_deck()) {
         player_y = 0.0f;
+        player_vy = 0.0f;
     } else {
-        player_y -= PANTHEON_PLAYER_ABYSS_FALL_STEP;
+        player_vy -= PANTHEON_GRAVITY_ACCEL;
+        if (player_vy < -PANTHEON_GRAVITY_TERMINAL) {
+            player_vy = -PANTHEON_GRAVITY_TERMINAL;
+        }
+        player_y += player_vy;
         if (player_y < PANTHEON_PLAYER_ABYSS_Y_MIN) {
             player_y = PANTHEON_PLAYER_ABYSS_Y_MIN;
+            player_vy = 0.0f;
         }
     }
     /* Keep world position in a huge envelope to avoid far-distance precision drift. */
@@ -1403,6 +1428,121 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
     return q;
 }
 
+static void pantheon_audio_bootstrap(void) {
+    static int once = 0;
+    if (once) {
+        return;
+    }
+    once = 1;
+
+    /* Keep this non-fatal for now: Phase 2A infrastructure should never block render boot. */
+    int libsd_res = SifLoadModule("rom0:LIBSD", 0, NULL);
+    int audsrv_res = SifLoadModule("rom0:AUDSRV", 0, NULL);
+    int init_res = -1;
+    if (libsd_res >= 0 && audsrv_res >= 0) {
+        init_res = audsrv_init();
+    }
+    if (libsd_res < 0 || audsrv_res < 0 || init_res != 0) {
+        printf("pantheon audio init skipped libsd=%d audsrv=%d init=%d err=%d (%s)\n",
+               libsd_res,
+               audsrv_res,
+               init_res,
+               audsrv_get_error(),
+               audsrv_get_error_string());
+        g_audio_ready = 0;
+        return;
+    }
+
+    audsrv_fmt_t fmt;
+    fmt.freq = 48000;
+    fmt.bits = 16;
+    fmt.channels = 2;
+    if (audsrv_set_format(&fmt) != 0) {
+        printf("pantheon audio format failed err=%d (%s)\n",
+               audsrv_get_error(),
+               audsrv_get_error_string());
+        g_audio_ready = 0;
+        return;
+    }
+
+    audsrv_set_volume(MAX_VOLUME);
+    /* Validate embedded WAV and cache data payload offset for runtime streaming. */
+    if (theme_wav_len < 44 || memcmp(theme_wav_data, "RIFF", 4) != 0 || memcmp(theme_wav_data + 8, "WAVE", 4) != 0) {
+        printf("pantheon audio theme wav invalid bytes=%u\n", theme_wav_len);
+        g_audio_ready = 0;
+        g_audio_theme_loaded = 0;
+        return;
+    }
+
+    unsigned int off = 12;
+    unsigned int data_off = 0;
+    unsigned int data_size = 0;
+    while (off + 8 <= theme_wav_len) {
+        unsigned int csize = (unsigned int)theme_wav_data[off + 4] |
+                             ((unsigned int)theme_wav_data[off + 5] << 8) |
+                             ((unsigned int)theme_wav_data[off + 6] << 16) |
+                             ((unsigned int)theme_wav_data[off + 7] << 24);
+        if (off + 8 + csize > theme_wav_len) {
+            break;
+        }
+        if (memcmp(theme_wav_data + off, "data", 4) == 0) {
+            data_off = off + 8;
+            data_size = csize;
+            break;
+        }
+        off += 8 + csize + (csize & 1u);
+    }
+
+    if (data_off == 0 || data_size == 0) {
+        printf("pantheon audio theme wav missing data chunk\n");
+        g_audio_ready = 0;
+        g_audio_theme_loaded = 0;
+        return;
+    }
+
+    g_audio_theme_data_off = data_off;
+    g_audio_theme_loaded = 1;
+    g_audio_ready = 1;
+    printf("pantheon audio ready (audsrv + SPU2), theme_intro.wav loaded bytes=%u\n", theme_wav_len);
+}
+
+static void pantheon_audio_runtime_probe(void) {
+    if (!g_audio_ready || !g_audio_theme_loaded) {
+        return;
+    }
+
+    const unsigned int chunk_bytes = 4096;
+    const unsigned int data_end = theme_wav_len;
+
+    if (!g_audio_theme_play_started) {
+        int avail = audsrv_available();
+        if (avail <= 0) {
+            return;
+        }
+        g_audio_theme_play_started = 1;
+    }
+
+    int avail = audsrv_available();
+    while (avail >= (int)chunk_bytes && g_audio_theme_data_off < data_end) {
+        unsigned int remain = data_end - g_audio_theme_data_off;
+        unsigned int send = (remain > chunk_bytes) ? chunk_bytes : remain;
+        int wrote = audsrv_play_audio((const char *)(theme_wav_data + g_audio_theme_data_off), (int)send);
+        if (wrote < 0) {
+            printf("pantheon audio wav stream failed err=%d (%s)\n",
+                   audsrv_get_error(),
+                   audsrv_get_error_string());
+            return;
+        }
+        g_audio_theme_data_off += (unsigned int)wrote;
+        avail = audsrv_available();
+    }
+
+    if (g_audio_theme_data_off >= data_end) {
+        /* Loop from PCM payload start for continuous theme playback. */
+        g_audio_theme_data_off = 44;
+    }
+}
+
 qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z, int frame_id) {
     u8 clear_r = g_atmosphere.sky_horizon.r;
     u8 clear_g = g_atmosphere.sky_horizon.g;
@@ -1598,6 +1738,7 @@ int main(int argc, char *argv[]) {
     padInit(0);
     int pad_open_res = padPortOpen(0, 0, padBuf);
     pad_port_open_ok = (pad_open_res != 0);
+    pantheon_audio_bootstrap();
 
     framebuffer_t frame[2];
     zbuffer_t z;
@@ -1707,6 +1848,7 @@ int main(int argc, char *argv[]) {
         static int dbg_frame = 0;
         dbg_frame++;
         update_atmosphere(dbg_frame);
+        pantheon_audio_runtime_probe();
         packet_reset(packets[context]);
         qword_t *q = packets[context]->data;
         int boot_reveal = pantheon_boot_reveal_active(dbg_frame);
@@ -1730,15 +1872,7 @@ int main(int argc, char *argv[]) {
 #endif
 
         try_finish_pad_init();
-        /* Ground invariant: keep Y anchored on the deck before input integration. */
-        if (player_on_support_deck()) {
-            player_y = 0.0f;
-        }
         read_pad_analog();
-        /* Ground invariant: while supported by the floor deck, lock vertical position. */
-        if (player_on_support_deck()) {
-            player_y = 0.0f;
-        }
 #if !PANTHEON_TRIAGE_STATIC_CAMERA
         update_camera_orbit();
 #else
@@ -1853,9 +1987,33 @@ int main(int argc, char *argv[]) {
                     tile_submits = 1;
                 }
 #else
-                int tile_radius = PANTHEON_TILE_RADIUS;
                 int tile_budget = PANTHEON_TILE_SUBMIT_BUDGET;
                 if (floor_tile_span_x > 0.0f && floor_tile_span_z > 0.0f) {
+#if PANTHEON_PHASE2_WEEK1_FIXED_GRID_16X16
+                    /* Phase 2A milestone: fixed 16x16 Path1 tile block using Softimage floor patch as unit cell. */
+                    for (int tz = 0; tz < 16; tz++) {
+                        for (int tx = 0; tx < 16; tx++) {
+                            if (tile_submits >= tile_budget) {
+                                break;
+                            }
+                            packet_t *vif_pkt = path1_vif_packet_begin();
+                            q = vif_pkt->data;
+                            float tile_off_x = ((float)tx - 7.5f) * floor_tile_span_x;
+                            float tile_off_z = ((float)tz - 7.5f) * floor_tile_span_z;
+                            g_floor_center_x = tile_off_x;
+                            g_floor_center_z = tile_off_z;
+                            build_floor_tile(tile_off_x, tile_off_z);
+                            g_path1_mesh_stage = "floor_tile_16x16";
+                            q = render_path1_tris(q, mvp, floor_tile_tris, path1_vert_count, path1_vert_count);
+                            q = add_dma_tag(q, 0, 7, 0, 0, 0);
+                            FlushCache(0);
+                            path1_vif_packet_submit(vif_pkt, q, dbg_frame, "floor_tile_16x16");
+                            tile_submits++;
+                        }
+                        if (tile_submits >= tile_budget) break;
+                    }
+#else
+                    int tile_radius = PANTHEON_TILE_RADIUS;
                     int player_tile_x = (int)floorf(player_x / floor_tile_span_x);
                     int player_tile_z = (int)floorf(player_z / floor_tile_span_z);
                     for (int tz = -tile_radius; tz <= tile_radius; tz++) {
@@ -1879,6 +2037,7 @@ int main(int argc, char *argv[]) {
                         }
                         if (tile_submits >= tile_budget) break;
                     }
+#endif
                 } else {
                     packet_t *vif_pkt = path1_vif_packet_begin();
                     q = vif_pkt->data;

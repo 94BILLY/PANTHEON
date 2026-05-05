@@ -8,6 +8,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 
 ### Added
 
+- **IOP audio path (beta):** `floor.c` loads **`LIBSD`** / **`AUDSRV`**, links **`-laudsrv`**, parses embedded **theme** WAV (`theme_wav_data.h` from `theme_intro.wav`), with **`theme.ads`** / **`theme_ads_data.h`** as ADPCM-style companion data. Reference WAV duplicated at repo root and **`docs/media/theme_intro.wav`**.
 - **`docs/PANTHEON_MARKETING.md`** — v2 X/Reddit copy: accurate hybrid vs strict, **`v1.0.0-beta`**, tracked media paths, policy reminder; GitHub Social preview called out as manual step.
 - **`obj2ps2.py`** — Wavefront `.obj` → C for Path 1–style vertex emission (Blender / DCC route); documented in README, `GETTING_STARTED.md`, and `docs/pantheon-landing.html`.
 - **`docs/screenshot_beta1.png`** — README hero still (retail PS2 capture; same frame as `still-world-hero.png`).
@@ -15,6 +16,9 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 
 ### Changed
 
+- **`Makefile.world`:** `EE_LIBS` includes **`-laudsrv`** for `audsrv` linkage.
+- **README:** Phase 1 baseline bullets expanded (tiled floor / hybrid deck, audio beta, reference WAV); roadmap **Phase 2** calls out audio + texturing; **Repository policy** states sole maintainer **94BILLY** and GitHub collaborator hygiene; core file table lists theme assets.
+- **`GETTING_STARTED.md`:** **Common issues** entry for **`cannot find -laudsrv`**.
 - **Docs tone:** README, `GETTING_STARTED.md` (opening), `BETA_RELEASE.md` (opening), and `docs/pantheon-landing.html` reframed as **public record / showcase** for readers who already understand Path 1—explicit boundaries (no license, no contributions); reproducibility without “starter kit” positioning.
 - **README:** Centered hero (title, tagline, flat-square badges, captioned hero still); section rules; overview blockquote; `bash` quickstart; tables for baseline, media, docs, roadmap; maintainer metadata in `<details>`; aligned with **v1.0.0-Beta** / landing tagline. **Repository policy** as blockquote + centered footer table.
 - **GETTING_STARTED.md:** **TL;DR** at top; **Common issues** moved to end (after **References**).

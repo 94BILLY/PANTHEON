@@ -15,7 +15,7 @@ EE_OBJS = floor.o shader.o pantheon_vram.o pantheon_texture_host.o
 PANTHEON_TEXTURE_PHASE ?= 0
 
 # Libraries - IMPORTANT: -lpad is added here
-EE_LIBS = -ldraw -lgraph -lmath3d -lpacket -ldma -lkernel -lpad -lm
+EE_LIBS = -ldraw -lgraph -lmath3d -lpacket -ldma -lkernel -lpad -laudsrv -lm
 
 EE_CC = ee-gcc
 EE_AS = dvp-as
