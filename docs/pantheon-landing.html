@@ -1,54 +1,59 @@
 <!--
   Pantheon — 94billy.com (WordPress Custom HTML block)
-  Paste only the <div class="pantheon-landing">…</div> below (omit this comment).
-  Header: title + tagline only. One GIF in Field demo — live site uses <code>PS2DEMO.gif</code> on 94billy.com Media (see <code>src</code> below). Repo README still uses <code>docs/media/loop-boot-to-world.gif</code>.
-  Upload checklist: docs/PANTHEON_WORDPRESS_MEDIA.md
+  Paste: <!-- wp:html --> … <!-- /wp:html --> wrapping the <div class="pantheon-landing">…</div> below (omit this comment).
+  Live GIF: PS2DEMO.gif on 94billy.com Media. Upload checklist: docs/PANTHEON_WORDPRESS_MEDIA.md
 -->
-<div class="pantheon-landing" style="font-family: 'Times New Roman', Times, serif; max-width: 850px; margin: 0 auto; color: #000; line-height: 1.5; padding: 5px 20px 20px 20px;">
+<div class="pantheon-landing" style="font-family: 'Times New Roman', Times, serif; max-width: 850px; margin: 0 auto; color: #000; line-height: 1.5; padding: 5px 15px 20px 15px;">
 
     <div style="border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align: center;">
-        <h1 style="font-size: 3.8rem; margin: 0; font-weight: bold; line-height: 1; letter-spacing: -1px;">PANTHEON</h1>
-        <p style="font-size: 1.05rem; margin-top: 12px; font-style: normal; opacity: 0.85; font-weight: normal;">A Path 1 game engine for the Sony® PlayStation 2.</p>
+        <div style="margin-bottom: 10px;">
+            <img src="http://94billy.com/wp-content/uploads/2026/05/PANTHEON.png" alt="Pantheon Logo" style="width: 100%; max-width: 120px; height: auto;" />
+        </div>
+        <h1 style="font-size: clamp(2rem, 8vw, 3.8rem); margin: 0; font-weight: bold; line-height: 1; letter-spacing: -1px;">PANTHEON</h1>
+        <p style="font-size: clamp(0.85rem, 3vw, 1.05rem); margin-top: 12px; font-style: normal; opacity: 0.85; font-weight: normal;">Unified Path 1 game engine for PlayStation 2. VU1-native. Locked 60 FPS.</p>
     </div>
 
-    <div style="color: #000; padding: 12px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 1.2rem;">
+    <div style="color: #000; padding: 12px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: clamp(0.9rem, 2.5vw, 1.2rem);">
         v1.0.0-Beta
     </div>
 
+    <p style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); margin: -25px 0 28px 0; text-align: center; font-style: italic; opacity: 0.88; line-height: 1.45;"><strong>In progress:</strong> final polish on IOP theme audio — <code>LIBSD</code> / <code>AUDSRV</code>, <strong>audsrv</strong> playback, embedded <code>theme_wav_data.h</code> (reference <a href="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/theme_intro.wav" target="_blank" rel="noopener" style="color: #000;">theme_intro.wav</a> on GitHub). Tuning volume, chunk cadence, hardware vs PCSX2 parity.</p>
+
     <section style="margin-bottom: 35px; text-align: justify;">
-        <p style="font-size: 1.1rem; margin-bottom: 15px;">Pantheon is a bare-metal Path 1 PlayStation 2 engine built from scratch in C and VU1 vector assembly — utilizing the same pipeline architecture that powered the most technically demanding titles of the PlayStation 2 era. Engineered for zero abstraction, Pantheon eliminates every software layer between the developer and the silicon, delegating all geometric transformation and rasterization authority directly to Vector Unit 1.</p>
-        <p style="font-size: 1.1rem; margin: 0;">Born on March 23rd, 2026, Pantheon enforces a strict manager–worker execution contract: the Emotion Engine sequences 128-bit DMA command chains while VU1 executes a bespoke VLIW microprogram — <strong>shader.vsm</strong> — that transforms vertices, builds GIF packets, and fires <strong>XGKICK</strong> directly to the Graphics Synthesizer. Geometry originates in <strong>Softimage 3D</strong>, the same production tool used by Kojima Productions and Rockstar North. The EE never touches a vertex.</p>
+        <p style="font-size: clamp(0.95rem, 2.5vw, 1.1rem); margin-bottom: 15px;"><strong>Pantheon</strong> is a deterministic <strong>Path 1</strong> rendering framework for PlayStation 2, built from scratch in <strong>C</strong> and <strong>VU1 vector assembly</strong>. It enforces a strict <strong>manager–worker execution contract</strong>: the <strong>Emotion Engine</strong> sequences <strong>128-bit DMA command chains</strong> while <strong>VU1</strong> executes a bespoke <strong>VLIW microprogram</strong> — <strong>shader.vsm</strong> — that transforms all vertices, builds GIF packets, and fires <strong>XGKICK</strong> directly to the <strong>Graphics Synthesizer</strong>. Maximum silicon throughput. Zero abstraction.</p>
+        <p style="font-size: clamp(0.95rem, 2.5vw, 1.1rem); margin: 0;">Born on March 23rd, 2026, Pantheon achieves locked 60 FPS through integrated precision engineering: geometry is authored in <strong>Softimage 3D</strong>, crunched offline via <strong>hrc2ps2.py</strong>, and delivered as C arrays. The <strong>Emotion Engine</strong> never touches a vertex. Compile-time memory contracts enforce correctness. VU1 owns all transformation authority. This is the same architecture that powered the most technically demanding PlayStation 2 titles.</p>
     </section>
 
     <section style="margin-bottom: 35px;">
-        <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">1. Phase 1 Baseline — v1.0.0-Beta</h3>
-        <ul style="list-style-type: disc; padding-left: 25px; font-size: 1.1rem; margin: 0;">
-            <li style="margin-bottom: 10px;"><strong>60 FPS Locked:</strong> Sustained asynchronous rendering in a pure Path 1 environment. Verified on PCSX2 2.7.x and real PS2 hardware.</li>
-            <li style="margin-bottom: 10px;"><strong>VU1 Skydome:</strong> Hemisphere geometry authored in Softimage 3D, crunched through the offline pipeline, rendered entirely by VU1 microcode via XGKICK.</li>
+        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">1. Phase 1 Baseline — v1.0.0-Beta</h3>
+        <ul style="list-style-type: disc; padding-left: 25px; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin: 0;">
+            <li style="margin-bottom: 10px;"><strong>Locked 60 FPS:</strong> Deterministic asynchronous rendering in pure Path 1. Verified on PCSX2 2.7.x and real PS2 hardware.</li>
+            <li style="margin-bottom: 10px;"><strong>VU1 Skydome:</strong> Hemisphere geometry authored in Softimage 3D, crunched through offline pipeline, rendered entirely by VU1 microcode via XGKICK.</li>
             <li style="margin-bottom: 10px;"><strong>San Andreas-Style Timecycle:</strong> Four weather presets across eight time slots with per-channel linear RGB interpolation. 24-minute game day cycle.</li>
             <li style="margin-bottom: 10px;"><strong>GTA-Style Orbital Camera:</strong> Spherical camera telemetry with analog deadzone, pitch/yaw smoothing, and dynamic zoom.</li>
+            <li style="margin-bottom: 10px;"><strong>DualShock 2 Input:</strong> Left stick move, right stick orbit, L1/R1 zoom — analog capture with edge detection.</li>
+            <li style="margin-bottom: 10px;"><strong>Walkable Floor (Hybrid Profile):</strong> Tiled Path 1 mesh plus CPU GIF deck where enabled to avoid coplanar Z-fight; strict Path 1 build puts the full floor on VU1 for validation.</li>
+            <li style="margin-bottom: 10px;"><strong>IOP Theme Audio (Beta):</strong> Loads <code>LIBSD</code> / <code>AUDSRV</code>, links <strong>audsrv</strong>, embedded intro PCM in <code>theme_wav_data.h</code> with companion <code>theme.ads</code> / ADS headers. See polish note above.</li>
             <li style="margin-bottom: 10px;"><strong>Compile-Time Memory Contract:</strong> Shared EE/VU1 address layout enforced by <strong>pantheon_path1_contract.h</strong>. Misalignment is a build error, not a runtime failure.</li>
             <li style="margin-bottom: 10px;"><strong>Strategic VRAM Allocator:</strong> Linear word-bump allocator over 4 MB GS local memory. Zero-overlap layout audited via boot-time telemetry.</li>
-            <li style="margin-bottom: 10px;"><strong>94BILLY STUDIOS Boot Sequence:</strong> Luma ramp with bitmap title. Path 1 world deferred until reveal completes.</li>
+            <li style="margin-bottom: 10px;"><strong>94BILLY Boot Sequence:</strong> Luma ramp with bitmap title. Path 1 world deferred until reveal completes.</li>
         </ul>
     </section>
 
     <section style="margin-bottom: 35px;">
-        <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">2. Field Demonstration: v1.0.0-Beta</h3>
-
+        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">2. Field Demonstration: v1.0.0-Beta</h3>
         <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0px #ccc;">
             <img style="width: 100%; max-width: 800px; height: auto; display: block; margin: 0 auto;" src="https://94billy.com/wp-content/uploads/2026/05/PS2DEMO.gif" alt="Pantheon — Path 1 demo (retail PS2 capture)" />
         </div>
-        <p style="font-size: 0.9rem; margin-top: 10px; font-style: italic; text-align: center;">Field demo — boot through Path 1 world.</p>
+        <p style="font-size: 0.9rem; margin-top: 10px; font-style: italic; text-align: center;">Retail PS2 capture — 60 FPS locked. Boot title through Path 1 skydome and walkable floor.</p>
     </section>
 
-    <section style="margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 25px 0;">
-        <h3 style="margin-top: 0; font-size: 1.25rem; font-weight: bold; text-transform: uppercase;">3. The VU1 Microprogram</h3>
-        <p style="font-size: 1.1rem; margin-bottom: 20px;">Pantheon's <strong>shader.vsm</strong> is compiled with <strong>dvp-as</strong> and linked directly into the ELF binary as a standard object. The entry point <strong>PantheonShader</strong> resolves to a non-zero address at link time. The memory contract it executes against is defined in <strong>pantheon_path1_contract.h</strong> and verified at compile time:</p>
-
+    <section style="margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 15px 0;">
+        <h3 style="margin-top: 0; font-size: clamp(1rem, 3vw, 1.25rem); font-weight: bold; text-transform: uppercase;">3. Path 1 Pipeline — EE → VIF1 → VU1 → GS</h3>
+        <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 20px;">Pantheon's <strong>shader.vsm</strong> is compiled with <strong>dvp-as</strong> and linked directly into the ELF binary as a standard object. The entry point <strong>PantheonShader</strong> resolves to a non-zero address at link time. The memory contract it executes against is defined in <strong>pantheon_path1_contract.h</strong> and verified at compile time:</p>
         <div style="margin-bottom: 10px;">
-            <p style="font-size: 1rem; margin-bottom: 5px; font-weight: bold; color: #555;">PIPELINE: EE → VIF1 → VU1 → XGKICK → GS</p>
-            <div style="padding: 10px 0 10px 15px; border-left: 2px solid #000; font-family: monospace; font-size: 0.85rem; word-break: break-all; background: #f9f9f9;">
+            <p style="font-size: clamp(0.85rem, 2vw, 1rem); margin-bottom: 5px; font-weight: bold; color: #555;">PIPELINE: EE → VIF1 → VU1 → XGKICK → GS</p>
+            <div style="padding: 10px 0 10px 15px; border-left: 2px solid #000; font-family: monospace; font-size: clamp(0.75rem, 2vw, 0.85rem); word-break: break-all; background: #f9f9f9; overflow-x: auto;">
                 <strong>MPG:</strong> Upload shader.vsm to VU1 instruction memory<br>
                 <strong>UNPACK:</strong> Burst MVP matrix + vertex stream into VU1 data memory<br>
                 <strong>MSCAL:</strong> Execute PantheonShader — transform, perspective divide, pack GIF tags<br>
@@ -59,25 +64,31 @@
     </section>
 
     <section style="margin-bottom: 35px;">
-        <h3 style="font-size: 1.25rem; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">4. Build Sequence</h3>
-        <p style="font-size: 1.1rem; margin-bottom: 10px;"><strong>Requirements:</strong> ps2sdk · ee-gcc 15.2.0 · dvp-as · PCSX2 2.7.x · Python 3.x</p>
-        <p style="font-size: 1.1rem; margin-bottom: 10px;"><strong>Option A — Default Hybrid Build (Recommended):</strong></p>
-        <ol style="padding-left: 25px; font-size: 1.1rem; margin-bottom: 20px;">
+        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">4. Installation </h3>
+        <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 10px;"><strong>Requirements:</strong> ps2sdk (with <strong>audsrv</strong>) · ee-gcc 15.x · dvp-as · PCSX2 2.7.x · Python 3.x</p>
+        <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 10px;"><strong>Option A — Default Hybrid Build (Recommended):</strong></p>
+        <ol style="padding-left: 25px; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 20px;">
             <li style="margin-bottom: 10px;"><strong>Clone:</strong> <code>git clone https://github.com/94BILLY/PANTHEON.git</code></li>
-            <li style="margin-bottom: 10px;"><strong>Build:</strong> <code>make -f Makefile.world</code></li>
+            <li style="margin-bottom: 10px;"><strong>Build:</strong> <code>make -f Makefile.world</code> (links <code>-laudsrv</code> for theme audio)</li>
             <li style="margin-bottom: 10px;"><strong>Deploy:</strong> Open <strong>floor.elf</strong> in PCSX2 2.7.x or copy to PS2 hardware via OPL.</li>
         </ol>
-        <p style="font-size: 1.1rem; margin-bottom: 10px;"><strong>Option B — Strict Path 1 Validation:</strong></p>
-        <ol style="padding-left: 25px; font-size: 1.1rem; margin: 0;">
-            <li style="margin-bottom: 10px;"><strong>Build:</strong> <code>make -f Makefile.world EE_CFLAGS='-DPANTHEON_RENDER_PROFILE=1'</code></li>
+        <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 10px;"><strong>Option B — Strict Path 1 Validation:</strong></p>
+        <ol style="padding-left: 25px; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin: 0;">
+            <li style="margin-bottom: 10px;"><strong>Build:</strong> <code>make -f Makefile.world EE_EXTRA_CFLAGS='-DPANTHEON_RENDER_PROFILE=1'</code></li>
             <li style="margin-bottom: 10px;"><strong>Result:</strong> VU1 renders all geometry. CPU GIF overlay disabled. Pure Path 1 pipeline validation.</li>
         </ol>
     </section>
 
-    <div style="text-align: center; border-top: 2px solid #000; padding-top: 15px; margin-top: 0;">
-        <a style="color: #000; font-weight: bold; font-size: 1.8rem; text-decoration: underline;" href="https://github.com/94BILLY/PANTHEON" target="_blank" rel="noopener">View on GitHub</a>
-        <p style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px;">&ldquo;Imagination unleashed.&rdquo;</p>
-        <p style="margin-top: 5px; font-size: 0.85rem; opacity: 0.6;">Engineered by 94BILLY</p>
+    <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 15px 0; margin-bottom: 25px; text-align: center;">
+        <a href="https://github.com/94BILLY/PANTHEON" target="_blank" rel="noopener">
+            <img style="width: 100%; max-width: 800px; height: auto; border: 1px solid #000; display: block; margin: 0 auto;" src="https://raw.githubusercontent.com/94BILLY/PANTHEON/main/docs/media/Pantheon%20Oculus%20Official%20Wallpaper.png" alt="Pantheon Oculus Official Wallpaper" />
+        </a>
+    </div>
+
+    <div style="text-align: center; padding-top: 25px; margin-top: 0;">
+        <a style="color: #000; font-weight: bold; font-size: clamp(1.2rem, 4vw, 1.8rem); text-decoration: underline;" href="https://github.com/94BILLY/PANTHEON" target="_blank" rel="noopener">View on GitHub</a>
+        <p style="margin-top: 15px; font-size: clamp(0.95rem, 3vw, 1.2rem); font-weight: bold; letter-spacing: 1px;">&ldquo;Imagination unleashed.&rdquo;</p>
+        <p style="margin-top: 5px; font-size: clamp(0.75rem, 2vw, 0.85rem); opacity: 0.6;">Engineered by 94BILLY</p>
     </div>
 
 </div>

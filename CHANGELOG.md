@@ -9,6 +9,7 @@ Pre-release tags use **`vMAJOR.MINOR.PATCH-beta`** (e.g. **`v1.0.0-beta`**, then
 ### Added
 
 - **IOP audio path (beta):** `floor.c` loads **`LIBSD`** / **`AUDSRV`**, links **`-laudsrv`**, parses embedded **theme** WAV (`theme_wav_data.h` from `theme_intro.wav`), with **`theme.ads`** / **`theme_ads_data.h`** as ADPCM-style companion data. Reference WAV duplicated at repo root and **`docs/media/theme_intro.wav`**.
+- **`docs/pantheon-landing.html`** — WordPress Custom HTML aligned with live 94billy.com block: logo, responsive type, Path 1 pipeline section title, wallpaper strip; **Phase 1** bullets for DualShock, hybrid walkable floor, IOP **audsrv** theme audio (beta); **in progress** audio polish callout; install notes for **audsrv** / `-laudsrv`; strict build uses **`EE_EXTRA_CFLAGS`**.
 - **`docs/PANTHEON_MARKETING.md`** — v2 X/Reddit copy: accurate hybrid vs strict, **`v1.0.0-beta`**, tracked media paths, policy reminder; GitHub Social preview called out as manual step.
 - **`obj2ps2.py`** — Wavefront `.obj` → C for Path 1–style vertex emission (Blender / DCC route); documented in README, `GETTING_STARTED.md`, and `docs/pantheon-landing.html`.
 - **`docs/screenshot_beta1.png`** — README hero still (retail PS2 capture; same frame as `still-world-hero.png`).
