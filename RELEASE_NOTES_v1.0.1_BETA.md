@@ -44,7 +44,7 @@ This release introduces **world scaling infrastructure** and **production-ready 
 
 **v1.0.1-Beta Floor Expansion (Dynamic treadmill in action)**
 
-https://94billy.com/wp-content/uploads/2026/05/pantheon-v1.0.1-beta-floor-expansion.mp4
+http://94billy.com/wp-content/uploads/2026/05/Pantheon-Demo-002-PCSX2.mp4
 
 31×31 dynamic treadmill demonstrating seamless world expansion, zero-pop boot sequence, and locked 60 FPS stability across floor tile transitions.
 
