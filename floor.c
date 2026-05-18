@@ -261,15 +261,16 @@ extern u32 PantheonShaderEnd __attribute__((section(".vutext")));
 #endif
 
 #ifndef PANTHEON_TILE_RADIUS
-/* Tiles in ±radius around player (e.g. 2 => 5×5 SoftImage floor patches). */
-#define PANTHEON_TILE_RADIUS 2
+/* Tiles in ±radius around player (e.g. 15 => 31×31 floor grid). */
+#define PANTHEON_TILE_RADIUS 15
 #endif
 
 #ifndef PANTHEON_TILE_SUBMIT_BUDGET
-#define PANTHEON_TILE_SUBMIT_BUDGET 256
+/* Must be >= (2·TILE_RADIUS+1)^2 for complete ring. Formula: radius 15 = 961. */
+#define PANTHEON_TILE_SUBMIT_BUDGET 961
 #endif
 #ifndef PANTHEON_PHASE2_WEEK1_FIXED_GRID_16X16
-#define PANTHEON_PHASE2_WEEK1_FIXED_GRID_16X16 1
+#define PANTHEON_PHASE2_WEEK1_FIXED_GRID_16X16 0
 #endif
 
 #ifndef PANTHEON_FLOOR_FOLLOW_TILE_SIZE
@@ -1859,7 +1860,7 @@ int main(int argc, char *argv[]) {
             {PANTHEON_RENDER_JOB_PATH1_SKY,
              (RENDER_STAGE >= 2) && path1_world && PANTHEON_TRIAGE_ENABLE_SKYDOME && !PANTHEON_TRIAGE_DISABLE_SKY_PASS},
             {PANTHEON_RENDER_JOB_PATH1_FLOOR,
-             (RENDER_STAGE >= 2) && path1_world && PANTHEON_PATH1_FLOOR_TILES}
+             (RENDER_STAGE >= 2) && PANTHEON_PATH1_FLOOR_TILES}
         };
 
 #if PANTHEON_MIN_TELEMETRY
