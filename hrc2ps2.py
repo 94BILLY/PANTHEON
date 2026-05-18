@@ -419,6 +419,53 @@ def compute_color(vertices, idx, color_mode, bounds, asset_prefix):
     return r, g, b, 128.0
 
 
+def slice_mesh_for_vu1(vertices, indices, uvs, max_verts=72):
+    """Partition mesh into VU1-safe batches (≤72 verts per batch, respects 16KB data memory)."""
+    if len(vertices) <= max_verts:
+        return [{"vertices": vertices, "indices": indices, "uvs": uvs,
+                 "vert_map": {i: i for i in range(len(vertices))}}]
+
+    batches = []
+    used = [False] * len(vertices)
+    tri_assigned = {}
+
+    while not all(used):
+        vert_map, batch_v, batch_i, batch_uv = {}, [], [], []
+        frontier = {next(i for i, u in enumerate(used) if not u)}
+
+        while frontier and len(batch_v) < max_verts:
+            nxt = set()
+            for ti, (a, b, c) in enumerate(indices):
+                if ti in tri_assigned:
+                    continue
+                if not (a in frontier or b in frontier or c in frontier):
+                    continue
+                new_verts_needed = sum(1 for v in (a, b, c) if v not in vert_map)
+                if len(batch_v) + new_verts_needed > max_verts:
+                    continue
+
+                local = []
+                for v in (a, b, c):
+                    if v not in vert_map:
+                        vert_map[v] = len(batch_v)
+                        batch_v.append(vertices[v])
+                        batch_uv.append(uvs[v] if uvs and v * 3 < len(uvs) else [0.0, 0.0])
+                        used[v] = True
+                    local.append(vert_map[v])
+                    nxt.add(v)
+
+                batch_i.append(tuple(local))
+                tri_assigned[ti] = len(batches)
+
+            frontier = nxt
+
+        if batch_v:
+            batches.append({"vertices": batch_v, "indices": batch_i,
+                            "uvs": batch_uv, "vert_map": vert_map})
+
+    return batches
+
+
 def write_header(input_file, output_file, prefix, vertices, indices, uvs, color_mode):
     guard = f"{prefix.upper()}_DATA_H"
     min_x = min(v[0] for v in vertices)
@@ -542,6 +589,11 @@ def parse_args():
         default=0x035A,
         help="Binary scrape offset fallback (default: 0x035A).",
     )
+    parser.add_argument(
+        "--slice",
+        action="store_true",
+        help="Slice mesh into VU1-safe batches (≤72 verts). Emits _batch0, _batch1... arrays.",
+    )
     return parser.parse_args()
 
 
@@ -581,7 +633,20 @@ def main():
                 f"strategy={strategy_id}"
             )
             return 0
-        write_header(input_file, output_file, prefix, vertices, indices, uvs, args.color_mode)
+
+        if args.slice:
+            batches = slice_mesh_for_vu1(vertices, indices, uvs)
+            base_output = os.path.splitext(output_file)[0]
+            for bi, batch in enumerate(batches):
+                batch_output = f"{base_output}_batch{bi}.h"
+                batch_prefix = f"{prefix}_batch{bi}"
+                write_header(
+                    input_file, batch_output, batch_prefix,
+                    batch["vertices"], batch["indices"], batch["uvs"], args.color_mode
+                )
+            print(f"Sliced into {len(batches)} batch(es)")
+        else:
+            write_header(input_file, output_file, prefix, vertices, indices, uvs, args.color_mode)
     except ValueError as parse_error:
         print(f"ERROR: {parse_error}")
         return 1
