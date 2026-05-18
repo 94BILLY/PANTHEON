@@ -22,6 +22,15 @@
 
 <p align="center"><sub>Boot → world · Loop from retail PS2 capture</sub></p>
 
+<p align="center">
+  <video width="720" controls>
+    <source src="http://94billy.com/wp-content/uploads/2026/05/Pantheon-Demo-002-PCSX2.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+<p align="center"><sub>v1.0.1-Beta progression — 31×31 dynamic treadmill floor expansion with zero-pop boot sequence and locked 60 FPS</sub></p>
+
 ---
 
 ## Overview
