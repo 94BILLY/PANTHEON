@@ -357,8 +357,10 @@ static u8 pantheon_boot_reveal_luma(int frame_id);
 static int pantheon_boot_reveal_active(int frame_id);
 static int pantheon_path1_world_enabled(int frame_id);
 static qword_t *render_boot_title_overlay(qword_t *q, int frame_id);
+#ifdef PANTHEON_HARDWARE_TARGET
 static void pantheon_audio_bootstrap(void);
 static void pantheon_audio_runtime_probe(void);
+#endif
 
 /* 0 = no ramp/title (immediate gameplay clear).
  * 1 = luma ramp + bitmap URL/title; Path1 hands off only after TOTAL_FRAMES (no mid-boot strobing).
@@ -1429,6 +1431,7 @@ static qword_t *render_boot_title_overlay(qword_t *q, int frame_id) {
     return q;
 }
 
+#ifdef PANTHEON_HARDWARE_TARGET
 static void pantheon_audio_bootstrap(void) {
     static int once = 0;
     if (once) {
@@ -1506,7 +1509,9 @@ static void pantheon_audio_bootstrap(void) {
     g_audio_ready = 1;
     printf("pantheon audio ready (audsrv + SPU2), theme_intro.wav loaded bytes=%u\n", theme_wav_len);
 }
+#endif
 
+#ifdef PANTHEON_HARDWARE_TARGET
 static void pantheon_audio_runtime_probe(void) {
     if (!g_audio_ready || !g_audio_theme_loaded) {
         return;
@@ -1543,6 +1548,7 @@ static void pantheon_audio_runtime_probe(void) {
         g_audio_theme_data_off = 44;
     }
 }
+#endif
 
 qword_t *render_clear_and_setup(qword_t *q, int ctx, framebuffer_t *frame, zbuffer_t *z, int frame_id) {
     u8 clear_r = g_atmosphere.sky_horizon.r;
@@ -1739,7 +1745,9 @@ int main(int argc, char *argv[]) {
     padInit(0);
     int pad_open_res = padPortOpen(0, 0, padBuf);
     pad_port_open_ok = (pad_open_res != 0);
+#ifdef PANTHEON_HARDWARE_TARGET
     pantheon_audio_bootstrap();
+#endif
 
     framebuffer_t frame[2];
     zbuffer_t z;
@@ -1849,7 +1857,9 @@ int main(int argc, char *argv[]) {
         static int dbg_frame = 0;
         dbg_frame++;
         update_atmosphere(dbg_frame);
+#ifdef PANTHEON_HARDWARE_TARGET
         pantheon_audio_runtime_probe();
+#endif
         packet_reset(packets[context]);
         qword_t *q = packets[context]->data;
         int boot_reveal = pantheon_boot_reveal_active(dbg_frame);
