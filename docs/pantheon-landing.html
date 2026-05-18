@@ -14,7 +14,7 @@
     </div>
 
     <div style="color: #000; padding: 12px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: clamp(0.9rem, 2.5vw, 1.2rem);">
-        v1.0.0-Beta
+        v1.0.1-Beta
     </div>
 
     <section style="margin-bottom: 35px; text-align: justify;">
@@ -39,7 +39,18 @@
     </section>
 
     <section style="margin-bottom: 35px;">
-        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">2. Field Demonstration: v1.0.0-Beta</h3>
+        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">2. Phase 2 Scale — v1.0.1-Beta</h3>
+        <ul style="list-style-type: disc; padding-left: 25px; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin: 0;">
+            <li style="margin-bottom: 10px;"><strong>31×31 Dynamic Treadmill Floor:</strong> Player-anchored tile grid snaps origin to nearest tile boundary. Y=0.0f ground invariant maintained at locked 60 FPS. Seamless world expansion without visible tile transitions.</li>
+            <li style="margin-bottom: 10px;"><strong>Zero-Pop Boot Sequence:</strong> Eliminated intro flickering. Path 1 world rendering strictly gated until 94BILLY STUDIOS reveal completes. Z-fight artifacts eliminated.</li>
+            <li style="margin-bottom: 10px;"><strong>Optimized Mesh Slicing:</strong> <code>hrc2ps2.py</code> automatically partitions assets into VU1-safe batches (≤72 verts). Respects 16KB VU1 data memory ceiling. Ready for monolithic asset ingestion.</li>
+            <li style="margin-bottom: 10px;"><strong>Hardware-Ready Audio:</strong> IOP/SPU2 infrastructure complete. Gated via <code>#ifdef PANTHEON_HARDWARE_TARGET</code> for clean PCSX2 emulator builds. Real PS2 hardware builds retain full audsrv support.</li>
+            <li style="margin-bottom: 10px;"><strong>Production Documentation:</strong> <code>ENGINE_STATE.md</code> canonical technical specification. VRAM map, VU1 contract, build flags, toolchain paths. Hardware/emulator build examples.</li>
+        </ul>
+    </section>
+
+    <section style="margin-bottom: 35px;">
+        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">3. Field Demonstration: v1.0.1-Beta</h3>
         <div style="border: 1px solid #000; background: #000; padding: 5px; box-shadow: 5px 5px 0px #ccc;">
             <img style="width: 100%; max-width: 800px; height: auto; display: block; margin: 0 auto;" src="https://94billy.com/wp-content/uploads/2026/05/PS2DEMO.gif" alt="Pantheon — Path 1 demo (retail PS2 capture)" />
         </div>
@@ -47,7 +58,7 @@
     </section>
 
     <section style="margin-bottom: 35px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 15px 0;">
-        <h3 style="margin-top: 0; font-size: clamp(1rem, 3vw, 1.25rem); font-weight: bold; text-transform: uppercase;">3. Path 1 Pipeline — EE → VIF1 → VU1 → GS</h3>
+        <h3 style="margin-top: 0; font-size: clamp(1rem, 3vw, 1.25rem); font-weight: bold; text-transform: uppercase;">4. Path 1 Pipeline — EE → VIF1 → VU1 → GS</h3>
         <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 20px;">Pantheon's <strong>shader.vsm</strong> is compiled with <strong>dvp-as</strong> and linked directly into the ELF binary as a standard object. The entry point <strong>PantheonShader</strong> resolves to a non-zero address at link time. The memory contract it executes against is defined in <strong>pantheon_path1_contract.h</strong> and verified at compile time:</p>
         <div style="margin-bottom: 10px;">
             <p style="font-size: clamp(0.85rem, 2vw, 1rem); margin-bottom: 5px; font-weight: bold; color: #555;">PIPELINE: EE → VIF1 → VU1 → XGKICK → GS</p>
@@ -62,7 +73,7 @@
     </section>
 
     <section style="margin-bottom: 35px;">
-        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">4. Installation </h3>
+        <h3 style="font-size: clamp(1rem, 3vw, 1.25rem); border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase;">5. Installation </h3>
         <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 10px;"><strong>Requirements:</strong> ps2sdk (with <strong>audsrv</strong>) · ee-gcc 15.x · dvp-as · PCSX2 2.7.x · Python 3.x</p>
         <p style="font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 10px;"><strong>Option A — Default Hybrid Build (Recommended):</strong></p>
         <ol style="padding-left: 25px; font-size: clamp(0.9rem, 2.5vw, 1.1rem); margin-bottom: 20px;">
