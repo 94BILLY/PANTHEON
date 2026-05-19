@@ -29,9 +29,15 @@
   </video>
 </p>
 
-<p align="center"><sub>v1.0.1-Beta progression — 31×31 dynamic treadmill floor expansion with zero-pop boot sequence and locked 60 FPS</sub></p>
+<p align="center">
+  <img src="https://github.com/94BILLY/PANTHEON/releases/download/v1.0.1-beta/Pantheon.PCSX2.Emulator.Demo.001.gif" alt="Full progression capture — PCSX2 v2.7.x" width="720" />
+</p>
+
+<p align="center"><sub>PCSX2 v2.7.x emulation at native 640×480 — Boot luma ramp reveal into treadmill loop, skydome timecycle progression, and orbit camera telemetry at locked 60 FPS</sub></p>
 
 ---
+
+<p align="center"><sub>v1.0.1-Beta progression — 31×31 dynamic treadmill floor expansion with zero-pop boot sequence and locked 60 FPS</sub></p>
 
 ## Overview
 
@@ -48,6 +54,7 @@ Pantheon enforces a strict **Path 1 pipeline**: the Emotion Engine sequences 128
 - **DualShock input** — Analog pad capture and edge detection
 
 **Build profiles:**
+
 - **Hybrid (default)** — CPU GIF floor + Path 1 skydome (avoids coplanar Z-fight)
 - **Strict Path 1** — VU1 renders all geometry; CPU GIF overlay disabled
 
@@ -74,7 +81,15 @@ Run in **PCSX2 2.7.x** or deploy to real PS2 hardware via OPL/FreeMcBoot.
 
 **Requirements:** `ps2sdk` · `ee-gcc` 15.2.0 · `dvp-as` · Python 3.x
 
-Setup guide: [`GETTING_STARTED.md`](GETTING_STARTED.md)
+Setup guide: [GETTING_STARTED.md](GETTING_STARTED.md)
+
+---
+
+## Roadmap
+
+- **Phase 3 — Texturing** — STQ coordinates, texture sampling in VU1, GS VRAM upload
+- **Phase 4 — Atmosphere** — Full dynamic timecycle, day/night transition, weather and ambiance details
+- **Phase 5 — Monolithic Assets** — Large model ingestion via automatic mesh slicing
 
 ---
 
@@ -112,14 +127,6 @@ Setup guide: [`GETTING_STARTED.md`](GETTING_STARTED.md)
 Source: [`docs/pantheon-oculus-straight-on-zenith.png`](docs/pantheon-oculus-straight-on-zenith.png)  
 Generator: [`tools/generate_pantheon_zenith_logos.py`](tools/generate_pantheon_zenith_logos.py)  
 Details: [`docs/LOGO.md`](docs/LOGO.md)
-
----
-
-## Roadmap
-
-- **Phase 3 — Texturing** — STQ coordinates, texture sampling in VU1, GS VRAM upload
-- **Phase 4 — Atmosphere** — Full dynamic timecycle, day/night transition
-- **Phase 5 — Monolithic Assets** — Large model ingestion via automatic mesh slicing
 
 ---
 
@@ -179,3 +186,5 @@ C (95%), Assembly (5%)
 ```
 
 </details>
+
+<p align="center"><sub>© 2026 94BILLY · All rights reserved</sub></p>
